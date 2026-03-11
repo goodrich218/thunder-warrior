@@ -76,6 +76,10 @@
                 <div class="skill-name">❤️ 修复机体</div>
                 <div class="skill-desc">恢复 3000 生命值</div>
             </div>
+            <div class="skill-option" onclick="selectSkill('missile')">
+                <div class="skill-name">🚀 导弹升级</div>
+                <div class="skill-desc">导弹 +1 (当前: <span id="missileVal">0</span>)，击中后分裂3弹</div>
+            </div>
         </div>
         <div id="gameOver">
             <h2>游戏结束</h2>
@@ -110,7 +114,7 @@
 
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
-        let bulletCount = 1, ricochetCount = 0;
+        let bulletCount = 1, ricochetCount = 0, missileCount = 0;
         // 总积分（累计所有游戏的积分）
         let totalScore = parseInt(localStorage.getItem('thunderWarriorTotal') || '0');
 
@@ -514,7 +518,19 @@
             const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
             for (let i = 0; i < bulletCount; i++) {
                 const a = (startAngle + i * spread) * Math.PI / 180;
-                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 6, vy: -Math.cos(a) * 6, ricochet: ricochetCount, bounces: 0});
+                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 6, vy: -Math.cos(a) * 6, ricochet: ricochetCount, bounces: 0, isMissile: false});
+            }
+            // 发射导弹
+            for (let i = 0; i < missileCount; i++) {
+                const offset = (i - (missileCount - 1) / 2) * 20;
+                player.bullets.push({
+                    x: player.x + offset, 
+                    y: player.y - 20, 
+                    vx: 0, 
+                    vy: -4, 
+                    isMissile: true,
+                    damage: 2
+                });
             }
         }
 
@@ -524,6 +540,7 @@
                 document.getElementById('skillPanel').style.display = 'block';
                 document.getElementById('bulletCountVal').textContent = bulletCount;
                 document.getElementById('ricochetVal').textContent = ricochetCount;
+                document.getElementById('missileVal').textContent = missileCount;
             }
             updateUI();
         }
@@ -531,6 +548,7 @@
         function selectSkill(s) {
             if (s === 'multishot') bulletCount++;
             else if (s === 'ricochet') ricochetCount++;
+            else if (s === 'missile') missileCount++;
             else if (s === 'heal') currentHp = Math.min(maxHp, currentHp + 3000);
             document.getElementById('skillPanel').style.display = 'none';
             gameState = 'playing';
@@ -554,6 +572,21 @@
 
             // 更新子弹
             player.bullets = player.bullets.filter(b => {
+                if (b.isMissile && enemies.length > 0) {
+                    // 导弹追踪最近的敌人
+                    let nearest = enemies[0];
+                    let minDist = Math.sqrt((b.x - nearest.x) ** 2 + (b.y - nearest.y) ** 2);
+                    for (const e of enemies) {
+                        const d = Math.sqrt((b.x - e.x) ** 2 + (b.y - e.y) ** 2);
+                        if (d < minDist) { minDist = d; nearest = e; }
+                    }
+                    const dx = nearest.x - b.x;
+                    const dy = nearest.y - b.y;
+                    const angle = Math.atan2(dy, dx);
+                    // 慢慢转向目标
+                    b.vx = Math.cos(angle) * 4;
+                    b.vy = Math.sin(angle) * 4;
+                }
                 b.x += b.vx; b.y += b.vy;
                 if (b.ricochet > 0 && b.bounces < b.ricochet) {
                     if (b.x <= 0 || b.x >= WIDTH) { b.vx *= -0.8; b.x = b.x <= 0 ? 1 : WIDTH - 1; b.bounces++; }
@@ -578,10 +611,17 @@
             enemies = enemies.filter(e => e.y < HEIGHT + e.h);
 
             // 碰撞检测
+            let newBullets = [];
             player.bullets = player.bullets.filter(b => {
                 let hit = false;
                 enemies = enemies.filter(e => {
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
+                        if (b.isMissile) {
+                            // 导弹击中后分裂成3颗小子弹
+                            newBullets.push({x: b.x, y: b.y, vx: -3, vy: 2, isMissile: false});
+                            newBullets.push({x: b.x, y: b.y, vx: 0, vy: 3, isMissile: false});
+                            newBullets.push({x: b.x, y: b.y, vx: 3, vy: 2, isMissile: false});
+                        }
                         e.currentHp--; hit = true;
                         if (e.currentHp <= 0) {
                             score += e.score;
@@ -594,6 +634,8 @@
                 });
                 return !hit;
             });
+            // 添加分裂出的小子弹
+            player.bullets.push(...newBullets);
 
             // 敌机子弹打玩家
             enemies.forEach(e => {
@@ -644,8 +686,24 @@
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
 
             // 绘制子弹
-            ctx.fillStyle = '#0ff';
-            player.bullets.forEach(b => ctx.fillRect(b.x - 1.5, b.y - 6, 3, 12));
+            player.bullets.forEach(b => {
+                if (b.isMissile) {
+                    // 导弹 - 更大的红色子弹
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 导弹尾焰
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y + 5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 普通子弹
+                    ctx.fillStyle = '#0ff';
+                    ctx.fillRect(b.x - 1.5, b.y - 6, 3, 12);
+                }
+            });
 
             // 绘制敌机
             enemies.forEach(e => {
@@ -695,7 +753,7 @@
 
         function restart() {
             score = 0; level = 1; maxHp = 10000; currentHp = 10000;
-            bulletCount = 1; ricochetCount = 0;
+            bulletCount = 1; ricochetCount = 0; missileCount = 0;
             enemies = []; particles = []; player.bullets = [];
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
