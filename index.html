@@ -6,7 +6,7 @@
     <title>雷电战机 - Thunder Warrior</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Microsoft YaHei', sans-serif; overflow: hidden; }
+        body { background: #000; display: flex; justify-content: center; align-items: flex-start; padding-top: 20px; min-height: 100vh; font-family: 'Microsoft YaHei', sans-serif; overflow: hidden; }
         #gameContainer { position: relative; }
         #gameCanvas { 
             border: 2px solid #0ff; 
@@ -42,12 +42,13 @@
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="600" height="800"></canvas>
+        <canvas id="gameCanvas" width="600" height="1000"></canvas>
         <div id="ui">
             <div id="healthBar"><div id="healthFill"></div></div>
             <div id="stats">
                 <span id="healthText">HP: 10000 / 10000</span>
                 <span id="score">积分: 0</span>
+                <span id="totalScore">总积分: 0</span>
                 <span id="level">等级: 1</span>
             </div>
             <div id="nextUpgrade">升级还需: 1000分</div>
@@ -92,10 +93,10 @@
         function resizeCanvas() {
             const maxWidth = window.innerWidth - 20;
             const maxHeight = window.innerHeight - 20;
-            const aspect = 600 / 800;
+            const aspect = 600 / 1000;
             
             if (maxWidth / maxHeight > aspect) {
-                canvas.height = Math.min(maxHeight, 800);
+                canvas.height = Math.min(maxHeight, 1000);
                 canvas.width = canvas.height * aspect;
             } else {
                 canvas.width = Math.min(maxWidth, 600);
@@ -110,6 +111,8 @@
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0;
+        // 总积分（累计所有游戏的积分）
+        let totalScore = parseInt(localStorage.getItem('thunderWarriorTotal') || '0');
 
         const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
@@ -473,13 +476,13 @@
 
         function spawnEnemy() {
             const types = [
-                {t: 0, w: 24, h: 24, hp: 1, s: 3, sc: 100, name: 'F-16'},
-                {t: 1, w: 30, h: 30, hp: 2, s: 2.5, sc: 200, name: 'F-15'},
-                {t: 2, w: 36, h: 36, hp: 5, s: 1.5, sc: 500, name: 'F/A-18'},
-                {t: 3, w: 42, h: 42, hp: 15, s: 0.8, sc: 2000, name: 'F-22'},
-                {t: 4, w: 39, h: 39, hp: 20, s: 0.7, sc: 3000, name: 'F-35'},
-                {t: 5, w: 44, h: 44, hp: 25, s: 0.6, sc: 3500, name: 'F/A-18E'},
-                {t: 6, w: 60, h: 38, hp: 100, s: 0.4, sc: 10000, name: 'B-2'}
+                {t: 0, w: 24, h: 24, hp: 1, s: 1.5, sc: 50, name: 'F-16'},
+                {t: 1, w: 30, h: 30, hp: 2, s: 1.25, sc: 100, name: 'F-15'},
+                {t: 2, w: 36, h: 36, hp: 5, s: 0.75, sc: 250, name: 'F/A-18'},
+                {t: 3, w: 42, h: 42, hp: 15, s: 0.4, sc: 1000, name: 'F-22'},
+                {t: 4, w: 39, h: 39, hp: 20, s: 0.35, sc: 1500, name: 'F-35'},
+                {t: 5, w: 44, h: 44, hp: 25, s: 0.3, sc: 1750, name: 'F/A-18E'},
+                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 5000, name: 'B-2'}
             ];
             let weights = [40, 25, 15, 10, 5, 3, 2];
             if (score > 2000) weights = [30, 25, 20, 12, 6, 4, 3];
@@ -511,7 +514,7 @@
             const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
             for (let i = 0; i < bulletCount; i++) {
                 const a = (startAngle + i * spread) * Math.PI / 180;
-                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 10, vy: -Math.cos(a) * 10, ricochet: ricochetCount, bounces: 0});
+                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 6, vy: -Math.cos(a) * 6, ricochet: ricochetCount, bounces: 0});
             }
         }
 
@@ -564,9 +567,13 @@
                 e.y += e.speed;
                 if (Math.random() < 0.01 && e.y > 50) {
                     if (!e.bullets) e.bullets = [];
-                    e.bullets.push({x: e.x, y: e.y + e.h/2, speed: 4});
+                    // 追踪玩家
+                    const dx = player.x - e.x;
+                    const dy = player.y - (e.y + e.h/2);
+                    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    e.bullets.push({x: e.x, y: e.y + e.h/2, vx: (dx/dist) * 2.5, vy: (dy/dist) * 2.5});
                 }
-                if (e.bullets) e.bullets = e.bullets.filter(b => { b.y += b.speed; return b.y < HEIGHT; });
+                if (e.bullets) e.bullets = e.bullets.filter(b => { b.x += b.vx; b.y += b.vy; return b.y < HEIGHT && b.x > 0 && b.x < WIDTH; });
             });
             enemies = enemies.filter(e => e.y < HEIGHT + e.h);
 
@@ -638,7 +645,7 @@
 
             // 绘制子弹
             ctx.fillStyle = '#0ff';
-            player.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 8, 4, 16));
+            player.bullets.forEach(b => ctx.fillRect(b.x - 1.5, b.y - 6, 3, 12));
 
             // 绘制敌机
             enemies.forEach(e => {
@@ -663,15 +670,27 @@
             document.getElementById('healthFill').style.width = Math.max(0, currentHp/maxHp*100) + '%';
             document.getElementById('healthText').textContent = `HP: ${Math.max(0, currentHp)} / ${maxHp}`;
             document.getElementById('score').textContent = `积分: ${score}`;
+            document.getElementById('totalScore').textContent = `总积分: ${totalScore}`;
             document.getElementById('level').textContent = `等级: ${level}`;
             document.getElementById('nextUpgrade').textContent = `升级还需: ${Math.max(0, getUpgradeThreshold() - score)}分 (下次: ${UPGRADE_BASE * Math.pow(2, level)}分)`;
         }
 
         function gameOver() {
             gameState = 'gameover';
+            // 累加到总积分并保存
+            totalScore += score;
+            localStorage.setItem('thunderWarriorTotal', totalScore.toString());
             document.getElementById('finalScore').textContent = score;
             document.getElementById('finalLevel').textContent = level;
+            document.getElementById('gameOver').innerHTML = `
+                <h2>游戏结束</h2>
+                <p>本次积分: ${score}</p>
+                <p>总积分: ${totalScore}</p>
+                <p>最高等级: ${level}</p>
+                <button id="restartBtn">重新开始</button>
+            `;
             document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('restartBtn').addEventListener('click', restart);
         }
 
         function restart() {
