@@ -14,8 +14,8 @@
         #healthFill { height: 100%; background: linear-gradient(90deg, #f00, #ff0); transition: width 0.2s; }
         #stats { margin-top: 5px; display: flex; justify-content: space-between; }
         #nextUpgrade { color: #ff0; font-size: 12px; margin-top: 3px; }
-        #skillPanel, #upgradePanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #0f0; border-radius: 15px; padding: 25px; color: #fff; display: none; z-index: 100; text-align: center; min-width: 300px; }
-        #skillPanel h2, #upgradePanel h2 { color: #0f0; margin-bottom: 20px; font-size: 22px; }
+        #skillPanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #0f0; border-radius: 15px; padding: 25px; color: #fff; display: none; z-index: 100; text-align: center; min-width: 300px; }
+        #skillPanel h2 { color: #0f0; margin-bottom: 20px; font-size: 22px; }
         .skill-option { background: linear-gradient(180deg, #1a1a1a, #333); border: 2px solid #0f0; color: #fff; padding: 15px 20px; margin: 10px 0; cursor: pointer; border-radius: 8px; font-size: 16px; transition: all 0.2s; width: 100%; }
         .skill-option:hover { background: linear-gradient(180deg, #2a2a2a, #444); box-shadow: 0 0 15px #0f0; transform: scale(1.02); }
         .skill-option .skill-name { color: #0f0; font-size: 18px; font-weight: bold; }
@@ -78,139 +78,295 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const WIDTH = canvas.width, HEIGHT = canvas.height;
+        const WIDTH = 600, HEIGHT = 800;
 
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0;
 
-        const player = { x: WIDTH/2, y: HEIGHT-100, width: 32, height: 40, bullets: [] };
-        let isDragging = false, dragOffset = {x:0, y:0};
+        const player = { x: 300, y: 700, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
-        let mouseX = WIDTH/2, mouseY = HEIGHT-100;
+        let mouseX = 300, mouseY = 700;
         const UPGRADE_THRESHOLD = 1000;
 
         // 绘制中国战机
-        function drawChinesePlane(ctx, x, y, w, h, type) {
-            ctx.save(); ctx.translate(x, y); const scale = w/32; ctx.scale(scale, scale);
-            const bw=32, bh=40;
-            if(type==0){
-                ctx.fillStyle='#8B0000';ctx.beginPath();ctx.moveTo(bw/2,0);ctx.lineTo(bw/2+6,bh-5);ctx.lineTo(bw/2-6,bh-5);ctx.fill();
-                ctx.fillStyle='#B22222';ctx.beginPath();ctx.moveTo(bw/2-3,bh*0.4);ctx.lineTo(0,bh*0.7);ctx.lineTo(bw/2-3,bh*0.6);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+3,bh*0.4);ctx.lineTo(bw,bh*0.7);ctx.lineTo(bw/2+3,bh*0.6);ctx.fill();
-                ctx.fillStyle='#CD5C5C';ctx.beginPath();ctx.moveTo(bw/2-2,bh-8);ctx.lineTo(bw/2-6,bh);ctx.lineTo(bw/2,bh-5);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+2,bh-8);ctx.lineTo(bw/2+6,bh);ctx.lineTo(bw/2,bh-5);ctx.fill();
-                ctx.fillStyle='#00CED1';ctx.beginPath();ctx.ellipse(bw/2,bh*0.3,3,5,0,0,6.28);ctx.fill();
-            }else if(type==1){
-                ctx.fillStyle='#800000';ctx.beginPath();ctx.moveTo(bw/2,0);ctx.lineTo(bw/2+5,bh);ctx.lineTo(bw/2-5,bh);ctx.fill();
-                ctx.fillStyle='#A52A2A';ctx.beginPath();ctx.moveTo(bw/2-4,bh*0.35);ctx.lineTo(0,bh*0.6);ctx.lineTo(bw/2-4,bh*0.55);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+4,bh*0.35);ctx.lineTo(bw,bh*0.6);ctx.lineTo(bw/2+4,bh*0.55);ctx.fill();
-                ctx.fillStyle='#4A0000';ctx.fillRect(bw/2-4,bh-6,3,6);ctx.fillRect(bw/2+1,bh-6,3,6);
-                ctx.fillStyle='#B22222';ctx.beginPath();ctx.moveTo(bw/2-5,bh-5);ctx.lineTo(bw/2-8,bh);ctx.lineTo(bw/2-3,bh);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+5,bh-5);ctx.lineTo(bw/2+8,bh);ctx.lineTo(bw/2+3,bh);ctx.fill();
-                ctx.fillStyle='#20B2AA';ctx.beginPath();ctx.ellipse(bw/2,bh*0.25,3,6,0,0,6.28);ctx.fill();
-            }else if(type==2){
-                ctx.fillStyle='#2F0000';ctx.beginPath();ctx.moveTo(bw/2,0);ctx.lineTo(bw/2+4,bh);ctx.lineTo(bw/2-4,bh);ctx.fill();
-                ctx.fillStyle='#4A0000';ctx.beginPath();ctx.moveTo(bw/2-3,bh*0.3);ctx.lineTo(2,bh*0.5);ctx.lineTo(bw/2-3,bh*0.5);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+3,bh*0.3);ctx.lineTo(bw-2,bh*0.5);ctx.lineTo(bw/2+3,bh*0.5);ctx.fill();
-                ctx.fillStyle='#600000';ctx.beginPath();ctx.moveTo(bw/2-2,bh*0.15);ctx.lineTo(bw/2-7,bh*0.2);ctx.lineTo(bw/2-2,bh*0.22);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+2,bh*0.15);ctx.lineTo(bw/2+7,bh*0.2);ctx.lineTo(bw/2+2,bh*0.22);ctx.fill();
-                ctx.fillStyle='#FF4500';ctx.fillRect(bw/2-3,bh-4,2,4);ctx.fillRect(bw/2+1,bh-4,2,4);
-                ctx.fillStyle='#FFD700';ctx.beginPath();ctx.ellipse(bw/2,bh*0.2,2,5,0,0,6.28);ctx.fill();
-            }else{
-                ctx.fillStyle='#1A0000';ctx.beginPath();ctx.moveTo(bw/2,0);ctx.lineTo(bw/2+4,bh);ctx.lineTo(bw/2-4,bh);ctx.fill();
-                ctx.fillStyle='#330000';ctx.beginPath();ctx.moveTo(bw/2-3,bh*0.35);ctx.lineTo(0,bh*0.55);ctx.lineTo(bw/2-3,bh*0.5);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+3,bh*0.35);ctx.lineTo(bw,bh*0.55);ctx.lineTo(bw/2+3,bh*0.5);ctx.fill();
-                ctx.fillStyle='#440000';ctx.beginPath();ctx.moveTo(bw/2-4,bh-6);ctx.lineTo(bw/2-7,bh);ctx.lineTo(bw/2-2,bh);ctx.fill();
-                ctx.beginPath();ctx.moveTo(bw/2+4,bh-6);ctx.lineTo(bw/2+7,bh);ctx.lineTo(bw/2+2,bh);ctx.fill();
-                ctx.fillStyle='#FF6347';ctx.fillRect(bw/2-3,bh-4,2,4);ctx.fillRect(bw/2+1,bh-4,2,4);
-                ctx.fillStyle='#4169E1';ctx.beginPath();ctx.ellipse(bw/2,bh*0.22,2,4,0,0,6.28);ctx.fill();
-            }
+        function drawPlane(ctx, x, y, w, h, type) {
+            ctx.save(); ctx.translate(x, y);
+            const scale = w / 32; ctx.scale(scale, scale);
+            const bw = 32, bh = 40;
+            ctx.fillStyle = type === 0 ? '#8B0000' : type === 1 ? '#800000' : type === 2 ? '#2F0000' : '#1A0000';
+            ctx.beginPath(); ctx.moveTo(bw/2, 0); ctx.lineTo(bw/2 + 5, bh - 5); ctx.lineTo(bw/2 - 5, bh - 5); ctx.fill();
+            ctx.fillStyle = type === 0 ? '#B22222' : type === 1 ? '#A52A2A' : type === 2 ? '#4A0000' : '#330000';
+            ctx.beginPath(); ctx.moveTo(bw/2 - 3, bh * 0.4); ctx.lineTo(0, bh * 0.7); ctx.lineTo(bw/2 - 3, bh * 0.6); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(bw/2 + 3, bh * 0.4); ctx.lineTo(bw, bh * 0.7); ctx.lineTo(bw/2 + 3, bh * 0.6); ctx.fill();
+            ctx.fillStyle = type === 0 ? '#00CED1' : type === 1 ? '#20B2AA' : type === 2 ? '#FFD700' : '#4169E1';
+            ctx.beginPath(); ctx.ellipse(bw/2, bh * 0.3, 3, 5, 0, 0, 6.28); ctx.fill();
             ctx.restore();
         }
 
         // 绘制敌机
-        function drawEnemyPlane(ctx, x, y, w, h, t) {
+        function drawEnemy(ctx, x, y, w, h, t) {
             ctx.save(); ctx.translate(x, y); const scale = w/32; ctx.scale(scale, scale);
-            const bw=32, bh=32;
-            const colors=[['#4A5568','#2D3748','#1A202C'],['#374151','#1F2937','#111827'],['#4B5563','#374151','#1F2937'],['#6B7280','#4B5563','#374151']];
-            ctx.fillStyle=colors[t][0];ctx.beginPath();ctx.moveTo(bw/2,bh);ctx.lineTo(bw/2+(t==3?7:t==2?6:t==1?5:4),0);ctx.lineTo(bw/2-(t==3?7:t==2?6:t==1?5:4),0);ctx.fill();
-            ctx.fillStyle=colors[t][1];ctx.beginPath();ctx.moveTo(bw/2-(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.45:t==2?0.4:t==1?0.35:0.4));ctx.lineTo(0,bh*(t==3?0.25:t==2?0.2:t==1?0.15:0.2));ctx.lineTo(bw/2-(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.35:t==2?0.3:t==1?0.25:0.3));ctx.fill();
-            ctx.beginPath();ctx.moveTo(bw/2+(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.45:t==2?0.4:t==1?0.35:0.4));ctx.lineTo(bw,bh*(t==3?0.25:t==2?0.2:t==1?0.15:0.2));ctx.lineTo(bw/2+(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.35:t==2?0.3:t==1?0.25:0.3));ctx.fill();
-            if(t>=2){ctx.fillStyle=colors[t][2];ctx.beginPath();ctx.moveTo(bw/2-6,bh*0.7);ctx.lineTo(bw/2-10,bh);ctx.lineTo(bw/2-3,bh*0.8);ctx.fill();ctx.beginPath();ctx.moveTo(bw/2+6,bh*0.7);ctx.lineTo(bw/2+10,bh);ctx.lineTo(bw/2+3,bh*0.8);ctx.fill();}
-            ctx.fillStyle=colors[t][2];ctx.beginPath();ctx.ellipse(bw/2,bh*0.6,2,3,0,0,6.28);ctx.fill();
+            const colors = ['#4A5568', '#374151', '#4B5563', '#6B7280'];
+            ctx.fillStyle = colors[t];
+            ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(20, 0); ctx.lineTo(12, 0); ctx.fill();
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath(); ctx.ellipse(16, 20, 2, 3, 0, 0, 6.28); ctx.fill();
             ctx.restore();
         }
 
-        function spawnEnemy(){
-            const types=[{t:0,w:28,h:28,hp:1,s:3,sc:100},{t:1,w:36,h:36,hp:2,s:2.5,sc:200},{t:2,w:48,h:48,hp:5,s:1.5,sc:500},{t:3,w:60,h:60,hp:15,s:0.8,sc:2000}];
-            let w=[60,30,8,2];if(score>2000)w=[40,35,20,5];if(score>5000)w=[30,35,25,10];if(score>10000)w=[20,30,35,15];
-            let r=Math.random()*w.reduce((a,b)=>a+b,0),i=0;for(;i<w.length&&(r-=w[i])>0;i++);
-            let e=types[i];enemies.push({x:Math.random()*(WIDTH-e.w)+e.w/2,y:-e.h,w:e.w,h:e.h,type:e.t,hp:e.hp,currentHp:e.hp,speed:e.s,score:e.sc,lastShot:0});
+        function spawnEnemy() {
+            const types = [
+                {t: 0, w: 28, h: 28, hp: 1, s: 3, sc: 100},
+                {t: 1, w: 36, h: 36, hp: 2, s: 2.5, sc: 200},
+                {t: 2, w: 48, h: 48, hp: 5, s: 1.5, sc: 500},
+                {t: 3, w: 60, h: 60, hp: 15, s: 0.8, sc: 2000}
+            ];
+            let weights = [60, 30, 8, 2];
+            if (score > 2000) weights = [40, 35, 20, 5];
+            if (score > 5000) weights = [30, 35, 25, 10];
+            if (score > 10000) weights = [20, 30, 35, 15];
+            const total = weights.reduce((a,b)=>a+b,0);
+            let r = Math.random() * total, i = 0;
+            for (; i < weights.length && (r -= weights[i]) > 0; i++);
+            const e = types[i];
+            enemies.push({x: Math.random() * (WIDTH - e.w) + e.w/2, y: -e.h, w: e.w, h: e.h, type: e.t, hp: e.hp, currentHp: e.hp, speed: e.s, score: e.sc, bullets: []});
         }
 
-        function createExplosion(x,y,c,n){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:30,color:c,size:Math.random()*4+2});}
-        function updateParticles(){particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;p.size*=.95;return p.life>0;});}
-        function drawParticles(){particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life/30;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,6.28);ctx.fill();});ctx.globalAlpha=1;}
-
-        function playerShoot(){
-            const spread=15,startAngle=-spread*(bulletCount-1)/2;
-            for(let i=0;i<bulletCount;i++){const a=(startAngle+i*spread)*Math.PI/180;player.bullets.push({x:player.x,y:player.y-player.height/2,vx:Math.sin(a)*10,vy:-Math.cos(a)*10,d:1,ricochet:ricochetCount,bounces:0});}
-        }
-
-        function enemyShoot(e){const n=Date.now();if(n-e.lastShot>1500&&e.y>50){e.lastShot=n;if(!e.b)e.b=[];e.b.push({x:e.x,y:e.y+e.h/2,speed:4});}}
-
-        function checkUpgrade(){const t=level*UPGRADE_THRESHOLD;if(score>=t){level++;gameState='upgrade';showSkillPanel();}updateUI();}
-        function showSkillPanel(){document.getElementById('skillPanel').style.display='block';document.getElementById('bulletCountVal').textContent=bulletCount;document.getElementById('ricochetVal').textContent=ricochetCount;}
-        function selectSkill(s){if(s==='multishot')bulletCount++;else if(s==='ricochet')ricochetCount++;else if(s==='heal')currentHp=Math.min(maxHp,currentHp+3000);document.getElementById('skillPanel').style.display='none';gameState='playing';updateUI();}
-
-        function update(){
-            if(gameState!=='playing')return;
-            // 拖动模式
-            if(isDragging){
-                player.x=mouseX-dragOffset.x;
-                player.y=mouseY-dragOffset.y;
-                console.log('update drag', player.x, player.y);
+        function createExplosion(x, y, c, n) {
+            for (let i = 0; i < n; i++) {
+                particles.push({x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 30, color: c, size: Math.random()*4+2});
             }
-            player.x=Math.max(player.width/2,Math.min(WIDTH-player.width/2,player.x));player.y=Math.max(player.height/2+50,Math.min(HEIGHT-player.height/2,player.y));
-            if(!player.lastShot||Date.now()-player.lastShot>200){playerShoot();player.lastShot=Date.now();}
-            player.bullets=player.bullets.filter(b=>{b.x+=b.vx;b.y+=b.vy;if(b.ricochet>0&&b.bounces<b.ricochet){if(b.x<=0||b.x>=WIDTH){b.vx*=-.8;b.x=b.x<=0?1:WIDTH-1;b.bounces++;}if(b.y<=0){b.vy*=-.8;b.y=1;b.bounces++;}}return b.y>-50&&b.y<HEIGHT+50;});
-            enemies.forEach(e=>{e.y+=e.speed;if(e.type>=1)enemyShoot(e);if(e.b)e.b=e.b.filter(b=>{b.y+=b.speed;return b.y<HEIGHT;});});
-            enemies=enemies.filter(e=>e.y<HEIGHT+e.h);
-            player.bullets=player.bullets.filter(b=>{let h=false;enemies=enemies.filter(e=>{const dx=b.x-e.x,dy=b.y-e.y;if(Math.abs(dx)<e.w/2&&Math.abs(dy)<e.h/2){e.currentHp--;h=true;if(e.currentHp<=0){score+=e.score;createExplosion(e.x,e.y,'#FF6B6B',20);checkUpgrade();return false;}}return true;});return!h;});
-            enemies.forEach(e=>{if(e.b)e.b=e.b.filter(b=>{const dx=b.x-player.x,dy=b.y-player.y;if(Math.abs(dx)<player.width/2&&Math.abs(dy)<player.height/2){currentHp-=100;createExplosion(player.x,player.y,'#FFD700',5);updateUI();if(currentHp<=0)gameOver();return false;}return true;});});
-            enemies.forEach(e=>{const dx=e.x-player.x,dy=e.y-player.y;if(Math.abs(dx)<(e.w+player.width)/2&&Math.abs(dy)<(e.h+player.height)/2){currentHp-=500;e.currentHp=0;createExplosion(e.x,e.y,'#FF4444',15);updateUI();if(currentHp<=0)gameOver();}});
-            enemies=enemies.filter(e=>e.currentHp>0);updateParticles();
         }
 
-        function draw(){
-            ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,WIDTH,HEIGHT);
-            ctx.fillStyle='#fff';for(let i=0;i<50;i++){const x=(i*127+Date.now()/50)%WIDTH,y=(i*97+Date.now()/100)%HEIGHT;ctx.fillRect(x,y,1,1);}
-            if(gameState!=='playing'&&gameState!=='upgrade')return;
-            // 调试：绘制玩家位置
-            console.log('draw player', player.x, player.y, isDragging);
-            drawChinesePlane(ctx,player.x-player.width/2,player.y-player.height/2,player.width,player.height,selectedPlane);
-            ctx.fillStyle='#0ff';player.bullets.forEach(b=>{ctx.fillRect(b.x-2,b.y-8,4,16);});
-            enemies.forEach(e=>{drawEnemyPlane(ctx,e.x-e.w/2,e.y-e.h/2,e.w,e.h,e.type);if(e.b){ctx.fillStyle='#f44';e.b.forEach(b=>{ctx.fillRect(b.x-2,b.y-4,4,8);});}if(e.currentHp<e.hp){const bw=e.w,bh=3,bx=e.x-bw/2,by=e.y-e.h/2-8;ctx.fillStyle='#333';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle='#f00';ctx.fillRect(bx,by,bw*(e.currentHp/e.hp),bh);}});
+        function updateParticles() {
+            particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.life--; p.size *= 0.95; return p.life > 0; });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life/30; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.28); ctx.fill(); });
+            ctx.globalAlpha = 1;
+        }
+
+        function playerShoot() {
+            const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
+            for (let i = 0; i < bulletCount; i++) {
+                const a = (startAngle + i * spread) * Math.PI / 180;
+                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 10, vy: -Math.cos(a) * 10, ricochet: ricochetCount, bounces: 0});
+            }
+        }
+
+        function checkUpgrade() {
+            if (score >= level * UPGRADE_THRESHOLD) {
+                level++; gameState = 'upgrade';
+                document.getElementById('skillPanel').style.display = 'block';
+                document.getElementById('bulletCountVal').textContent = bulletCount;
+                document.getElementById('ricochetVal').textContent = ricochetCount;
+            }
+            updateUI();
+        }
+
+        function selectSkill(s) {
+            if (s === 'multishot') bulletCount++;
+            else if (s === 'ricochet') ricochetCount++;
+            else if (s === 'heal') currentHp = Math.min(maxHp, currentHp + 3000);
+            document.getElementById('skillPanel').style.display = 'none';
+            gameState = 'playing';
+            updateUI();
+        }
+
+        function update() {
+            if (gameState !== 'playing') return;
+            
+            // 鼠标跟随
+            player.x = mouseX;
+            player.y = mouseY;
+            player.x = Math.max(16, Math.min(WIDTH - 16, player.x));
+            player.y = Math.max(20, Math.min(HEIGHT - 20, player.y));
+
+            // 射击
+            if (!player.lastShot || Date.now() - player.lastShot > 200) {
+                playerShoot();
+                player.lastShot = Date.now();
+            }
+
+            // 更新子弹
+            player.bullets = player.bullets.filter(b => {
+                b.x += b.vx; b.y += b.vy;
+                if (b.ricochet > 0 && b.bounces < b.ricochet) {
+                    if (b.x <= 0 || b.x >= WIDTH) { b.vx *= -0.8; b.x = b.x <= 0 ? 1 : WIDTH - 1; b.bounces++; }
+                    if (b.y <= 0) { b.vy *= -0.8; b.y = 1; b.bounces++; }
+                }
+                return b.y > -50 && b.y < HEIGHT + 50;
+            });
+
+            // 更新敌机
+            enemies.forEach(e => {
+                e.y += e.speed;
+                if (Math.random() < 0.01 && e.y > 50) {
+                    if (!e.bullets) e.bullets = [];
+                    e.bullets.push({x: e.x, y: e.y + e.h/2, speed: 4});
+                }
+                if (e.bullets) e.bullets = e.bullets.filter(b => { b.y += b.speed; return b.y < HEIGHT; });
+            });
+            enemies = enemies.filter(e => e.y < HEIGHT + e.h);
+
+            // 碰撞检测
+            player.bullets = player.bullets.filter(b => {
+                let hit = false;
+                enemies = enemies.filter(e => {
+                    if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
+                        e.currentHp--; hit = true;
+                        if (e.currentHp <= 0) {
+                            score += e.score;
+                            createExplosion(e.x, e.y, '#FF6B6B', 20);
+                            checkUpgrade();
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+                return !hit;
+            });
+
+            // 敌机子弹打玩家
+            enemies.forEach(e => {
+                if (e.bullets) {
+                    e.bullets = e.bullets.filter(b => {
+                        if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
+                            currentHp -= 100;
+                            createExplosion(player.x, player.y, '#FFD700', 5);
+                            updateUI();
+                            if (currentHp <= 0) gameOver();
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+            });
+
+            // 敌机撞玩家
+            enemies.forEach(e => {
+                if (Math.abs(e.x - player.x) < (e.w + 32)/2 && Math.abs(e.y - player.y) < (e.h + 40)/2) {
+                    currentHp -= 500;
+                    e.currentHp = 0;
+                    createExplosion(e.x, e.y, '#FF4444', 15);
+                    updateUI();
+                    if (currentHp <= 0) gameOver();
+                }
+            });
+            enemies = enemies.filter(e => e.currentHp > 0);
+
+            updateParticles();
+        }
+
+        function draw() {
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            // 星空背景
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 127 + Date.now() / 50) % WIDTH;
+                const y = (i * 97 + Date.now() / 100) % HEIGHT;
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            if (gameState !== 'playing' && gameState !== 'upgrade') return;
+
+            // 绘制玩家飞机
+            drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+
+            // 绘制子弹
+            ctx.fillStyle = '#0ff';
+            player.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 8, 4, 16));
+
+            // 绘制敌机
+            enemies.forEach(e => {
+                drawEnemy(ctx, e.x - e.w/2, e.y - e.h/2, e.w, e.h, e.type);
+                if (e.bullets) {
+                    ctx.fillStyle = '#f44';
+                    e.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 4, 4, 8));
+                }
+                // 血条
+                if (e.currentHp < e.hp) {
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 8, e.w, 3);
+                    ctx.fillStyle = '#f00';
+                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 8, e.w * (e.currentHp/e.hp), 3);
+                }
+            });
+
             drawParticles();
         }
 
-        function updateUI(){const hp=Math.max(0,currentHp/maxHp*100);document.getElementById('healthFill').style.width=hp+'%';document.getElementById('healthText').textContent=`HP: ${Math.max(0,currentHp)} / ${maxHp}`;document.getElementById('score').textContent=`积分: ${score}`;document.getElementById('level').textContent=`等级: ${level}`;const next=level*UPGRADE_THRESHOLD-score;document.getElementById('nextUpgrade').textContent=`升级还需: ${Math.max(0,next)}分`;}
-        function gameOver(){gameState='gameover';document.getElementById('finalScore').textContent=score;document.getElementById('finalLevel').textContent=level;document.getElementById('gameOver').style.display='block';}
-        function restart(){score=0;level=1;maxHp=10000;currentHp=10000;bulletCount=1;ricochetCount=0;enemies=[];particles=[];player.bullets=[];player.x=WIDTH/2;player.y=HEIGHT-100;isDragging=false;gameState='select';document.getElementById('gameOver').style.display='none';document.getElementById('selectPanel').style.display='block';updateUI();}
-        function selectPlane(i){selectedPlane=i;document.getElementById('selectPanel').style.display='none';gameState='playing';console.log('selectPlane', gameState, player.x, player.y);}
-        function drawPreviews(){for(let i=0;i<4;i++){const c=document.getElementById('preview'+i).getContext('2d');c.clearRect(0,0,64,80);drawChinesePlane(c,16,20,32,40,i);}}
+        function updateUI() {
+            document.getElementById('healthFill').style.width = Math.max(0, currentHp/maxHp*100) + '%';
+            document.getElementById('healthText').textContent = `HP: ${Math.max(0, currentHp)} / ${maxHp}`;
+            document.getElementById('score').textContent = `积分: ${score}`;
+            document.getElementById('level').textContent = `等级: ${level}`;
+            document.getElementById('nextUpgrade').textContent = `升级还需: ${Math.max(0, level*UPGRADE_THRESHOLD - score)}分`;
+        }
 
-        canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;const dx=mouseX-player.x,dy=mouseY-player.y;if(Math.abs(dx)<player.width*1.5&&Math.abs(dy)<player.height*1.5){isDragging=true;dragOffset={x:dx,y:dy};console.log('drag start', dragOffset);}});
-        canvas.addEventListener('mouseup',()=>isDragging=false);
-        canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;if(isDragging)console.log('dragging', mouseX, mouseY);});
-        canvas.addEventListener('mouseleave',()=>isDragging=false);
-        document.querySelectorAll('.plane-btn').forEach(b=>b.addEventListener('click',()=>selectPlane(parseInt(b.dataset.plane))));
-        document.getElementById('restartBtn').addEventListener('click',restart);
+        function gameOver() {
+            gameState = 'gameover';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalLevel').textContent = level;
+            document.getElementById('gameOver').style.display = 'block';
+        }
 
-        let lastSpawn=0;
-        function gameLoop(t){if(gameState==='playing'&&t-lastSpawn>800){spawnEnemy();lastSpawn=t;}update();draw();requestAnimationFrame(gameLoop);}
-        drawPreviews();updateUI();requestAnimationFrame(gameLoop);
+        function restart() {
+            score = 0; level = 1; maxHp = 10000; currentHp = 10000;
+            bulletCount = 1; ricochetCount = 0;
+            enemies = []; particles = []; player.bullets = [];
+            player.x = 300; player.y = 700;
+            gameState = 'select';
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('selectPanel').style.display = 'block';
+            updateUI();
+        }
+
+        function selectPlane(i) {
+            selectedPlane = i;
+            document.getElementById('selectPanel').style.display = 'none';
+            gameState = 'playing';
+        }
+
+        function drawPreviews() {
+            for (let i = 0; i < 4; i++) {
+                const c = document.getElementById('preview' + i).getContext('2d');
+                c.clearRect(0, 0, 64, 80);
+                drawPlane(c, 16, 20, 32, 40, i);
+            }
+        }
+
+        // 鼠标控制
+        canvas.addEventListener('mousemove', e => {
+            const r = canvas.getBoundingClientRect();
+            mouseX = e.clientX - r.left;
+            mouseY = e.clientY - r.top;
+        });
+
+        document.querySelectorAll('.plane-btn').forEach(b => {
+            b.addEventListener('click', () => selectPlane(parseInt(b.dataset.plane)));
+        });
+        document.getElementById('restartBtn').addEventListener('click', restart);
+
+        // 游戏循环
+        let lastSpawn = 0;
+        function gameLoop(t) {
+            if (gameState === 'playing' && t - lastSpawn > 800) {
+                spawnEnemy();
+                lastSpawn = t;
+            }
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        drawPreviews();
+        updateUI();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
