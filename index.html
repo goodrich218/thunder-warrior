@@ -22,6 +22,9 @@
         #healthFill { height: 100%; background: linear-gradient(90deg, #f00, #ff0); transition: width 0.2s; }
         #stats { margin-top: 5px; display: flex; justify-content: space-between; }
         #nextUpgrade { color: #ff0; font-size: 12px; margin-top: 3px; }
+        #missileIndicator { position: absolute; bottom: 10px; left: 10px; display: flex; gap: 5px; pointer-events: none; }
+        .missile-icon { width: 20px; height: 20px; background: linear-gradient(180deg, #FF4500, #FFD700); border-radius: 50%; border: 2px solid #fff; opacity: 0.3; }
+        .missile-icon.active { opacity: 1; box-shadow: 0 0 8px #FF4500; }
         #skillPanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #0f0; border-radius: 15px; padding: 25px; color: #fff; display: none; z-index: 100; text-align: center; min-width: 300px; }
         #skillPanel h2 { color: #0f0; margin-bottom: 20px; font-size: 22px; }
         .skill-option { background: linear-gradient(180deg, #1a1a1a, #333); border: 2px solid #0f0; color: #fff; padding: 15px 20px; margin: 10px 0; cursor: pointer; border-radius: 8px; font-size: 16px; transition: all 0.2s; width: 100%; }
@@ -53,6 +56,11 @@
             </div>
             <div id="nextUpgrade">升级还需: 1000分</div>
         </div>
+        <div id="missileIndicator">
+            <div class="missile-icon"></div>
+            <div class="missile-icon"></div>
+            <div class="missile-icon"></div>
+        </div>
         <div id="selectPanel">
             <h2>选择你的战机</h2>
             <div class="plane-select">
@@ -76,9 +84,9 @@
                 <div class="skill-name">❤️ 修复机体</div>
                 <div class="skill-desc">恢复 3000 生命值</div>
             </div>
-            <div class="skill-option" onclick="selectSkill('missile')">
+            <div class="skill-option" onclick="selectSkill('missile')" id="missileOption">
                 <div class="skill-name">🎯 跟踪弹</div>
-                <div class="skill-desc">跟踪弹 +1 (当前: <span id="missileVal">0</span>)，击中后分裂3弹</div>
+                <div class="skill-desc">跟踪弹 +1 (当前: <span id="missileVal">0</span>/3)</div>
             </div>
         </div>
         <div id="gameOver">
@@ -541,6 +549,12 @@
                 document.getElementById('bulletCountVal').textContent = bulletCount;
                 document.getElementById('ricochetVal').textContent = ricochetCount;
                 document.getElementById('missileVal').textContent = missileCount;
+                // 跟踪弹满3时隐藏选项
+                if (missileCount >= 3) {
+                    document.getElementById('missileOption').style.display = 'none';
+                } else {
+                    document.getElementById('missileOption').style.display = 'block';
+                }
             }
             updateUI();
         }
@@ -548,11 +562,19 @@
         function selectSkill(s) {
             if (s === 'multishot') bulletCount++;
             else if (s === 'ricochet') ricochetCount++;
-            else if (s === 'missile') missileCount++;
+            else if (s === 'missile' && missileCount < 3) missileCount++;
             else if (s === 'heal') currentHp = Math.min(maxHp, currentHp + 3000);
             document.getElementById('skillPanel').style.display = 'none';
             gameState = 'playing';
             updateUI();
+            updateMissileIndicator();
+        }
+        
+        function updateMissileIndicator() {
+            const icons = document.querySelectorAll('.missile-icon');
+            icons.forEach((icon, i) => {
+                icon.classList.toggle('active', i < missileCount);
+            });
         }
 
         function update() {
@@ -611,17 +633,10 @@
             enemies = enemies.filter(e => e.y < HEIGHT + e.h);
 
             // 碰撞检测
-            let newBullets = [];
             player.bullets = player.bullets.filter(b => {
                 let hit = false;
                 enemies = enemies.filter(e => {
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
-                        if (b.isMissile) {
-                            // 导弹击中后分裂成3颗小子弹
-                            newBullets.push({x: b.x, y: b.y, vx: -3, vy: 2, isMissile: false});
-                            newBullets.push({x: b.x, y: b.y, vx: 0, vy: 3, isMissile: false});
-                            newBullets.push({x: b.x, y: b.y, vx: 3, vy: 2, isMissile: false});
-                        }
                         e.currentHp--; hit = true;
                         if (e.currentHp <= 0) {
                             score += e.score;
@@ -634,8 +649,6 @@
                 });
                 return !hit;
             });
-            // 添加分裂出的小子弹
-            player.bullets.push(...newBullets);
 
             // 敌机子弹打玩家
             enemies.forEach(e => {
@@ -731,6 +744,7 @@
             document.getElementById('totalScore').textContent = `总积分: ${totalScore}`;
             document.getElementById('level').textContent = `等级: ${level}`;
             document.getElementById('nextUpgrade').textContent = `升级还需: ${Math.max(0, getUpgradeThreshold() - score)}分 (下次: ${UPGRADE_BASE * Math.pow(2, level)}分)`;
+            updateMissileIndicator();
         }
 
         function gameOver() {
