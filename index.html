@@ -93,9 +93,9 @@
                 <div class="skill-name">🔫 多重子弹</div>
                 <div class="skill-desc">子弹数 +1 (当前: <span id="bulletCountVal">1</span>/5)</div>
             </div>
-            <div class="skill-option" onclick="selectSkill('ricochet')">
+            <div class="skill-option" onclick="selectSkill('ricochet')" id="ricochetOption">
                 <div class="skill-name">↩️ 弹射导弹</div>
-                <div class="skill-desc">子弹弹射 +1 (当前: <span id="ricochetVal">0</span>)</div>
+                <div class="skill-desc">子弹弹射 +1 (当前: <span id="ricochetVal">0</span>/3)</div>
             </div>
             <div class="skill-option" onclick="selectSkill('heal')">
                 <div class="skill-name">❤️ 修复机体</div>
@@ -592,6 +592,12 @@
                     document.getElementById('multishotOption').style.display = 'block';
                 }
                 document.getElementById('ricochetVal').textContent = ricochetCount;
+                // 弹射满3时隐藏选项
+                if (ricochetCount >= 3) {
+                    document.getElementById('ricochetOption').style.display = 'none';
+                } else {
+                    document.getElementById('ricochetOption').style.display = 'block';
+                }
                 document.getElementById('missileVal').textContent = missileCount;
                 // 跟踪弹满3时隐藏选项
                 if (missileCount >= 3) {
@@ -615,7 +621,7 @@
             if (s === 'multishot' && bulletCount < 5) {
                 bulletCount++;
             } else if (s === 'ricochet') {
-                ricochetCount++;
+                if (ricochetCount < 3) ricochetCount++;
             } else if (s === 'missile' && missileCount < 3) {
                 missileCount++;
             } else if (s === 'leech' && leechLevel < 20) {
