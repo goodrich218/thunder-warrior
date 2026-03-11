@@ -131,55 +131,207 @@
             ctx.restore();
         }
 
-        // 绘制敌机 - 美国战斗机
+        // 绘制敌机 - 美国战斗机（更精细版本）
         function drawEnemy(ctx, x, y, w, h, t) {
-            ctx.save(); ctx.translate(x, y); const scale = w/32; ctx.scale(scale, scale);
-            const colors = ['#5B6770', '#4A5568', '#374151', '#6B7280']; // 灰色系
+            ctx.save(); ctx.translate(x, y);
+            const s = w / 32; // 缩放比例
             
-            if (t === 0) { // F-16 Fighting Falcon
-                ctx.fillStyle = colors[0];
-                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(22, 0); ctx.lineTo(10, 0); ctx.fill();
-                ctx.fillStyle = '#3a3a3a';
-                ctx.beginPath(); ctx.moveTo(16-3, 25); ctx.lineTo(0, 15); ctx.lineTo(16-3, 20); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(16+3, 25); ctx.lineTo(32, 15); ctx.lineTo(16+3, 20); ctx.fill();
-                ctx.fillStyle = '#87CEEB'; // 座舱
-                ctx.beginPath(); ctx.ellipse(16, 18, 3, 4, 0, 0, 6.28); ctx.fill();
-            } else if (t === 1) { // F-15 Eagle
-                ctx.fillStyle = colors[1];
-                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(24, 0); ctx.lineTo(8, 0); ctx.fill();
-                ctx.fillStyle = '#2a2a2a';
-                ctx.beginPath(); ctx.moveTo(16-4, 22); ctx.lineTo(2, 10); ctx.lineTo(16-4, 18); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(16+4, 22); ctx.lineTo(30, 10); ctx.lineTo(16+4, 18); ctx.fill();
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(14, 28, 4, 4); ctx.fillRect(16, 28, 4, 4); // 发动机
+            if (t === 0) { // F-16 战隼 - 单发轻型
+                // 机身 - 浅灰色
+                ctx.fillStyle = '#8C9298';
+                ctx.beginPath();
+                ctx.moveTo(16*s, 0); // 机头
+                ctx.lineTo(18*s, 12*s);
+                ctx.lineTo(20*s, 32*s);
+                ctx.lineTo(16*s, 30*s);
+                ctx.lineTo(12*s, 32*s);
+                ctx.lineTo(14*s, 12*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 主翼 - 三角翼
+                ctx.fillStyle = '#6B7280';
+                ctx.beginPath();
+                ctx.moveTo(14*s, 14*s);
+                ctx.lineTo(0, 22*s);
+                ctx.lineTo(12*s, 20*s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(18*s, 14*s);
+                ctx.lineTo(32*s, 22*s);
+                ctx.lineTo(20*s, 20*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 尾翼
+                ctx.fillStyle = '#5B6770';
+                ctx.beginPath();
+                ctx.moveTo(14*s, 28*s);
+                ctx.lineTo(8*s, 32*s);
+                ctx.lineTo(16*s, 30*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 座舱 - 透明蓝
                 ctx.fillStyle = '#87CEEB';
-                ctx.beginPath(); ctx.ellipse(16, 14, 3, 5, 0, 0, 6.28); ctx.fill();
-            } else if (t === 2) { // F/A-18 Hornet
-                ctx.fillStyle = colors[2];
-                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(23, 0); ctx.lineTo(9, 0); ctx.fill();
-                ctx.fillStyle = '#2a2a2a';
-                ctx.beginPath(); ctx.moveTo(16-5, 24); ctx.lineTo(0, 12); ctx.lineTo(16-5, 18); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(16+5, 24); ctx.lineTo(32, 12); ctx.lineTo(16+5, 18); ctx.fill();
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(13, 26, 6, 6); // 双发动机
-                ctx.fillStyle = '#87CEEB';
-                ctx.beginPath(); ctx.ellipse(16, 12, 3, 5, 0, 0, 6.28); ctx.fill();
-            } else if (t === 3) { // F-22 Raptor (终极BOSS)
-                ctx.fillStyle = colors[3];
-                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(24, 0); ctx.lineTo(8, 0); ctx.fill();
-                // 菱形翼
-                ctx.fillStyle = '#1a1a1a';
-                ctx.beginPath(); ctx.moveTo(16-2, 20); ctx.lineTo(4, 10); ctx.lineTo(16-2, 16); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(16+2, 20); ctx.lineTo(28, 10); ctx.lineTo(16+2, 16); ctx.fill();
-                // 鸭翼
-                ctx.beginPath(); ctx.moveTo(16-4, 8); ctx.lineTo(8, 4); ctx.lineTo(16-4, 6); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(16+4, 8); ctx.lineTo(24, 4); ctx.lineTo(16+4, 6); ctx.fill();
-                // 发动机
-                ctx.fillStyle = '#FF4500';
-                ctx.fillRect(13, 28, 2, 4); ctx.fillRect(17, 28, 2, 4);
-                ctx.fillStyle = '#C0C0C0'; // 金色座舱
-                ctx.beginPath(); ctx.ellipse(16, 10, 2, 4, 0, 0, 6.28); ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(16*s, 8*s, 2*s, 4*s, 0, 0, 6.28);
+                ctx.fill();
             }
+            else if (t === 1) { // F-15 鹰式 - 双发重型
+                // 机身 - 深灰色
+                ctx.fillStyle = '#4A5568';
+                ctx.beginPath();
+                ctx.moveTo(16*s, 0);
+                ctx.lineTo(20*s, 10*s);
+                ctx.lineTo(22*s, 32*s);
+                ctx.lineTo(16*s, 28*s);
+                ctx.lineTo(10*s, 32*s);
+                ctx.lineTo(12*s, 10*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 大三角翼
+                ctx.fillStyle = '#374151';
+                ctx.beginPath();
+                ctx.moveTo(12*s, 12*s);
+                ctx.lineTo(-2*s, 18*s);
+                ctx.lineTo(10*s, 20*s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(20*s, 12*s);
+                ctx.lineTo(34*s, 18*s);
+                ctx.lineTo(22*s, 20*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 双发动机
+                ctx.fillStyle = '#1F2937';
+                ctx.fillRect(11*s, 28*s, 4*s, 4*s);
+                ctx.fillRect(17*s, 28*s, 4*s, 4*s);
+                
+                // 尾翼
+                ctx.fillStyle = '#2D3748';
+                ctx.beginPath();
+                ctx.moveTo(10*s, 26*s);
+                ctx.lineTo(4*s, 32*s);
+                ctx.lineTo(12*s, 30*s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(22*s, 26*s);
+                ctx.lineTo(28*s, 32*s);
+                ctx.lineTo(20*s, 30*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 座舱
+                ctx.fillStyle = '#60A5FA';
+                ctx.beginPath();
+                ctx.ellipse(16*s, 6*s, 2.5*s, 5*s, 0, 0, 6.28);
+                ctx.fill();
+            }
+            else if (t === 2) { // F/A-18 大黄蜂 - 舰载机
+                // 机身 - 海军灰
+                ctx.fillStyle = '#6B7280';
+                ctx.beginPath();
+                ctx.moveTo(16*s, 0);
+                ctx.lineTo(19*s, 8*s);
+                ctx.lineTo(21*s, 28*s);
+                ctx.lineTo(16*s, 32*s);
+                ctx.lineTo(11*s, 28*s);
+                ctx.lineTo(13*s, 8*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 后掠翼
+                ctx.fillStyle = '#4B5563';
+                ctx.beginPath();
+                ctx.moveTo(13*s, 14*s);
+                ctx.lineTo(0, 24*s);
+                ctx.lineTo(11*s, 22*s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(19*s, 14*s);
+                ctx.lineTo(32*s, 24*s);
+                ctx.lineTo(21*s, 22*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 翼尖折叠（舰载特征）
+                ctx.fillStyle = '#374151';
+                ctx.fillRect(0, 22*s, 3*s, 4*s);
+                ctx.fillRect(29*s, 22*s, 3*s, 4*s);
+                
+                // 双发发动机
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(12*s, 28*s, 5*s, 4*s);
+                ctx.fillRect(15*s, 28*s, 5*s, 4*s);
+                
+                // 座舱
+                ctx.fillStyle = '#38BDF8';
+                ctx.beginPath();
+                ctx.ellipse(16*s, 5*s, 2*s, 4*s, 0, 0, 6.28);
+                ctx.fill();
+            }
+            else if (t === 3) { // F-22 猛禽 - 隐身战机（BOSS）
+                // 机身 - 深色隐身涂装
+                ctx.fillStyle = '#1F2937';
+                ctx.beginPath();
+                ctx.moveTo(16*s, 0);
+                ctx.lineTo(18*s, 6*s);
+                ctx.lineTo(20*s, 28*s);
+                ctx.lineTo(16*s, 32*s);
+                ctx.lineTo(12*s, 28*s);
+                ctx.lineTo(14*s, 6*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 菱形主翼 - 隐身特征
+                ctx.fillStyle = '#111827';
+                ctx.beginPath();
+                ctx.moveTo(16*s, 10*s);
+                ctx.lineTo(2*s, 20*s);
+                ctx.lineTo(12*s, 22*s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(16*s, 10*s);
+                ctx.lineTo(30*s, 20*s);
+                ctx.lineTo(20*s, 22*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 尾翼 - 倾斜双垂尾
+                ctx.fillStyle = '#0a0a0a';
+                ctx.beginPath();
+                ctx.moveTo(10*s, 24*s);
+                ctx.lineTo(4*s, 28*s);
+                ctx.lineTo(12*s, 30*s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(22*s, 24*s);
+                ctx.lineTo(28*s, 28*s);
+                ctx.lineTo(20*s, 30*s);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 发动机喷口 - 红色火焰
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(13*s, 30*s, 2*s, 2*s);
+                ctx.fillRect(17*s, 30*s, 2*s, 2*s);
+                
+                // 座舱 - 镀金玻璃
+                ctx.fillStyle = '#FCD34D';
+                ctx.beginPath();
+                ctx.ellipse(16*s, 4*s, 1.5*s, 3*s, 0, 0, 6.28);
+                ctx.fill();
+            }
+            
             ctx.restore();
         }
 
