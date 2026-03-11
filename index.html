@@ -198,8 +198,9 @@
         document.querySelectorAll('.plane-btn').forEach(b=>b.addEventListener('click',()=>selectPlane(parseInt(b.dataset.plane))));
         document.getElementById('restartBtn').addEventListener('click',restart);
 
-        drawPreviews();updateUI();requestAnimationFrame(function loop(t){if(gameState==='playing'&&t-lastSpawn>800){spawnEnemy();lastSpawn=t;}update();draw();requestAnimationFrame(loop);});
         let lastSpawn=0;
+        function gameLoop(t){if(gameState==='playing'&&t-lastSpawn>800){spawnEnemy();lastSpawn=t;}update();draw();requestAnimationFrame(gameLoop);}
+        drawPreviews();updateUI();requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
