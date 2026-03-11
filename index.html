@@ -612,11 +612,18 @@
         }
 
         function selectSkill(s) {
-            if (s === 'multishot' && bulletCount < 5) bulletCount++;
-            else if (s === 'ricochet') ricochetCount++;
-            else if (s === 'missile' && missileCount < 3) missileCount++;
-            else if (s === 'leech' && leechLevel < 20) leechLevel++;
-            else if (s === 'heal') currentHp = Math.min(maxHp, currentHp + 3000);
+            if (s === 'multishot' && bulletCount < 5) {
+                bulletCount++;
+            } else if (s === 'ricochet') {
+                ricochetCount++;
+            } else if (s === 'missile' && missileCount < 3) {
+                missileCount++;
+            } else if (s === 'leech' && leechLevel < 20) {
+                leechLevel++;
+            } else if (s === 'heal') {
+                currentHp = Math.min(maxHp, currentHp + 3000);
+            }
+            // 关闭技能面板
             document.getElementById('skillPanel').style.display = 'none';
             gameState = 'playing';
             updateUI();
