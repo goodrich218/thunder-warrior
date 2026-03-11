@@ -104,23 +104,64 @@
             ctx.restore();
         }
 
-        // 绘制敌机
+        // 绘制敌机 - 美国战斗机
         function drawEnemy(ctx, x, y, w, h, t) {
             ctx.save(); ctx.translate(x, y); const scale = w/32; ctx.scale(scale, scale);
-            const colors = ['#4A5568', '#374151', '#4B5563', '#6B7280'];
-            ctx.fillStyle = colors[t];
-            ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(20, 0); ctx.lineTo(12, 0); ctx.fill();
-            ctx.fillStyle = '#1a1a1a';
-            ctx.beginPath(); ctx.ellipse(16, 20, 2, 3, 0, 0, 6.28); ctx.fill();
+            const colors = ['#5B6770', '#4A5568', '#374151', '#6B7280']; // 灰色系
+            
+            if (t === 0) { // F-16 Fighting Falcon
+                ctx.fillStyle = colors[0];
+                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(22, 0); ctx.lineTo(10, 0); ctx.fill();
+                ctx.fillStyle = '#3a3a3a';
+                ctx.beginPath(); ctx.moveTo(16-3, 25); ctx.lineTo(0, 15); ctx.lineTo(16-3, 20); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(16+3, 25); ctx.lineTo(32, 15); ctx.lineTo(16+3, 20); ctx.fill();
+                ctx.fillStyle = '#87CEEB'; // 座舱
+                ctx.beginPath(); ctx.ellipse(16, 18, 3, 4, 0, 0, 6.28); ctx.fill();
+            } else if (t === 1) { // F-15 Eagle
+                ctx.fillStyle = colors[1];
+                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(24, 0); ctx.lineTo(8, 0); ctx.fill();
+                ctx.fillStyle = '#2a2a2a';
+                ctx.beginPath(); ctx.moveTo(16-4, 22); ctx.lineTo(2, 10); ctx.lineTo(16-4, 18); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(16+4, 22); ctx.lineTo(30, 10); ctx.lineTo(16+4, 18); ctx.fill();
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(14, 28, 4, 4); ctx.fillRect(16, 28, 4, 4); // 发动机
+                ctx.fillStyle = '#87CEEB';
+                ctx.beginPath(); ctx.ellipse(16, 14, 3, 5, 0, 0, 6.28); ctx.fill();
+            } else if (t === 2) { // F/A-18 Hornet
+                ctx.fillStyle = colors[2];
+                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(23, 0); ctx.lineTo(9, 0); ctx.fill();
+                ctx.fillStyle = '#2a2a2a';
+                ctx.beginPath(); ctx.moveTo(16-5, 24); ctx.lineTo(0, 12); ctx.lineTo(16-5, 18); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(16+5, 24); ctx.lineTo(32, 12); ctx.lineTo(16+5, 18); ctx.fill();
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(13, 26, 6, 6); // 双发动机
+                ctx.fillStyle = '#87CEEB';
+                ctx.beginPath(); ctx.ellipse(16, 12, 3, 5, 0, 0, 6.28); ctx.fill();
+            } else if (t === 3) { // F-22 Raptor (终极BOSS)
+                ctx.fillStyle = colors[3];
+                ctx.beginPath(); ctx.moveTo(16, 32); ctx.lineTo(24, 0); ctx.lineTo(8, 0); ctx.fill();
+                // 菱形翼
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath(); ctx.moveTo(16-2, 20); ctx.lineTo(4, 10); ctx.lineTo(16-2, 16); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(16+2, 20); ctx.lineTo(28, 10); ctx.lineTo(16+2, 16); ctx.fill();
+                // 鸭翼
+                ctx.beginPath(); ctx.moveTo(16-4, 8); ctx.lineTo(8, 4); ctx.lineTo(16-4, 6); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(16+4, 8); ctx.lineTo(24, 4); ctx.lineTo(16+4, 6); ctx.fill();
+                // 发动机
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(13, 28, 2, 4); ctx.fillRect(17, 28, 2, 4);
+                ctx.fillStyle = '#C0C0C0'; // 金色座舱
+                ctx.beginPath(); ctx.ellipse(16, 10, 2, 4, 0, 0, 6.28); ctx.fill();
+            }
             ctx.restore();
         }
 
         function spawnEnemy() {
             const types = [
-                {t: 0, w: 28, h: 28, hp: 1, s: 3, sc: 100},
-                {t: 1, w: 36, h: 36, hp: 2, s: 2.5, sc: 200},
-                {t: 2, w: 48, h: 48, hp: 5, s: 1.5, sc: 500},
-                {t: 3, w: 60, h: 60, hp: 15, s: 0.8, sc: 2000}
+                {t: 0, w: 32, h: 32, hp: 1, s: 3, sc: 100, name: 'F-16'},
+                {t: 1, w: 40, h: 40, hp: 2, s: 2.5, sc: 200, name: 'F-15'},
+                {t: 2, w: 48, h: 48, hp: 5, s: 1.5, sc: 500, name: 'F/A-18'},
+                {t: 3, w: 56, h: 56, hp: 15, s: 0.8, sc: 2000, name: 'F-22'}
             ];
             let weights = [60, 30, 8, 2];
             if (score > 2000) weights = [40, 35, 20, 5];
@@ -291,9 +332,9 @@
                 // 血条
                 if (e.currentHp < e.hp) {
                     ctx.fillStyle = '#333';
-                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 8, e.w, 3);
+                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 10, e.w, 4);
                     ctx.fillStyle = '#f00';
-                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 8, e.w * (e.currentHp/e.hp), 3);
+                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 10, e.w * (e.currentHp/e.hp), 4);
                 }
             });
 
