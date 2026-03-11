@@ -87,9 +87,9 @@
         </div>
         <div id="skillPanel">
             <h2>🎉 升级成功！选择技能</h2>
-            <div class="skill-option" onclick="selectSkill('multishot')">
+            <div class="skill-option" onclick="selectSkill('multishot')" id="multishotOption">
                 <div class="skill-name">🔫 多重子弹</div>
-                <div class="skill-desc">子弹数 +1 (当前: <span id="bulletCountVal">1</span>)</div>
+                <div class="skill-desc">子弹数 +1 (当前: <span id="bulletCountVal">1</span>/5)</div>
             </div>
             <div class="skill-option" onclick="selectSkill('ricochet')">
                 <div class="skill-name">↩️ 弹射导弹</div>
@@ -558,7 +558,7 @@
             const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
             for (let i = 0; i < bulletCount; i++) {
                 const a = (startAngle + i * spread) * Math.PI / 180;
-                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 6, vy: -Math.cos(a) * 6, ricochet: ricochetCount, bounces: 0, isMissile: false});
+                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false});
             }
         }
 
@@ -583,6 +583,12 @@
                 enemies.forEach(e => { if (e.bullets) e.bullets = []; });
                 document.getElementById('skillPanel').style.display = 'block';
                 document.getElementById('bulletCountVal').textContent = bulletCount;
+                // 多重子弹满5时隐藏选项
+                if (bulletCount >= 5) {
+                    document.getElementById('multishotOption').style.display = 'none';
+                } else {
+                    document.getElementById('multishotOption').style.display = 'block';
+                }
                 document.getElementById('ricochetVal').textContent = ricochetCount;
                 document.getElementById('missileVal').textContent = missileCount;
                 // 跟踪弹满3时隐藏选项
@@ -604,7 +610,7 @@
         }
 
         function selectSkill(s) {
-            if (s === 'multishot') bulletCount++;
+            if (s === 'multishot' && bulletCount < 5) bulletCount++;
             else if (s === 'ricochet') ricochetCount++;
             else if (s === 'missile' && missileCount < 3) missileCount++;
             else if (s === 'leech' && leechLevel < 20) leechLevel++;
