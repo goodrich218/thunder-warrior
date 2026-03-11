@@ -114,7 +114,7 @@
         const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
         let mouseX = WIDTH/2, mouseY = HEIGHT - 100;
-        const UPGRADE_THRESHOLD = 1000;
+        const UPGRADE_THRESHOLD = 3000; // 升级所需基础分数，每次升级递增
 
         // 绘制中国战机
         function drawPlane(ctx, x, y, w, h, type) {
