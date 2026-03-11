@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雷电战机 - Thunder Warrior</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        #gameCanvas {
+            border: 2px solid #0ff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            color: #fff;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        #healthBar {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #0ff;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        #healthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #f00, #ff0);
+            transition: width 0.2s;
+        }
+        #stats {
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #upgradePanel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 20px;
+            color: #fff;
+            display: none;
+            z-index: 100;
+        }
+        #upgradePanel h2 {
+            color: #0f0;
+            margin-bottom: 15px;
+        }
+        .upgrade-btn {
+            background: linear-gradient(180deg, #1a1a1a, #333);
+            border: 2px solid #0f0;
+            color: #0f0;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .upgrade-btn:hover {
+            background: linear-gradient(180deg, #333, #1a1a1a);
+            box-shadow: 0 0 10px #0f0;
+        }
+        .upgrade-btn:disabled {
+            border-color: #666;
+            color: #666;
+            cursor: not-allowed;
+        }
+        #selectPanel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #f00;
+            border-radius: 10px;
+            padding: 30px;
+            color: #fff;
+            z-index: 100;
+        }
+        #selectPanel h2 {
+            color: #f00;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .plane-select {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .plane-btn {
+            background: linear-gradient(180deg, #1a1a1a, #333);
+            border: 2px solid #f00;
+            color: #fff;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .plane-btn:hover {
+            border-color: #ff0;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+        .plane-btn canvas {
+            display: block;
+            margin: 0 auto 10px;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #f00;
+            border-radius: 10px;
+            padding: 30px;
+            color: #fff;
+            text-align: center;
+            display: none;
+            z-index: 100;
+        }
+        #gameOver h2 {
+            color: #f00;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        #restartBtn {
+            background: linear-gradient(180deg, #600, #900);
+            border: 2px solid #f00;
+            color: #fff;
+            padding: 10px 30px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        #restartBtn:hover {
+            box-shadow: 0 0 15px #f00;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="600" height="800"></canvas>
+        
+        <div id="ui">
+            <div id="healthBar">
+                <div id="healthFill"></div>
+            </div>
+            <div id="stats">
+                <span id="healthText">HP: 10000 / 10000</span>
+                <span id="score">积分: 0</span>
+                <span id="level">等级: 1</span>
+            </div>
+        </div>
+
+        <div id="selectPanel">
+            <h2>选择你的战机</h2>
+            <div class="plane-select">
+                <div class="plane-btn" data-plane="0">
+                    <canvas id="preview0" width="64" height="80"></canvas>
+                    <div>歼-10 猛龙</div>
+                </div>
+                <div class="plane-btn" data-plane="1">
+                    <canvas id="preview1" width="64" height="80"></canvas>
+                    <div>歼-16 潜龙</div>
+                </div>
+                <div class="plane-btn" data-plane="2">
+                    <canvas id="preview2" width="64" height="80"></canvas>
+                    <div>歼-20 威龙</div>
+                </div>
+                <div class="plane-btn" data-plane="3">
+                    <canvas id="preview3" width="64" height="80"></canvas>
+                    <div>歼-35 鹘鹰</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="upgradePanel">
+            <h2>升级系统 [U键关闭]</h2>
+            <p>当前等级: <span id="currentLevel">1</span></p>
+            <p>血量上限: <span id="maxHp">10000</span></p>
+            <hr style="margin: 10px 0; border-color: #0f0;">
+            <p>升级费用: <span id="upgradeCost">1000</span> 积分</p>
+            <p>升级效果: 血量上限 +2000，血量回满</p>
+            <button class="upgrade-btn" id="upgradeBtn">升级</button>
+        </div>
+
+        <div id="gameOver">
+            <h2>游戏结束</h2>
+            <p>最终积分: <span id="finalScore">0</span></p>
+            <p>最终等级: <span id="finalLevel">1</span></p>
+            <button id="restartBtn">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
+
+        // 游戏状态
+        let gameState = 'select'; // select, playing, paused, gameover
+        let score = 0;
+        let level = 1;
+        let maxHp = 10000;
+        let currentHp = 10000;
+        let selectedPlane = 0;
+
+        // 玩家飞机
+        const player = {
+            x: WIDTH / 2,
+            y: HEIGHT - 100,
+            width: 32,
+            height: 40,
+            speed: 5,
+            bullets: []
+        };
+
+        // 敌机数组
+        let enemies = [];
+        let particles = [];
+
+        // 按键状态
+        const keys = {};
+
+        // 绘制中国战机
+        function drawChinesePlane(ctx, x, y, w, h, type) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const scale = w / 32;
+            ctx.scale(scale, scale);
+            
+            // 基础尺寸 32x40
+            const baseW = 32;
+            const baseH = 40;
+
+            switch(type) {
+                case 0: // 歼-10 猛龙 - 单发，三角翼
+                    // 机身
+                    ctx.fillStyle = '#8B0000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, 0);
+                    ctx.lineTo(baseW/2 + 6, baseH - 5);
+                    ctx.lineTo(baseW/2 - 6, baseH - 5);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 主翼
+                    ctx.fillStyle = '#B22222';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 3, baseH * 0.4);
+                    ctx.lineTo(0, baseH * 0.7);
+                    ctx.lineTo(baseW/2 - 3, baseH * 0.6);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 3, baseH * 0.4);
+                    ctx.lineTo(baseW, baseH * 0.7);
+                    ctx.lineTo(baseW/2 + 3, baseH * 0.6);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 尾翼
+                    ctx.fillStyle = '#CD5C5C';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 2, baseH - 8);
+                    ctx.lineTo(baseW/2 - 6, baseH);
+                    ctx.lineTo(baseW/2, baseH - 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 2, baseH - 8);
+                    ctx.lineTo(baseW/2 + 6, baseH);
+                    ctx.lineTo(baseW/2, baseH - 5);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 座舱
+                    ctx.fillStyle = '#00CED1';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.3, 3, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 1: // 歼-16 潜龙 - 双发，侧卫风格
+                    // 机身
+                    ctx.fillStyle = '#800000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, 0);
+                    ctx.lineTo(baseW/2 + 5, baseH);
+                    ctx.lineTo(baseW/2 - 5, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 主翼
+                    ctx.fillStyle = '#A52A2A';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 4, baseH * 0.35);
+                    ctx.lineTo(0, baseH * 0.6);
+                    ctx.lineTo(baseW/2 - 4, baseH * 0.55);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 4, baseH * 0.35);
+                    ctx.lineTo(baseW, baseH * 0.6);
+                    ctx.lineTo(baseW/2 + 4, baseH * 0.55);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 发动机
+                    ctx.fillStyle = '#4A0000';
+                    ctx.fillRect(baseW/2 - 4, baseH - 6, 3, 6);
+                    ctx.fillRect(baseW/2 + 1, baseH - 6, 3, 6);
+
+                    // 尾翼
+                    ctx.fillStyle = '#B22222';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 5, baseH - 5);
+                    ctx.lineTo(baseW/2 - 8, baseH);
+                    ctx.lineTo(baseW/2 - 3, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 5, baseH - 5);
+                    ctx.lineTo(baseW/2 + 8, baseH);
+                    ctx.lineTo(baseW/2 + 3, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 座舱
+                    ctx.fillStyle = '#20B2AA';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.25, 3, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 2: // 歼-20 威龙 - 隐身，菱形翼
+                    // 机身
+                    ctx.fillStyle = '#2F0000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, 0);
+                    ctx.lineTo(baseW/2 + 4, baseH);
+                    ctx.lineTo(baseW/2 - 4, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 隐身主翼
+                    ctx.fillStyle = '#4A0000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 3, baseH * 0.3);
+                    ctx.lineTo(2, baseH * 0.5);
+                    ctx.lineTo(baseW/2 - 3, baseH * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 3, baseH * 0.3);
+                    ctx.lineTo(baseW - 2, baseH * 0.5);
+                    ctx.lineTo(baseW/2 + 3, baseH * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 鸭翼
+                    ctx.fillStyle = '#600000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 2, baseH * 0.15);
+                    ctx.lineTo(baseW/2 - 7, baseH * 0.2);
+                    ctx.lineTo(baseW/2 - 2, baseH * 0.22);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 2, baseH * 0.15);
+                    ctx.lineTo(baseW/2 + 7, baseH * 0.2);
+                    ctx.lineTo(baseW/2 + 2, baseH * 0.22);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 发动机喷口
+                    ctx.fillStyle = '#FF4500';
+                    ctx.fillRect(baseW/2 - 3, baseH - 4, 2, 4);
+                    ctx.fillRect(baseW/2 + 1, baseH - 4, 2, 4);
+
+                    // 座舱 (金色涂装)
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.2, 2, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 3: // 歼-35 鹘鹰 - 舰载隐身
+                    // 机身
+                    ctx.fillStyle = '#1A0000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, 0);
+                    ctx.lineTo(baseW/2 + 4, baseH);
+                    ctx.lineTo(baseW/2 - 4, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 主翼
+                    ctx.fillStyle = '#330000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 3, baseH * 0.35);
+                    ctx.lineTo(0, baseH * 0.55);
+                    ctx.lineTo(baseW/2 - 3, baseH * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 3, baseH * 0.35);
+                    ctx.lineTo(baseW, baseH * 0.55);
+                    ctx.lineTo(baseW/2 + 3, baseH * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 尾翼
+                    ctx.fillStyle = '#440000';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 4, baseH - 6);
+                    ctx.lineTo(baseW/2 - 7, baseH);
+                    ctx.lineTo(baseW/2 - 2, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 4, baseH - 6);
+                    ctx.lineTo(baseW/2 + 7, baseH);
+                    ctx.lineTo(baseW/2 + 2, baseH);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // 发动机
+                    ctx.fillStyle = '#FF6347';
+                    ctx.fillRect(baseW/2 - 3, baseH - 4, 2, 4);
+                    ctx.fillRect(baseW/2 + 1, baseH - 4, 2, 4);
+
+                    // 座舱
+                    ctx.fillStyle = '#4169E1';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.22, 2, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        // 绘制敌机
+        function drawEnemyPlane(ctx, x, y, w, h, type) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const scale = w / 32;
+            ctx.scale(scale, scale);
+
+            const baseW = 32;
+            const baseH = 32;
+
+            switch(type) {
+                case 0: // F-16 风格 (scout)
+                    ctx.fillStyle = '#4A5568';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, baseH);
+                    ctx.lineTo(baseW/2 + 4, 0);
+                    ctx.lineTo(baseW/2 - 4, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#2D3748';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 3, baseH * 0.4);
+                    ctx.lineTo(2, baseH * 0.2);
+                    ctx.lineTo(baseW/2 - 3, baseH * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 3, baseH * 0.4);
+                    ctx.lineTo(baseW - 2, baseH * 0.2);
+                    ctx.lineTo(baseW/2 + 3, baseH * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#1A202C';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.6, 2, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 1: // F-15 风格 (fighter)
+                    ctx.fillStyle = '#374151';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, baseH);
+                    ctx.lineTo(baseW/2 + 5, 0);
+                    ctx.lineTo(baseW/2 - 5, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#1F2937';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 4, baseH * 0.35);
+                    ctx.lineTo(0, baseH * 0.15);
+                    ctx.lineTo(baseW/2 - 4, baseH * 0.25);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 4, baseH * 0.35);
+                    ctx.lineTo(baseW, baseH * 0.15);
+                    ctx.lineTo(baseW/2 + 4, baseH * 0.25);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#111827';
+                    ctx.fillRect(baseW/2 - 3, baseH - 5, 2, 5);
+                    ctx.fillRect(baseW/2 + 1, baseH - 5, 2, 5);
+
+                    ctx.fillStyle = '#064E3B';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.55, 2, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 2: // Su-27 风格 (bomber)
+                    ctx.fillStyle = '#4B5563';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, baseH);
+                    ctx.lineTo(baseW/2 + 6, 0);
+                    ctx.lineTo(baseW/2 - 6, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#374151';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 5, baseH * 0.4);
+                    ctx.lineTo(0, baseH * 0.2);
+                    ctx.lineTo(baseW/2 - 5, baseH * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 5, baseH * 0.4);
+                    ctx.lineTo(baseW, baseH * 0.2);
+                    ctx.lineTo(baseW/2 + 5, baseH * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#1F2937';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 6, baseH * 0.7);
+                    ctx.lineTo(baseW/2 - 10, baseH);
+                    ctx.lineTo(baseW/2 - 3, baseH * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 6, baseH * 0.7);
+                    ctx.lineTo(baseW/2 + 10, baseH);
+                    ctx.lineTo(baseW/2 + 3, baseH * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#065F46';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.5, 2, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 3: // MiG-29 风格 (mothership)
+                    ctx.fillStyle = '#6B7280';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2, baseH);
+                    ctx.lineTo(baseW/2 + 7, 0);
+                    ctx.lineTo(baseW/2 - 7, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#4B5563';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 6, baseH * 0.45);
+                    ctx.lineTo(0, baseH * 0.25);
+                    ctx.lineTo(baseW/2 - 6, baseH * 0.35);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 6, baseH * 0.45);
+                    ctx.lineTo(baseW, baseH * 0.25);
+                    ctx.lineTo(baseW/2 + 6, baseH * 0.35);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#374151';
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 - 7, baseH * 0.75);
+                    ctx.lineTo(baseW/2 - 12, baseH);
+                    ctx.lineTo(baseW/2 - 4, baseH * 0.85);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(baseW/2 + 7, baseH * 0.75);
+                    ctx.lineTo(baseW/2 + 12, baseH);
+                    ctx.lineTo(baseW/2 + 4, baseH * 0.85);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#1E3A8A';
+                    ctx.beginPath();
+                    ctx.ellipse(baseW/2, baseH * 0.45, 3, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        // 生成敌机
+        function spawnEnemy() {
+            const types = [
+                { type: 0, w: 28, h: 28, hp: 1, speed: 3, score: 100, name: 'scout' },
+                { type: 1, w: 36, h: 36, hp: 2, speed: 2.5, score: 200, name: 'fighter' },
+                { type: 2, w: 48, h: 48, hp: 5, score: 500, speed: 1.5, name: 'bomber' },
+                { type: 3, w: 60, h: 60, hp: 15, speed: 0.8, score: 2000, name: 'mothership' }
+            ];
+
+            // 根据分数调整敌机类型概率
+            let weights = [60, 30, 8, 2];
+            if (score > 2000) weights = [40, 35, 20, 5];
+            if (score > 5000) weights = [30, 35, 25, 10];
+            if (score > 10000) weights = [20, 30, 35, 15];
+
+            const totalWeight = weights.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            let selectedIndex = 0;
+
+            for (let i = 0; i < weights.length; i++) {
+                random -= weights[i];
+                if (random <= 0) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+
+            const template = types[selectedIndex];
+            enemies.push({
+                x: Math.random() * (WIDTH - template.w) + template.w / 2,
+                y: -template.h,
+                ...template,
+                currentHp: template.hp,
+                lastShot: 0
+            });
+        }
+
+        // 创建粒子效果
+        function createExplosion(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 30,
+                    color: color,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        // 更新粒子
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.size *= 0.95;
+                return p.life > 0;
+            });
+        }
+
+        // 绘制粒子
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 30;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // 玩家射击
+        function playerShoot() {
+            player.bullets.push({
+                x: player.x,
+                y: player.y - player.height / 2,
+                speed: 10,
+                damage: 1
+            });
+        }
+
+        // 敌机射击
+        function enemyShoot(enemy) {
+            const now = Date.now();
+            if (now - enemy.lastShot > 1500 && enemy.y > 50) {
+                enemy.lastShot = now;
+                if (!enemy.bullets) enemy.bullets = [];
+                enemy.bullets.push({
+                    x: enemy.x,
+                    y: enemy.y + enemy.h / 2,
+                    speed: 4
+                });
+            }
+        }
+
+        // 更新游戏
+        function update() {
+            if (gameState !== 'playing') return;
+
+            // 玩家移动
+            if (keys['ArrowLeft'] || keys['KeyA']) {
+                player.x = Math.max(player.width / 2, player.x - player.speed);
+            }
+            if (keys['ArrowRight'] || keys['KeyD']) {
+                player.x = Math.min(WIDTH - player.width / 2, player.x + player.speed);
+            }
+            if (keys['ArrowUp'] || keys['KeyW']) {
+                player.y = Math.max(player.height / 2 + 50, player.y - player.speed);
+            }
+            if (keys['ArrowDown'] || keys['KeyS']) {
+                player.y = Math.min(HEIGHT - player.height / 2, player.y + player.speed);
+            }
+
+            // 自动射击
+            if (keys['Space'] && !player.lastShot) {
+                playerShoot();
+                player.lastShot = true;
+                setTimeout(() => player.lastShot = false, 150);
+            }
+
+            // 更新玩家子弹
+            player.bullets = player.bullets.filter(b => {
+                b.y -= b.speed;
+                return b.y > 0;
+            });
+
+            // 更新敌机
+            enemies.forEach(enemy => {
+                enemy.y += enemy.speed;
+                
+                // 敌机射击
+                if (enemy.type >= 1) {
+                    enemyShoot(enemy);
+                }
+
+                // 更新敌机子弹
+                if (enemy.bullets) {
+                    enemy.bullets = enemy.bullets.filter(b => {
+                        b.y += b.speed;
+                        return b.y < HEIGHT;
+                    });
+                }
+            });
+
+            // 移除出界敌机
+            enemies = enemies.filter(e => e.y < HEIGHT + e.h);
+
+            // 碰撞检测 - 玩家子弹 vs 敌机
+            player.bullets = player.bullets.filter(bullet => {
+                let hit = false;
+                enemies = enemies.filter(enemy => {
+                    const dx = bullet.x - enemy.x;
+                    const dy = bullet.y - enemy.y;
+                    if (Math.abs(dx) < enemy.w / 2 && Math.abs(dy) < enemy.h / 2) {
+                        enemy.currentHp--;
+                        hit = true;
+                        if (enemy.currentHp <= 0) {
+                            score += enemy.score;
+                            createExplosion(enemy.x, enemy.y, '#FF6B6B', 20);
+                            updateUI();
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+                return !hit;
+            });
+
+            // 碰撞检测 - 敌机子弹 vs 玩家
+            enemies.forEach(enemy => {
+                if (enemy.bullets) {
+                    enemy.bullets = enemy.bullets.filter(bullet => {
+                        const dx = bullet.x - player.x;
+                        const dy = bullet.y - player.y;
+                        if (Math.abs(dx) < player.width / 2 && Math.abs(dy) < player.height / 2) {
+                            currentHp -= 100;
+                            createExplosion(player.x, player.y, '#FFD700', 5);
+                            updateUI();
+                            if (currentHp <= 0) {
+                                gameOver();
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+            });
+
+            // 碰撞检测 - 敌机 vs 玩家
+            enemies.forEach(enemy => {
+                const dx = enemy.x - player.x;
+                const dy = enemy.y - player.y;
+                if (Math.abs(dx) < (enemy.w + player.width) / 2 && 
+                    Math.abs(dy) < (enemy.h + player.height) / 2) {
+                    currentHp -= 500;
+                    enemy.currentHp = 0;
+                    createExplosion(enemy.x, enemy.y, '#FF4444', 15);
+                    updateUI();
+                    if (currentHp <= 0) {
+                        gameOver();
+                    }
+                }
+            });
+
+            enemies = enemies.filter(e => e.currentHp > 0);
+
+            updateParticles();
+        }
+
+        // 绘制游戏
+        function draw() {
+            // 清空画布
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            // 绘制星空背景
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 127 + Date.now() / 50) % WIDTH;
+                const y = (i * 97 + Date.now() / 100) % HEIGHT;
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            if (gameState !== 'playing') return;
+
+            // 绘制玩家
+            drawChinesePlane(ctx, player.x - player.width / 2, player.y - player.height / 2, 
+                           player.width, player.height, selectedPlane);
+
+            // 绘制玩家子弹
+            ctx.fillStyle = '#0ff';
+            player.bullets.forEach(b => {
+                ctx.fillRect(b.x - 2, b.y - 8, 4, 16);
+            });
+
+            // 绘制敌机
+            enemies.forEach(enemy => {
+                drawEnemyPlane(ctx, enemy.x - enemy.w / 2, enemy.y - enemy.h / 2,
+                             enemy.w, enemy.h, enemy.type);
+
+                // 绘制敌机子弹
+                if (enemy.bullets) {
+                    ctx.fillStyle = '#f44';
+                    enemy.bullets.forEach(b => {
+                        ctx.fillRect(b.x - 2, b.y - 4, 4, 8);
+                    });
+                }
+
+                // 绘制血条
+                if (enemy.currentHp < enemy.hp) {
+                    const barWidth = enemy.w;
+                    const barHeight = 3;
+                    const barX = enemy.x - barWidth / 2;
+                    const barY = enemy.y - enemy.h / 2 - 8;
+
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
+                    ctx.fillStyle = '#f00';
+                    ctx.fillRect(barX, barY, barWidth * (enemy.currentHp / enemy.hp), barHeight);
+                }
+            });
+
+            // 绘制粒子
+            drawParticles();
+        }
+
+        // 更新UI
+        function updateUI() {
+            const healthPercent = Math.max(0, currentHp / maxHp * 100);
+            document.getElementById('healthFill').style.width = healthPercent + '%';
+            document.getElementById('healthText').textContent = `HP: ${Math.max(0, currentHp)} / ${maxHp}`;
+            document.getElementById('score').textContent = `积分: ${score}`;
+            document.getElementById('level').textContent = `等级: ${level}`;
+        }
+
+        // 升级系统
+        function showUpgradePanel() {
+            gameState = 'paused';
+            const panel = document.getElementById('upgradePanel');
+            panel.style.display = 'block';
+            document.getElementById('currentLevel').textContent = level;
+            document.getElementById('maxHp').textContent = maxHp;
+            const cost = 1000 * level;
+            document.getElementById('upgradeCost').textContent = cost;
+            document.getElementById('upgradeBtn').disabled = score < cost;
+        }
+
+        function hideUpgradePanel() {
+            gameState = 'playing';
+            document.getElementById('upgradePanel').style.display = 'none';
+        }
+
+        function doUpgrade() {
+            const cost = 1000 * level;
+            if (score >= cost) {
+                score -= cost;
+                level++;
+                maxHp += 2000;
+                currentHp = maxHp;
+                updateUI();
+                showUpgradePanel();
+            }
+        }
+
+        // 游戏结束
+        function gameOver() {
+            gameState = 'gameover';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalLevel').textContent = level;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        // 重新开始
+        function restart() {
+            score = 0;
+            level = 1;
+            maxHp = 10000;
+            currentHp = 10000;
+            enemies = [];
+            particles = [];
+            player.bullets = [];
+            player.x = WIDTH / 2;
+            player.y = HEIGHT - 100;
+            gameState = 'select';
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('selectPanel').style.display = 'block';
+            updateUI();
+        }
+
+        // 选择飞机
+        function selectPlane(index) {
+            selectedPlane = index;
+            document.getElementById('selectPanel').style.display = 'none';
+            gameState = 'playing';
+        }
+
+        // 绘制预览
+        function drawPreviews() {
+            for (let i = 0; i < 4; i++) {
+                const previewCanvas = document.getElementById('preview' + i);
+                const previewCtx = previewCanvas.getContext('2d');
+                previewCtx.clearRect(0, 0, 64, 80);
+                drawChinesePlane(previewCtx, 16, 20, 32, 40, i);
+            }
+        }
+
+        // 游戏循环
+        let lastSpawn = 0;
+        function gameLoop(timestamp) {
+            // 生成敌机
+            if (gameState === 'playing' && timestamp - lastSpawn > 800) {
+                spawnEnemy();
+                lastSpawn = timestamp;
+            }
+
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 事件监听
+        document.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if (e.code === 'KeyU' && gameState === 'playing') {
+                showUpgradePanel();
+            } else if (e.code === 'KeyU' && gameState === 'paused') {
+                hideUpgradePanel();
+            } else if (e.code === 'Escape' && gameState === 'paused') {
+                hideUpgradePanel();
+            }
+        });
+
+        document.addEventListener('keyup', e => {
+            keys[e.code] = false;
+        });
+
+        // 飞机选择按钮
+        document.querySelectorAll('.plane-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectPlane(parseInt(btn.dataset.plane));
+            });
+        });
+
+        // 升级按钮
+        document.getElementById('upgradeBtn').addEventListener('click', doUpgrade);
+
+        // 重新开始按钮
+        document.getElementById('restartBtn').addEventListener('click', restart);
+
+        // 初始化
+        drawPreviews();
+        updateUI();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
