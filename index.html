@@ -414,6 +414,54 @@
                 ctx.ellipse(20, 8, 3, 5, 0, 0, Math.PI * 2);
                 ctx.fill();
             }
+            else if (t === 6) { // B-2 Spirit (幽灵) - 终极BOSS轰炸机
+                // 飞翼设计，无尾翼
+                ctx.fillStyle = '#1F2937'; // 深黑
+                // 整体飞翼形状
+                ctx.beginPath();
+                ctx.moveTo(20, 5);
+                ctx.quadraticCurveTo(40, 15, 38, 25);
+                ctx.quadraticCurveTo(35, 35, 30, 38);
+                ctx.lineTo(10, 38);
+                ctx.quadraticCurveTo(5, 35, 2, 25);
+                ctx.quadraticCurveTo(0, 15, 20, 5);
+                ctx.fill();
+                
+                // 锯齿状后缘
+                ctx.fillStyle = '#0F172A';
+                ctx.beginPath();
+                ctx.moveTo(5, 30);
+                ctx.lineTo(12, 35);
+                ctx.lineTo(20, 30);
+                ctx.lineTo(28, 35);
+                ctx.lineTo(35, 30);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 座舱
+                ctx.fillStyle = '#374151';
+                ctx.beginPath();
+                ctx.ellipse(20, 15, 4, 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 发动机进气口
+                ctx.fillStyle = '#0F172A';
+                ctx.beginPath();
+                ctx.ellipse(12, 22, 3, 2, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(28, 22, 3, 2, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 发动机喷口光
+                ctx.fillStyle = '#DC2626';
+                ctx.beginPath();
+                ctx.ellipse(10, 28, 2, 1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(30, 28, 2, 1, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
             
             ctx.restore();
         }
@@ -425,12 +473,13 @@
                 {t: 2, w: 48, h: 48, hp: 5, s: 1.5, sc: 500, name: 'F/A-18'},
                 {t: 3, w: 56, h: 56, hp: 15, s: 0.8, sc: 2000, name: 'F-22'},
                 {t: 4, w: 52, h: 52, hp: 20, s: 0.7, sc: 3000, name: 'F-35'},
-                {t: 5, w: 58, h: 58, hp: 25, s: 0.6, sc: 3500, name: 'F/A-18E'}
+                {t: 5, w: 58, h: 58, hp: 25, s: 0.6, sc: 3500, name: 'F/A-18E'},
+                {t: 7, w: 80, h: 50, hp: 100, s: 0.4, sc: 10000, name: 'B-2'}
             ];
-            let weights = [40, 25, 15, 10, 5, 5];
-            if (score > 2000) weights = [30, 25, 20, 15, 5, 5];
-            if (score > 5000) weights = [20, 20, 20, 20, 10, 10];
-            if (score > 10000) weights = [15, 15, 20, 20, 15, 15];
+            let weights = [40, 25, 15, 10, 5, 3, 2];
+            if (score > 2000) weights = [30, 25, 20, 12, 6, 4, 3];
+            if (score > 5000) weights = [20, 20, 18, 15, 10, 10, 7];
+            if (score > 10000) weights = [15, 15, 15, 15, 15, 15, 10];
             const total = weights.reduce((a,b)=>a+b,0);
             let r = Math.random() * total, i = 0;
             for (; i < weights.length && (r -= weights[i]) > 0; i++);
