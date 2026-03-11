@@ -340,7 +340,24 @@
             }
         }
 
-        // 鼠标控制
+        // 触摸控制 - 手机大拇指拖动
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            const r = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            mouseX = touch.clientX - r.left;
+            mouseY = touch.clientY - r.top;
+        }, {passive: false});
+        
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const r = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            mouseX = touch.clientX - r.left;
+            mouseY = touch.clientY - r.top;
+        }, {passive: false});
+        
+        // 鼠标控制（电脑）
         canvas.addEventListener('mousemove', e => {
             const r = canvas.getBoundingClientRect();
             mouseX = e.clientX - r.left;
