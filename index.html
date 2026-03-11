@@ -129,15 +129,15 @@
         }
 
         // 绘制敌机
-        function drawEnemyPlane(ctx, x, y, w, h, type) {
+        function drawEnemyPlane(ctx, x, y, w, h, t) {
             ctx.save(); ctx.translate(x, y); const scale = w/32; ctx.scale(scale, scale);
             const bw=32, bh=32;
             const colors=[['#4A5568','#2D3748','#1A202C'],['#374151','#1F2937','#111827'],['#4B5563','#374151','#1F2937'],['#6B7280','#4B5563','#374151']];
-            ctx.fillStyle=colors[type][0];ctx.beginPath();ctx.moveTo(bw/2,bh);ctx.lineTo(bw/2+(type==3?7:type==2?6:type==1?5:4),0);ctx.lineTo(bw/2-(type==3?7:type==2?6:type==1?5:4),0);ctx.fill();
-            ctx.fillStyle=colors[type][1];ctx.beginPath();ctx.moveTo(bw/2-(type==3?6:type==2?5:type==1?4:3),bh*(type==3?0.45:type==2?0.4:type==1?0.35:0.4));ctx.lineTo(0,bh*(type==3?0.25:type==2?0.2:type==1?0.15:0.2));ctx.lineTo(bw/2-(type==3?6:type==2?5:type==1?4:3),bh*(type==3?0.35:type==2?0.3:type==1?0.25:0.3));ctx.fill();
-            ctx.beginPath();ctx.moveTo(bw/2+(type==3?6:type==2?5:type==1?4:3),bh*(type==3?0.45:type==2?0.4:type==1?0.35:0.4));ctx.lineTo(bw,bh*(type==3?0.25:type==2?0.2:type==1?0.15:0.2));ctx.lineTo(bw/2+(type==3?6:type==2?5:type==1?4:3),bh*(type==3?0.35:type==2?0.3:type==1?0.25:0.3));ctx.fill();
-            if(type>=2){ctx.fillStyle=colors[type][2];ctx.beginPath();ctx.moveTo(bw/2-6,bh*0.7);ctx.lineTo(bw/2-10,bh);ctx.lineTo(bw/2-3,bh*0.8);ctx.fill();ctx.beginPath();ctx.moveTo(bw/2+6,bh*0.7);ctx.lineTo(bw/2+10,bh);ctx.lineTo(bw/2+3,bh*0.8);ctx.fill();}
-            ctx.fillStyle=colors[type][2];ctx.beginPath();ctx.ellipse(bw/2,bh*0.6,2,3,0,0,6.28);ctx.fill();
+            ctx.fillStyle=colors[t][0];ctx.beginPath();ctx.moveTo(bw/2,bh);ctx.lineTo(bw/2+(t==3?7:t==2?6:t==1?5:4),0);ctx.lineTo(bw/2-(t==3?7:t==2?6:t==1?5:4),0);ctx.fill();
+            ctx.fillStyle=colors[t][1];ctx.beginPath();ctx.moveTo(bw/2-(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.45:t==2?0.4:t==1?0.35:0.4));ctx.lineTo(0,bh*(t==3?0.25:t==2?0.2:t==1?0.15:0.2));ctx.lineTo(bw/2-(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.35:t==2?0.3:t==1?0.25:0.3));ctx.fill();
+            ctx.beginPath();ctx.moveTo(bw/2+(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.45:t==2?0.4:t==1?0.35:0.4));ctx.lineTo(bw,bh*(t==3?0.25:t==2?0.2:t==1?0.15:0.2));ctx.lineTo(bw/2+(t==3?6:t==2?5:t==1?4:3),bh*(t==3?0.35:t==2?0.3:t==1?0.25:0.3));ctx.fill();
+            if(t>=2){ctx.fillStyle=colors[t][2];ctx.beginPath();ctx.moveTo(bw/2-6,bh*0.7);ctx.lineTo(bw/2-10,bh);ctx.lineTo(bw/2-3,bh*0.8);ctx.fill();ctx.beginPath();ctx.moveTo(bw/2+6,bh*0.7);ctx.lineTo(bw/2+10,bh);ctx.lineTo(bw/2+3,bh*0.8);ctx.fill();}
+            ctx.fillStyle=colors[t][2];ctx.beginPath();ctx.ellipse(bw/2,bh*0.6,2,3,0,0,6.28);ctx.fill();
             ctx.restore();
         }
 
@@ -169,7 +169,7 @@
             player.x=Math.max(player.width/2,Math.min(WIDTH-player.width/2,player.x));player.y=Math.max(player.height/2+50,Math.min(HEIGHT-player.height/2,player.y));
             if(!player.lastShot||Date.now()-player.lastShot>200){playerShoot();player.lastShot=Date.now();}
             player.bullets=player.bullets.filter(b=>{b.x+=b.vx;b.y+=b.vy;if(b.ricochet>0&&b.bounces<b.ricochet){if(b.x<=0||b.x>=WIDTH){b.vx*=-.8;b.x=b.x<=0?1:WIDTH-1;b.bounces++;}if(b.y<=0){b.vy*=-.8;b.y=1;b.bounces++;}}return b.y>-50&&b.y<HEIGHT+50;});
-            enemies.forEach(e=>{e.y+=e.speed;if(e.t>=1)enemyShoot(e);if(e.b)e.b=e.b.filter(b=>{b.y+=b.speed;return b.y<HEIGHT;});});
+            enemies.forEach(e=>{e.y+=e.speed;if(e.type>=1)enemyShoot(e);if(e.b)e.b=e.b.filter(b=>{b.y+=b.speed;return b.y<HEIGHT;});});
             enemies=enemies.filter(e=>e.y<HEIGHT+e.h);
             player.bullets=player.bullets.filter(b=>{let h=false;enemies=enemies.filter(e=>{const dx=b.x-e.x,dy=b.y-e.y;if(Math.abs(dx)<e.w/2&&Math.abs(dy)<e.h/2){e.currentHp--;h=true;if(e.currentHp<=0){score+=e.score;createExplosion(e.x,e.y,'#FF6B6B',20);checkUpgrade();return false;}}return true;});return!h;});
             enemies.forEach(e=>{if(e.b)e.b=e.b.filter(b=>{const dx=b.x-player.x,dy=b.y-player.y;if(Math.abs(dx)<player.width/2&&Math.abs(dy)<player.height/2){currentHp-=100;createExplosion(player.x,player.y,'#FFD700',5);updateUI();if(currentHp<=0)gameOver();return false;}return true;});});
@@ -183,7 +183,7 @@
             if(gameState!=='playing'&&gameState!=='upgrade')return;
             drawChinesePlane(ctx,player.x-player.width/2,player.y-player.height/2,player.width,player.height,selectedPlane);
             ctx.fillStyle='#0ff';player.bullets.forEach(b=>{ctx.fillRect(b.x-2,b.y-8,4,16);});
-            enemies.forEach(e=>{drawEnemyPlane(ctx,e.x-e.w/2,e.y-e.h/2,e.w,e.h,e.t);if(e.b){ctx.fillStyle='#f44';e.b.forEach(b=>{ctx.fillRect(b.x-2,b.y-4,4,8);});}if(e.currentHp<e.hp){const bw=e.w,bh=3,bx=e.x-bw/2,by=e.y-e.h/2-8;ctx.fillStyle='#333';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle='#f00';ctx.fillRect(bx,by,bw*(e.currentHp/e.hp),bh);}});
+            enemies.forEach(e=>{drawEnemyPlane(ctx,e.x-e.w/2,e.y-e.h/2,e.w,e.h,e.type);if(e.b){ctx.fillStyle='#f44';e.b.forEach(b=>{ctx.fillRect(b.x-2,b.y-4,4,8);});}if(e.currentHp<e.hp){const bw=e.w,bh=3,bx=e.x-bw/2,by=e.y-e.h/2-8;ctx.fillStyle='#333';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle='#f00';ctx.fillRect(bx,by,bw*(e.currentHp/e.hp),bh);}});
             drawParticles();
         }
 
