@@ -40,6 +40,12 @@
         #gameOver h2 { color: #f00; font-size: 28px; margin-bottom: 15px; }
         #restartBtn { background: linear-gradient(180deg, #600, #900); border: 2px solid #f00; color: #fff; padding: 10px 30px; cursor: pointer; border-radius: 5px; font-size: 16px; margin-top: 15px; }
         #restartBtn:hover { box-shadow: 0 0 15px #f00; }
+        #loginPanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #0ff; border-radius: 15px; padding: 30px; color: #fff; z-index: 100; text-align: center; min-width: 300px; }
+        #loginPanel h2 { color: #0ff; margin-bottom: 20px; }
+        #playerName { background: #222; border: 2px solid #0ff; color: #fff; padding: 10px; font-size: 16px; border-radius: 5px; width: 80%; text-align: center; margin-bottom: 15px; }
+        #loginBtn { background: linear-gradient(180deg, #006, #009); border: 2px solid #0ff; color: #fff; padding: 10px 30px; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        #loginBtn:hover { box-shadow: 0 0 15px #0ff; }
+        #bestScoreDisplay { color: #ff0; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -48,6 +54,7 @@
         <div id="ui">
             <div id="healthBar"><div id="healthFill"></div></div>
             <div id="stats">
+                <span id="playerNameDisplay">匿名</span>
                 <span id="healthText">HP: 10000 / 10000</span>
                 <span id="score">积分: 0</span>
                 <span id="lastScore">上局: 0</span>
@@ -57,6 +64,13 @@
         </div>
         <div id="missileIndicator">🎯<span id="missileLevel">0</span></div>
         <div id="leechIndicator">🩸<span id="leechLevel">0</span></div>
+        <div id="loginPanel">
+            <h2>🎮 雷电战机</h2>
+            <input type="text" id="playerName" placeholder="输入你的名字" maxlength="10">
+            <br>
+            <button id="loginBtn">开始游戏</button>
+            <div id="bestScoreDisplay"></div>
+        </div>
         <div id="selectPanel">
             <h2>选择你的战机</h2>
             <div class="plane-select">
@@ -124,6 +138,8 @@
         let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0;
         // 总积分（累计所有游戏的积分）
+        let playerName = localStorage.getItem('thunderWarriorPlayerName') || '';
+        let bestScore = parseInt(localStorage.getItem('thunderWarriorBestScore') || '0');
         let lastScore = parseInt(localStorage.getItem('thunderWarriorLastScore') || '0');
 
         const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
@@ -770,18 +786,24 @@
             document.getElementById('nextUpgrade').textContent = `升级还需: ${Math.max(0, getUpgradeThreshold() - score)}分`;
             document.getElementById('missileLevel').textContent = missileCount;
             document.getElementById('leechLevel').textContent = leechLevel;
+            document.getElementById('playerNameDisplay').textContent = playerName || '匿名';
         }
 
         function gameOver() {
             gameState = 'gameover';
-            // 保存上一局分数
+            // 保存上一局分数和最高分
             lastScore = score;
             localStorage.setItem('thunderWarriorLastScore', lastScore.toString());
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('thunderWarriorBestScore', bestScore.toString());
+            }
             document.getElementById('finalScore').textContent = score;
             document.getElementById('finalLevel').textContent = level;
             document.getElementById('gameOver').innerHTML = `
                 <h2>游戏结束</h2>
                 <p>本次积分: ${score}</p>
+                <p>最高分: ${bestScore}</p>
                 <p>上局: ${lastScore}</p>
                 <p>最高等级: ${level}</p>
                 <button id="restartBtn">重新开始</button>
@@ -857,6 +879,47 @@
         }
 
         drawPreviews();
+        
+        // 登录面板逻辑
+        const selectPanel = document.getElementById('selectPanel');
+        const loginPanel = document.getElementById('loginPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const playerNameInput = document.getElementById('playerName');
+        const bestScoreDisplay = document.getElementById('bestScoreDisplay');
+        
+        // 默认隐藏选机面板，显示登录面板
+        selectPanel.style.display = 'none';
+        
+        // 显示最高分
+        function updateBestScoreDisplay() {
+            if (bestScore > 0) {
+                const savedName = localStorage.getItem('thunderWarriorPlayerName') || '匿名';
+                bestScoreDisplay.textContent = `🏆 最高分: ${bestScore} (${savedName})`;
+            }
+        }
+        updateBestScoreDisplay();
+        
+        // 如果已有名字，自动填充
+        if (playerName) {
+            playerNameInput.value = playerName;
+        }
+        
+        // 点击开始游戏
+        loginBtn.addEventListener('click', () => {
+            const name = playerNameInput.value.trim() || '匿名';
+            playerName = name;
+            localStorage.setItem('thunderWarriorPlayerName', name);
+            loginPanel.style.display = 'none';
+            selectPanel.style.display = 'block';
+            gameState = 'select';
+            updateUI();
+        });
+        
+        // 回车也能提交
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+        
         updateUI();
         requestAnimationFrame(gameLoop);
     </script>
