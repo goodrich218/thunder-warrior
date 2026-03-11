@@ -8,7 +8,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Microsoft YaHei', sans-serif; overflow: hidden; }
         #gameContainer { position: relative; }
-        #gameCanvas { border: 2px solid #0ff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+        #gameCanvas { 
+            border: 2px solid #0ff; 
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            max-width: 100vw;
+            max-height: 100vh;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
         #ui { position: absolute; top: 10px; left: 10px; right: 10px; color: #fff; font-size: 14px; pointer-events: none; }
         #healthBar { width: 200px; height: 20px; background: #333; border: 2px solid #0ff; border-radius: 3px; overflow: hidden; }
         #healthFill { height: 100%; background: linear-gradient(90deg, #f00, #ff0); transition: width 0.2s; }
@@ -78,15 +86,34 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const WIDTH = 600, HEIGHT = 800;
+        
+        // 自适应屏幕尺寸
+        function resizeCanvas() {
+            const maxWidth = window.innerWidth - 20;
+            const maxHeight = window.innerHeight - 20;
+            const aspect = 600 / 800;
+            
+            if (maxWidth / maxHeight > aspect) {
+                canvas.height = Math.min(maxHeight, 800);
+                canvas.width = canvas.height * aspect;
+            } else {
+                canvas.width = Math.min(maxWidth, 600);
+                canvas.height = canvas.width / aspect;
+            }
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
 
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0;
 
-        const player = { x: 300, y: 700, width: 32, height: 40, bullets: [] };
+        const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
-        let mouseX = 300, mouseY = 700;
+        let mouseX = WIDTH/2, mouseY = HEIGHT - 100;
         const UPGRADE_THRESHOLD = 1000;
 
         // 绘制中国战机
@@ -360,7 +387,7 @@
             score = 0; level = 1; maxHp = 10000; currentHp = 10000;
             bulletCount = 1; ricochetCount = 0;
             enemies = []; particles = []; player.bullets = [];
-            player.x = 300; player.y = 700;
+            player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('selectPanel').style.display = 'block';
