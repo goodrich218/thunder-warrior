@@ -172,8 +172,8 @@
             enemies.forEach(e=>{e.y+=e.speed;if(e.t>=1)enemyShoot(e);if(e.b)e.b=e.b.filter(b=>{b.y+=b.speed;return b.y<HEIGHT;});});
             enemies=enemies.filter(e=>e.y<HEIGHT+e.h);
             player.bullets=player.bullets.filter(b=>{let h=false;enemies=enemies.filter(e=>{const dx=b.x-e.x,dy=b.y-e.y;if(Math.abs(dx)<e.w/2&&Math.abs(dy)<e.h/2){e.currentHp--;h=true;if(e.currentHp<=0){score+=e.score;createExplosion(e.x,e.y,'#FF6B6B',20);checkUpgrade();return false;}}return true;});return!h;});
-            enemies.forEach(e=>{if(e.b)e.b=e.b.filter(b=>{const dx=b.x-player.x,dy=b.y-player.y;if(Math.abs(dx)<player.w/2&&Math.abs(dy)<player.h/2){currentHp-=100;createExplosion(player.x,player.y,'#FFD700',5);updateUI();if(currentHp<=0)gameOver();return false;}return true;});});
-            enemies.forEach(e=>{const dx=e.x-player.x,dy=e.y-player.y;if(Math.abs(dx)<(e.w+player.w)/2&&Math.abs(dy)<(e.h+player.h)/2){currentHp-=500;e.currentHp=0;createExplosion(e.x,e.y,'#FF4444',15);updateUI();if(currentHp<=0)gameOver();}});
+            enemies.forEach(e=>{if(e.b)e.b=e.b.filter(b=>{const dx=b.x-player.x,dy=b.y-player.y;if(Math.abs(dx)<player.width/2&&Math.abs(dy)<player.height/2){currentHp-=100;createExplosion(player.x,player.y,'#FFD700',5);updateUI();if(currentHp<=0)gameOver();return false;}return true;});});
+            enemies.forEach(e=>{const dx=e.x-player.x,dy=e.y-player.y;if(Math.abs(dx)<(e.w+player.width)/2&&Math.abs(dy)<(e.h+player.height)/2){currentHp-=500;e.currentHp=0;createExplosion(e.x,e.y,'#FF4444',15);updateUI();if(currentHp<=0)gameOver();}});
             enemies=enemies.filter(e=>e.currentHp>0);updateParticles();
         }
 
@@ -181,7 +181,7 @@
             ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,WIDTH,HEIGHT);
             ctx.fillStyle='#fff';for(let i=0;i<50;i++){const x=(i*127+Date.now()/50)%WIDTH,y=(i*97+Date.now()/100)%HEIGHT;ctx.fillRect(x,y,1,1);}
             if(gameState!=='playing'&&gameState!=='upgrade')return;
-            drawChinesePlane(ctx,player.x-player.w/2,player.y-player.h/2,player.w,player.h,selectedPlane);
+            drawChinesePlane(ctx,player.x-player.width/2,player.y-player.height/2,player.width,player.height,selectedPlane);
             ctx.fillStyle='#0ff';player.bullets.forEach(b=>{ctx.fillRect(b.x-2,b.y-8,4,16);});
             enemies.forEach(e=>{drawEnemyPlane(ctx,e.x-e.w/2,e.y-e.h/2,e.w,e.h,e.t);if(e.b){ctx.fillStyle='#f44';e.b.forEach(b=>{ctx.fillRect(b.x-2,b.y-4,4,8);});}if(e.currentHp<e.hp){const bw=e.w,bh=3,bx=e.x-bw/2,by=e.y-e.h/2-8;ctx.fillStyle='#333';ctx.fillRect(bx,by,bw,bh);ctx.fillStyle='#f00';ctx.fillRect(bx,by,bw*(e.currentHp/e.hp),bh);}});
             drawParticles();
