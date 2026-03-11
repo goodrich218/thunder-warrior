@@ -861,11 +861,55 @@
             mouseY = e.clientY - r.top;
         });
 
+        // 登录面板逻辑 - 放在游戏启动前
+        const selectPanel = document.getElementById('selectPanel');
+        const loginPanel = document.getElementById('loginPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const playerNameInput = document.getElementById('playerName');
+        const bestScoreDisplay = document.getElementById('bestScoreDisplay');
+        
+        // 默认隐藏选机面板，显示登录面板
+        if (selectPanel) selectPanel.style.display = 'none';
+        
+        // 显示最高分
+        function updateBestScoreDisplay() {
+            if (bestScore > 0 && bestScoreDisplay) {
+                const savedName = localStorage.getItem('thunderWarriorPlayerName') || '匿名';
+                bestScoreDisplay.textContent = `🏆 最高分: ${bestScore} (${savedName})`;
+            }
+        }
+        updateBestScoreDisplay();
+        
+        // 如果已有名字，自动填充
+        if (playerName && playerNameInput) {
+            playerNameInput.value = playerName;
+        }
+        
+        // 点击开始游戏
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                const name = playerNameInput.value.trim() || '匿名';
+                playerName = name;
+                localStorage.setItem('thunderWarriorPlayerName', name);
+                if (loginPanel) loginPanel.style.display = 'none';
+                if (selectPanel) selectPanel.style.display = 'block';
+                gameState = 'select';
+                updateUI();
+            });
+        }
+        
+        // 回车也能提交
+        if (playerNameInput) {
+            playerNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && loginBtn) loginBtn.click();
+            });
+        }
+
         document.querySelectorAll('.plane-btn').forEach(b => {
             b.addEventListener('click', () => selectPlane(parseInt(b.dataset.plane)));
         });
         document.getElementById('restartBtn').addEventListener('click', restart);
-
+        
         // 游戏循环
         let lastSpawn = 0;
         function gameLoop(t) {
@@ -879,47 +923,6 @@
         }
 
         drawPreviews();
-        
-        // 登录面板逻辑
-        const selectPanel = document.getElementById('selectPanel');
-        const loginPanel = document.getElementById('loginPanel');
-        const loginBtn = document.getElementById('loginBtn');
-        const playerNameInput = document.getElementById('playerName');
-        const bestScoreDisplay = document.getElementById('bestScoreDisplay');
-        
-        // 默认隐藏选机面板，显示登录面板
-        selectPanel.style.display = 'none';
-        
-        // 显示最高分
-        function updateBestScoreDisplay() {
-            if (bestScore > 0) {
-                const savedName = localStorage.getItem('thunderWarriorPlayerName') || '匿名';
-                bestScoreDisplay.textContent = `🏆 最高分: ${bestScore} (${savedName})`;
-            }
-        }
-        updateBestScoreDisplay();
-        
-        // 如果已有名字，自动填充
-        if (playerName) {
-            playerNameInput.value = playerName;
-        }
-        
-        // 点击开始游戏
-        loginBtn.addEventListener('click', () => {
-            const name = playerNameInput.value.trim() || '匿名';
-            playerName = name;
-            localStorage.setItem('thunderWarriorPlayerName', name);
-            loginPanel.style.display = 'none';
-            selectPanel.style.display = 'block';
-            gameState = 'select';
-            updateUI();
-        });
-        
-        // 回车也能提交
-        playerNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loginBtn.click();
-        });
-        
         updateUI();
         requestAnimationFrame(gameLoop);
     </script>
