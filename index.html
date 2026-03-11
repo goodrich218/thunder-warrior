@@ -195,9 +195,9 @@
         function selectPlane(i){selectedPlane=i;document.getElementById('selectPanel').style.display='none';gameState='playing';}
         function drawPreviews(){for(let i=0;i<4;i++){const c=document.getElementById('preview'+i).getContext('2d');c.clearRect(0,0,64,80);drawChinesePlane(c,16,20,32,40,i);}}
 
-        canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;const dx=mx-player.x,dy=my-player.y;if(Math.abs(dx)<player.width&&Math.abs(dy)<player.height){isDragging=true;dragOffset={x:dx,y:dy};}});
+        canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;const dx=mouseX-player.x,dy=mouseY-player.y;if(Math.abs(dx)<player.width*1.5&&Math.abs(dy)<player.height*1.5){isDragging=true;dragOffset={x:dx,y:dy};console.log('drag start', dragOffset);}});
         canvas.addEventListener('mouseup',()=>isDragging=false);
-        canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;});
+        canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;if(isDragging)console.log('dragging', mouseX, mouseY);});
         canvas.addEventListener('mouseleave',()=>isDragging=false);
         document.querySelectorAll('.plane-btn').forEach(b=>b.addEventListener('click',()=>selectPlane(parseInt(b.dataset.plane))));
         document.getElementById('restartBtn').addEventListener('click',restart);
