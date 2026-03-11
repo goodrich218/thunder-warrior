@@ -239,9 +239,15 @@
             y: HEIGHT - 100,
             width: 32,
             height: 40,
-            speed: 5,
+            targetX: WIDTH / 2,
+            targetY: HEIGHT - 100,
+            speed: 0.15,
             bullets: []
         };
+
+        // 鼠标位置
+        let mouseX = WIDTH / 2;
+        let mouseY = HEIGHT - 100;
 
         // 敌机数组
         let enemies = [];
@@ -737,25 +743,20 @@
         function update() {
             if (gameState !== 'playing') return;
 
-            // 玩家移动
-            if (keys['ArrowLeft'] || keys['KeyA']) {
-                player.x = Math.max(player.width / 2, player.x - player.speed);
-            }
-            if (keys['ArrowRight'] || keys['KeyD']) {
-                player.x = Math.min(WIDTH - player.width / 2, player.x + player.speed);
-            }
-            if (keys['ArrowUp'] || keys['KeyW']) {
-                player.y = Math.max(player.height / 2 + 50, player.y - player.speed);
-            }
-            if (keys['ArrowDown'] || keys['KeyS']) {
-                player.y = Math.min(HEIGHT - player.height / 2, player.y + player.speed);
-            }
+            // 玩家移动 - 跟随鼠标
+            const dx = mouseX - player.x;
+            const dy = mouseY - player.y;
+            player.x += dx * player.speed;
+            player.y += dy * player.speed;
+
+            // 边界限制
+            player.x = Math.max(player.width / 2, Math.min(WIDTH - player.width / 2, player.x));
+            player.y = Math.max(player.height / 2 + 50, Math.min(HEIGHT - player.height / 2, player.y));
 
             // 自动射击
-            if (keys['Space'] && !player.lastShot) {
+            if (!player.lastShot || Date.now() - player.lastShot > 150) {
                 playerShoot();
-                player.lastShot = true;
-                setTimeout(() => player.lastShot = false, 150);
+                player.lastShot = Date.now();
             }
 
             // 更新玩家子弹
@@ -999,6 +1000,21 @@
         }
 
         // 事件监听
+        // 鼠标移动
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
+        // 鼠标离开画布时暂停
+        canvas.addEventListener('mouseleave', () => {
+            if (gameState === 'playing') {
+                mouseX = player.x;
+                mouseY = player.y;
+            }
+        });
+
         document.addEventListener('keydown', e => {
             keys[e.code] = true;
             if (e.code === 'KeyU' && gameState === 'playing') {
