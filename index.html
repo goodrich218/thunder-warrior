@@ -82,7 +82,7 @@
             </div>
             <div class="skill-option" onclick="selectSkill('leech')" id="leechOption">
                 <div class="skill-name">🩸 吸血</div>
-                <div class="skill-desc">击敌回血 +<span id="leechVal">1</span> (当前: Lv<span id="leechVal2">0</span>/5)</div>
+                <div class="skill-desc">击敌回血 +<span id="leechVal">1</span> (当前: Lv<span id="leechVal2">0</span>/20)</div>
             </div>
             <div class="skill-option" onclick="selectSkill('missile')" id="missileOption">
                 <div class="skill-name">🎯 跟踪弹</div>
@@ -568,10 +568,10 @@
                 } else {
                     document.getElementById('missileOption').style.display = 'block';
                 }
-                // 吸血满5时隐藏选项
+                // 吸血满20时隐藏选项
                 document.getElementById('leechVal').textContent = leechLevel + 1;
                 document.getElementById('leechVal2').textContent = leechLevel;
-                if (leechLevel >= 5) {
+                if (leechLevel >= 20) {
                     document.getElementById('leechOption').style.display = 'none';
                 } else {
                     document.getElementById('leechOption').style.display = 'block';
@@ -584,7 +584,7 @@
             if (s === 'multishot') bulletCount++;
             else if (s === 'ricochet') ricochetCount++;
             else if (s === 'missile' && missileCount < 3) missileCount++;
-            else if (s === 'leech' && leechLevel < 5) leechLevel++;
+            else if (s === 'leech' && leechLevel < 20) leechLevel++;
             else if (s === 'heal') currentHp = Math.min(maxHp, currentHp + 3000);
             document.getElementById('skillPanel').style.display = 'none';
             gameState = 'playing';
