@@ -146,29 +146,138 @@
             box-shadow: 0 0 6px var(--accent); transition: width 0.3s;
         }
         .sc-instant { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 2px; }
-        #selectPanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f00; border-radius: 10px; padding: 30px; color: #fff; z-index: 100; }
-        #selectPanel h2 { color: #f00; text-align: center; margin-bottom: 20px; }
-        .plane-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .plane-btn { background: linear-gradient(180deg, #1a1a1a, #333); border: 2px solid #f00; color: #fff; padding: 15px; cursor: pointer; border-radius: 8px; text-align: center; transition: all 0.2s; }
-        .plane-btn:hover { border-color: #ff0; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
-        .plane-btn canvas { display: block; margin: 0 auto 10px; }
-        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); border: 2px solid #f00; border-radius: 10px; padding: 30px; color: #fff; text-align: center; display: none; z-index: 100; }
-        #gameOver h2 { color: #f00; font-size: 28px; margin-bottom: 15px; }
-        #restartBtn { background: linear-gradient(180deg, #600, #900); border: 2px solid #f00; color: #fff; padding: 10px 30px; cursor: pointer; border-radius: 5px; font-size: 16px; margin-top: 15px; }
-        #restartBtn:hover { box-shadow: 0 0 15px #f00; }
-        #loginPanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #0ff; border-radius: 15px; padding: 30px; color: #fff; z-index: 100; text-align: center; min-width: 300px; }
-        #loginPanel h2 { color: #0ff; margin-bottom: 20px; }
-        #playerName { background: #222; border: 2px solid #0ff; color: #fff; padding: 10px; font-size: 16px; border-radius: 5px; width: 80%; text-align: center; margin-bottom: 15px; }
-        #loginBtn { background: linear-gradient(180deg, #006, #009); border: 2px solid #0ff; color: #fff; padding: 10px 30px; cursor: pointer; border-radius: 5px; font-size: 16px; }
-        #loginBtn:hover { box-shadow: 0 0 15px #0ff; }
-        #bestScoreDisplay { color: #ff0; font-size: 14px; margin-top: 10px; }
-        #playerList { margin-top: 15px; text-align: left; max-height: 160px; overflow-y: auto; border-top: 1px solid #0ff3; padding-top: 10px; }
-        #playerList h3 { color: #0ff; font-size: 13px; margin-bottom: 6px; text-align: center; }
-        .player-record { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-radius: 4px; font-size: 12px; margin-bottom: 3px; background: rgba(255,255,255,0.05); }
-        .player-record .pr-rank { color: #ff0; width: 20px; }
-        .player-record .pr-name { color: #fff; flex: 1; margin-left: 4px; }
-        .player-record .pr-score { color: #0f0; font-weight: bold; }
-        .player-record .pr-count { color: #888; font-size: 11px; margin-left: 6px; }
+        /* ── 飞机选择面板 ── */
+        #selectPanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(160deg, #02071a 0%, #06091c 60%, #060404 100%);
+            color: #fff; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow-y: auto; padding: 20px 0;
+        }
+        #selectPanel::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,100,0,0.018) 3px, rgba(255,100,0,0.018) 6px);
+        }
+        .sp-hdr { text-align: center; margin-bottom: 18px; position: relative; z-index: 1; }
+        .sp-hdr-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(255,130,0,0.6); margin-bottom: 8px; }
+        .sp-hdr h2 { font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #fff; margin: 0 0 4px; }
+        .sp-hdr-sub { font-size: 9px; letter-spacing: 5px; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 10px; }
+        .sp-hdr-line { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, #ff6600, transparent); margin: 0 auto; }
+        .plane-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; position: relative; z-index: 1; padding: 0 14px; width: 100%; box-sizing: border-box; max-width: 560px; }
+        .plane-btn {
+            background: linear-gradient(145deg, rgba(255,100,0,0.07) 0%, rgba(0,0,0,0.5) 100%);
+            border: 1px solid rgba(255,100,0,0.22); color: #fff; padding: 12px 10px;
+            cursor: pointer; border-radius: 8px; text-align: center; transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .plane-btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,160,0,0.1) 0%, transparent 55%);
+            opacity: 0; transition: opacity 0.25s;
+        }
+        .plane-btn:hover { border-color: rgba(255,180,0,0.85); transform: translateY(-2px);
+            box-shadow: 0 4px 24px rgba(255,100,0,0.3), inset 0 0 16px rgba(255,100,0,0.06); }
+        .plane-btn:hover::after { opacity: 1; }
+        .plane-btn canvas { display: block; margin: 0 auto 6px; }
+        .plane-card-badge { font-size: 7px; letter-spacing: 4px; color: rgba(255,180,0,0.55); margin-bottom: 3px; text-transform: uppercase; }
+        .plane-card-name { font-size: 12px; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 1px; }
+        .plane-card-type { font-size: 8px; color: rgba(255,255,255,0.35); letter-spacing: 1px; margin-bottom: 8px; }
+        .plane-stats { text-align: left; }
+        .stat-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+        .stat-row span { font-size: 8px; color: rgba(255,255,255,0.4); width: 22px; letter-spacing: 0.5px; flex-shrink: 0; }
+        .stat-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+        .stat-fill { height: 100%; border-radius: 2px; }
+        /* ── 游戏结束 ── */
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.92); border: 1px solid rgba(255,0,0,0.5); box-shadow: 0 0 30px rgba(255,0,0,0.2); border-radius: 10px; padding: 30px; color: #fff; text-align: center; display: none; z-index: 100; }
+        #gameOver h2 { color: #f44; font-size: 26px; margin-bottom: 15px; letter-spacing: 3px; }
+        #restartBtn { background: linear-gradient(180deg, #500, #800); border: 1px solid rgba(255,0,0,0.5); color: #fff; padding: 10px 30px; cursor: pointer; border-radius: 4px; font-size: 14px; letter-spacing: 3px; margin-top: 15px; transition: all 0.2s; font-family: inherit; }
+        #restartBtn:hover { box-shadow: 0 0 20px rgba(255,0,0,0.4); border-color: #f44; }
+        /* ── 登录面板 ── */
+        #loginPanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(160deg, #030d20 0%, #06091a 55%, #0a0608 100%);
+            color: #fff; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden; gap: 14px;
+        }
+        #loginPanel::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.014) 2px, rgba(0,229,255,0.014) 4px);
+        }
+        .login-orb {
+            position: absolute; border-radius: 50%; pointer-events: none;
+        }
+        .login-orb-1 {
+            width: 400px; height: 300px; top: -100px; left: 50%; transform: translateX(-50%);
+            background: radial-gradient(ellipse, rgba(0,100,255,0.14) 0%, transparent 70%);
+            animation: lorb1 5s ease-in-out infinite;
+        }
+        .login-orb-2 {
+            width: 200px; height: 200px; bottom: 0; right: -40px;
+            background: radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%);
+            animation: lorb2 7s ease-in-out infinite;
+        }
+        @keyframes lorb1 { 0%,100%{opacity:0.6;transform:translateX(-50%) scale(1)} 50%{opacity:1;transform:translateX(-50%) scale(1.12)} }
+        @keyframes lorb2 { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:0.9;transform:scale(1.2)} }
+        .login-logo { text-align: center; position: relative; z-index: 1; }
+        .login-en-badge {
+            font-size: 8px; letter-spacing: 7px; text-transform: uppercase;
+            color: rgba(0,229,255,0.45); border: 1px solid rgba(0,229,255,0.18);
+            padding: 4px 14px; display: inline-block; margin-bottom: 10px; border-radius: 2px;
+        }
+        .login-title {
+            font-size: 32px; font-weight: 900; letter-spacing: 7px;
+            background: linear-gradient(180deg, #fff 0%, rgba(0,229,255,0.75) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin: 0; line-height: 1.1;
+            filter: drop-shadow(0 0 14px rgba(0,229,255,0.45));
+        }
+        .login-tagline { font-size: 8px; letter-spacing: 4px; color: rgba(255,255,255,0.22); margin-top: 8px; text-transform: uppercase; }
+        .login-divider { width: 70px; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,229,255,0.45), transparent); position: relative; z-index: 1; }
+        .login-form { display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; z-index: 1; width: 250px; }
+        .login-field-label { font-size: 7px; letter-spacing: 4px; color: rgba(0,229,255,0.45); text-transform: uppercase; align-self: flex-start; }
+        #playerName {
+            background: rgba(0,229,255,0.04); border: 1px solid rgba(0,229,255,0.25);
+            border-bottom: 2px solid rgba(0,229,255,0.55);
+            color: #fff; padding: 10px 14px; font-size: 14px; letter-spacing: 2px;
+            width: 100%; text-align: center; outline: none;
+            border-radius: 4px 4px 3px 3px; font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        #playerName::placeholder { color: rgba(255,255,255,0.18); letter-spacing: 1px; font-size: 12px; }
+        #playerName:focus { border-color: rgba(0,229,255,0.7); border-bottom-color: #00e5ff; background: rgba(0,229,255,0.07); box-shadow: 0 0 18px rgba(0,229,255,0.12); }
+        #loginBtn {
+            width: 100%; padding: 12px 0;
+            background: linear-gradient(90deg, rgba(0,40,100,0.9), rgba(0,80,160,0.7), rgba(0,40,100,0.9));
+            border: 1px solid rgba(0,229,255,0.35); border-top: 1px solid rgba(0,229,255,0.55);
+            color: #e0f8ff; cursor: pointer; font-size: 13px; letter-spacing: 5px;
+            text-transform: uppercase; font-family: inherit;
+            border-radius: 4px; position: relative; overflow: hidden; transition: all 0.2s;
+        }
+        #loginBtn::before {
+            content: ''; position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,229,255,0.18), transparent);
+            transition: left 0.45s;
+        }
+        #loginBtn:hover { box-shadow: 0 0 22px rgba(0,229,255,0.28); border-color: rgba(0,229,255,0.7); }
+        #loginBtn:hover::before { left: 100%; }
+        #bestScoreDisplay { font-size: 11px; color: rgba(255,215,0,0.65); letter-spacing: 1px; position: relative; z-index: 1; }
+        #playerList { position: relative; z-index: 1; width: 250px; max-height: 180px; overflow-y: auto; }
+        #playerList h3 {
+            font-size: 7px; letter-spacing: 5px; text-transform: uppercase;
+            color: rgba(0,229,255,0.35); text-align: center; margin-bottom: 8px;
+            border-top: 1px solid rgba(0,229,255,0.1); padding-top: 10px;
+        }
+        .player-record { display: flex; align-items: center; padding: 5px 8px; border-radius: 3px; font-size: 11px; margin-bottom: 3px; background: rgba(255,255,255,0.04); border-left: 2px solid transparent; }
+        .player-record:nth-child(2) { border-left-color: #ffd700; background: rgba(255,215,0,0.04); }
+        .player-record:nth-child(3) { border-left-color: #b0b8c4; }
+        .player-record:nth-child(4) { border-left-color: #cd7f32; }
+        .player-record .pr-rank { color: rgba(255,215,0,0.55); width: 22px; font-size: 13px; }
+        .player-record .pr-name { color: rgba(255,255,255,0.82); flex: 1; margin-left: 4px; }
+        .player-record .pr-score { color: #00e5ff; font-weight: bold; }
+        .player-record .pr-count { color: rgba(255,255,255,0.28); font-size: 10px; margin-left: 6px; }
+        .login-footer { font-size: 7px; letter-spacing: 3px; color: rgba(255,255,255,0.1); text-transform: uppercase; position: relative; z-index: 1; }
     </style>
 </head>
 <body>
@@ -194,20 +303,75 @@
         <div id="leechIndicator">🩸<span id="leechLevel">0</span></div>
         <div id="freezeIndicator">❄️<span id="freezeLevelDisplay">0</span></div>
         <div id="loginPanel">
-            <h2>🎮 雷电战机</h2>
-            <input type="text" id="playerName" placeholder="输入你的名字" maxlength="10">
-            <br>
-            <button id="loginBtn">开始游戏</button>
+            <div class="login-orb login-orb-1"></div>
+            <div class="login-orb login-orb-2"></div>
+            <div class="login-logo">
+                <div class="login-en-badge">Thunder Warrior</div>
+                <h1 class="login-title">雷电战机</h1>
+                <div class="login-tagline">Air Dominance &middot; Extreme Combat</div>
+            </div>
+            <div class="login-divider"></div>
+            <div class="login-form">
+                <div class="login-field-label">战机代号 &middot; Callsign</div>
+                <input type="text" id="playerName" placeholder="输入你的名字" maxlength="10" autocomplete="off">
+                <button id="loginBtn">进入战场</button>
+            </div>
             <div id="bestScoreDisplay"></div>
             <div id="playerList"></div>
+            <div class="login-footer">Thunder Warrior v2.0 &middot; 2026</div>
         </div>
         <div id="selectPanel">
-            <h2>选择你的战机</h2>
+            <div class="sp-hdr">
+                <div class="sp-hdr-badge">Mission Briefing</div>
+                <h2>选择作战飞机</h2>
+                <div class="sp-hdr-sub">Select Your Aircraft</div>
+                <div class="sp-hdr-line"></div>
+            </div>
             <div class="plane-select">
-                <div class="plane-btn" data-plane="0"><canvas id="preview0" width="64" height="80"></canvas><div>歼-10 猛龙</div></div>
-                <div class="plane-btn" data-plane="1"><canvas id="preview1" width="64" height="80"></canvas><div>歼-16 潜龙</div></div>
-                <div class="plane-btn" data-plane="2"><canvas id="preview2" width="64" height="80"></canvas><div>歼-20 威龙</div></div>
-                <div class="plane-btn" data-plane="3"><canvas id="preview3" width="64" height="80"></canvas><div>歼-35 鹘鹰</div></div>
+                <div class="plane-btn" data-plane="0">
+                    <div class="plane-card-badge">J-10C</div>
+                    <canvas id="preview0" width="96" height="120"></canvas>
+                    <div class="plane-card-name">歼-10C 猛龙</div>
+                    <div class="plane-card-type">多用途战斗机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:60%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:82%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:50%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                </div>
+                <div class="plane-btn" data-plane="1">
+                    <div class="plane-card-badge">J-16</div>
+                    <canvas id="preview1" width="96" height="120"></canvas>
+                    <div class="plane-card-name">歼-16 潜龙</div>
+                    <div class="plane-card-type">重型多用途歼击机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:52%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:78%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                </div>
+                <div class="plane-btn" data-plane="2">
+                    <div class="plane-card-badge">J-20</div>
+                    <canvas id="preview2" width="96" height="120"></canvas>
+                    <div class="plane-card-name">歼-20 威龙</div>
+                    <div class="plane-card-type">隐身重型歼击机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:76%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:70%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:64%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                </div>
+                <div class="plane-btn" data-plane="3">
+                    <div class="plane-card-badge">J-35</div>
+                    <canvas id="preview3" width="96" height="120"></canvas>
+                    <div class="plane-card-name">歼-35 鹘鹰</div>
+                    <div class="plane-card-type">舰载隐身歼击机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:65%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:65%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                </div>
             </div>
         </div>
         <div id="skillPanel">
@@ -254,12 +418,7 @@
                 </div>
             </div>
         </div>
-        <div id="gameOver">
-            <h2>游戏结束</h2>
-            <p>最终积分: <span id="finalScore">0</span></p>
-            <p>最高等级: <span id="finalLevel">1</span></p>
-            <button id="restartBtn">重新开始</button>
-        </div>
+        <div id="gameOver"></div>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -1089,15 +1248,25 @@
                 localStorage.setItem('thunderWarriorBestPlayer', playerName || '匿名');
             }
             savePlayerRecord(playerName || '匿名', score);
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('finalLevel').textContent = level;
+            const isNewBest = score >= bestScore;
             document.getElementById('gameOver').innerHTML = `
-                <h2>游戏结束</h2>
-                <p>本次积分: ${score}</p>
-                <p>最高分: ${bestScore}</p>
-                <p>上局: ${lastScore}</p>
-                <p>最高等级: ${level}</p>
-                <button id="restartBtn">重新开始</button>
+                <div style="font-size:8px;letter-spacing:6px;color:rgba(255,80,80,0.5);margin-bottom:10px;text-transform:uppercase">Mission Failed</div>
+                <h2 style="font-size:22px;letter-spacing:4px;margin-bottom:20px">任务终止</h2>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;text-align:left;background:rgba(255,255,255,0.04);padding:14px 18px;border-radius:6px;border-left:2px solid rgba(255,60,60,0.4)">
+                    <div style="display:flex;justify-content:space-between;font-size:12px">
+                        <span style="color:rgba(255,255,255,0.45);letter-spacing:2px">本局积分</span>
+                        <span style="color:#fff;font-weight:bold">${score.toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px">
+                        <span style="color:rgba(255,255,255,0.45);letter-spacing:2px">历史最高</span>
+                        <span style="color:#ffd700;font-weight:bold">${bestScore.toLocaleString()}${isNewBest ? ' <span style="font-size:9px;background:rgba(255,215,0,0.15);padding:1px 5px;border-radius:2px;letter-spacing:1px">NEW</span>' : ''}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px">
+                        <span style="color:rgba(255,255,255,0.45);letter-spacing:2px">最高等级</span>
+                        <span style="color:#00e5ff">LV.${level}</span>
+                    </div>
+                </div>
+                <button id="restartBtn">再次出击</button>
             `;
             document.getElementById('gameOver').style.display = 'block';
             document.getElementById('restartBtn').addEventListener('click', restart);
@@ -1124,8 +1293,20 @@
         function drawPreviews() {
             for (let i = 0; i < 4; i++) {
                 const c = document.getElementById('preview' + i).getContext('2d');
-                c.clearRect(0, 0, 64, 80);
-                drawPlane(c, 16, 20, 32, 40, i);
+                c.clearRect(0, 0, 96, 120);
+                // Add subtle glow behind plane
+                c.save();
+                const schemes = [
+                    'rgba(120,140,160,0.18)', 'rgba(180,30,30,0.18)',
+                    'rgba(50,140,50,0.18)',   'rgba(50,80,180,0.18)'
+                ];
+                const grd = c.createRadialGradient(48, 60, 5, 48, 60, 45);
+                grd.addColorStop(0, schemes[i]);
+                grd.addColorStop(1, 'transparent');
+                c.fillStyle = grd;
+                c.fillRect(0, 0, 96, 120);
+                c.restore();
+                drawPlane(c, 24, 28, 48, 60, i);
             }
         }
 
@@ -1260,7 +1441,7 @@
         document.querySelectorAll('.plane-btn').forEach(b => {
             b.addEventListener('click', () => selectPlane(parseInt(b.dataset.plane)));
         });
-        document.getElementById('restartBtn').addEventListener('click', restart);
+        // restartBtn is injected dynamically in gameOver(), listener added there
         
         // 游戏循环
         let lastSpawn = 0;
