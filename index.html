@@ -369,7 +369,7 @@
             <div id="hud-left">
                 <div id="hp-header">
                     <span id="hp-label-text">Hull Integrity</span>
-                    <span id="healthText">10000 / 10000</span>
+                    <span id="healthText">1000 / 1000</span>
                 </div>
                 <div id="healthBar"><div id="healthFill"></div></div>
                 <div id="score-row">积分 <span id="score">0</span></div>
@@ -520,7 +520,7 @@
                 <div class="skill-card" onclick="selectSkill('heal')" style="--accent:#00E676">
                     <span class="sc-icon">💊</span>
                     <div class="sc-name">紧急修复</div>
-                    <div class="sc-desc">立即恢复 3000 HP</div>
+                    <div class="sc-desc">立即恢复 300 HP</div>
                     <div class="sc-instant">即时生效 · 无上限</div>
                 </div>
             </div>
@@ -552,7 +552,7 @@
         window.addEventListener('resize', resizeCanvas);
 
         let gameState = 'select';
-        let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
+        let score = 0, level = 1, maxHp = 1000, currentHp = 1000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
         // 总积分（累计所有游戏的积分）
@@ -1053,6 +1053,8 @@
             while (levelXP >= getLevelXPNeeded()) {
                 levelXP -= getLevelXPNeeded();
                 level++;
+                maxHp = Math.round(maxHp * 1.1);
+                currentHp = Math.min(currentHp, maxHp);
                 didLevelUp = true;
             }
             if (didLevelUp && gameState === 'playing') {
@@ -1073,7 +1075,7 @@
             } else if (s === 'freeze' && freezeLevel < 5) {
                 freezeLevel++;
             } else if (s === 'heal') {
-                currentHp = Math.min(maxHp, currentHp + 3000);
+                currentHp = Math.min(maxHp, currentHp + 300);
             }
             // 关闭技能面板
             document.getElementById('skillPanel').style.display = 'none';
@@ -1619,7 +1621,7 @@
         }
 
         function restart() {
-            score = 0; level = 1; maxHp = 10000; currentHp = 10000;
+            score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
