@@ -173,6 +173,43 @@
             content: ''; position: absolute; inset: 0; pointer-events: none;
             background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,100,0,0.018) 3px, rgba(255,100,0,0.018) 6px);
         }
+        #controlPanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(160deg, #020c1a 0%, #06091c 60%, #060408 100%);
+            color: #fff; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden; gap: 0;
+        }
+        #controlPanel::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.014) 3px, rgba(0,229,255,0.014) 6px);
+        }
+        .cp-hdr { text-align: center; margin-bottom: 28px; position: relative; z-index: 1; }
+        .cp-hdr-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(0,229,255,0.5); margin-bottom: 8px; }
+        .cp-hdr h2 { font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #fff; margin: 0 0 4px; }
+        .cp-hdr-sub { font-size: 9px; letter-spacing: 5px; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 10px; }
+        .cp-hdr-line { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, #00e5ff, transparent); margin: 0 auto; }
+        .cp-options { display: flex; gap: 18px; position: relative; z-index: 1; padding: 0 24px; }
+        .ctrl-btn-lg {
+            flex: 1; max-width: 180px; padding: 22px 16px;
+            background: rgba(0,229,255,0.04);
+            border: 1px solid rgba(0,229,255,0.18);
+            border-radius: 10px; cursor: pointer; text-align: center;
+            transition: all 0.22s; color: #fff; position: relative; overflow: hidden;
+        }
+        .ctrl-btn-lg:hover { border-color: rgba(0,229,255,0.5); background: rgba(0,229,255,0.08); transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,229,255,0.14); }
+        .ctrl-btn-lg.selected {
+            border-color: rgba(0,229,255,0.85);
+            background: rgba(0,229,255,0.1);
+            box-shadow: 0 0 22px rgba(0,229,255,0.2), inset 0 0 14px rgba(0,229,255,0.06);
+        }
+        .ctrl-btn-lg.selected::after {
+            content: '✓ 已选择'; position: absolute; top: 7px; right: 10px;
+            font-size: 7px; letter-spacing: 1px; color: rgba(0,229,255,0.75);
+        }
+        .ctrl-btn-lg canvas { display: block; margin: 0 auto 12px; }
+        .ctrl-btn-lg .ctrl-name { font-size: 13px; font-weight: bold; letter-spacing: 2px; margin-bottom: 6px; }
+        .ctrl-btn-lg .ctrl-desc { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.5px; line-height: 1.6; }
         .sp-hdr { text-align: center; margin-bottom: 18px; position: relative; z-index: 1; }
         .sp-hdr-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(255,130,0,0.6); margin-bottom: 8px; }
         .sp-hdr h2 { font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #fff; margin: 0 0 4px; }
@@ -370,9 +407,29 @@
             <div id="playerList"></div>
             <div class="login-footer">Thunder Warrior v2.0 &middot; 2026</div>
         </div>
+        <div id="controlPanel">
+            <div class="cp-hdr">
+                <div class="cp-hdr-badge">Step 1 of 2 &middot; Control Scheme</div>
+                <h2>选择操控方案</h2>
+                <div class="cp-hdr-sub">Choose Your Control Style</div>
+                <div class="cp-hdr-line"></div>
+            </div>
+            <div class="cp-options">
+                <div class="ctrl-btn-lg" data-mode="direct">
+                    <canvas id="ctrlIconDirect" width="76" height="76"></canvas>
+                    <div class="ctrl-name">跟随模式</div>
+                    <div class="ctrl-desc">点哪飞哪<br>简单直接</div>
+                </div>
+                <div class="ctrl-btn-lg" data-mode="joystick">
+                    <canvas id="ctrlIconJoy" width="76" height="76"></canvas>
+                    <div class="ctrl-name">摇杆模式</div>
+                    <div class="ctrl-desc">360° 方向控制<br>不遮挡飞机</div>
+                </div>
+            </div>
+        </div>
         <div id="selectPanel">
             <div class="sp-hdr">
-                <div class="sp-hdr-badge">Mission Briefing</div>
+                <div class="sp-hdr-badge">Step 2 of 2 &middot; Mission Briefing</div>
                 <h2>选择作战飞机</h2>
                 <div class="sp-hdr-sub">Select Your Aircraft</div>
                 <div class="sp-hdr-line"></div>
@@ -420,21 +477,6 @@
                         <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:65%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
                         <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:65%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
                         <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
-                    </div>
-                </div>
-            </div>
-            <div class="ctrl-section">
-                <div class="ctrl-hdr">· 操控方案 · Control Scheme ·</div>
-                <div class="ctrl-options">
-                    <div class="ctrl-btn" data-mode="direct">
-                        <canvas id="ctrlIconDirect" width="54" height="54"></canvas>
-                        <div class="ctrl-name">跟随模式</div>
-                        <div class="ctrl-desc">点哪飞哪<br>简单直接</div>
-                    </div>
-                    <div class="ctrl-btn" data-mode="joystick">
-                        <canvas id="ctrlIconJoy" width="54" height="54"></canvas>
-                        <div class="ctrl-name">摇杆模式</div>
-                        <div class="ctrl-desc">360° 方向控制<br>不遮挡飞机</div>
                     </div>
                 </div>
             </div>
@@ -1584,7 +1626,8 @@
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
-            document.getElementById('selectPanel').style.display = 'block';
+            if (controlPanel) controlPanel.style.display = 'flex';
+            if (selectPanel) selectPanel.style.display = 'none';
             updateUI();
             fetchPlayerList();
         }
@@ -1621,32 +1664,34 @@
             const d = document.getElementById('ctrlIconDirect');
             if (d) {
                 const dc = d.getContext('2d');
-                dc.clearRect(0, 0, 54, 54);
-                const cx = 27, cy = 27;
+                const W = d.width, H = d.height;
+                dc.clearRect(0, 0, W, H);
+                const cx = W/2, cy = H/2;
                 // 外圆
                 dc.strokeStyle = 'rgba(0,229,255,0.65)'; dc.lineWidth = 1.5;
-                dc.beginPath(); dc.arc(cx, cy, 18, 0, Math.PI*2); dc.stroke();
+                const s = cx / 27; // scale factor relative to original 54x54
+                dc.beginPath(); dc.arc(cx, cy, 18*s, 0, Math.PI*2); dc.stroke();
                 // 中圆
                 dc.strokeStyle = 'rgba(0,229,255,0.3)'; dc.lineWidth = 1;
-                dc.beginPath(); dc.arc(cx, cy, 10, 0, Math.PI*2); dc.stroke();
+                dc.beginPath(); dc.arc(cx, cy, 10*s, 0, Math.PI*2); dc.stroke();
                 // 十字准线
                 dc.strokeStyle = 'rgba(0,229,255,0.5)'; dc.lineWidth = 1;
-                [[cx-22,cy,cx-20,cy],[cx+20,cy,cx+22,cy],[cx,cy-22,cx,cy-20],[cx,cy+20,cx,cy+22]].forEach(([x1,y1,x2,y2])=>{
+                [[cx-22*s,cy,cx-20*s,cy],[cx+20*s,cy,cx+22*s,cy],[cx,cy-22*s,cx,cy-20*s],[cx,cy+20*s,cx,cy+22*s]].forEach(([x1,y1,x2,y2])=>{
                     dc.beginPath(); dc.moveTo(x1,y1); dc.lineTo(x2,y2); dc.stroke();
                 });
-                [[cx-16,cy,cx-4,cy],[cx+4,cy,cx+16,cy],[cx,cy-16,cx,cy-4],[cx,cy+4,cx,cy+16]].forEach(([x1,y1,x2,y2])=>{
+                [[cx-16*s,cy,cx-4*s,cy],[cx+4*s,cy,cx+16*s,cy],[cx,cy-16*s,cx,cy-4*s],[cx,cy+4*s,cx,cy+16*s]].forEach(([x1,y1,x2,y2])=>{
                     dc.beginPath(); dc.moveTo(x1,y1); dc.lineTo(x2,y2); dc.stroke();
                 });
                 // 中心发光点（手指触点）
                 dc.shadowBlur = 8; dc.shadowColor = '#00E5FF';
                 dc.fillStyle = 'rgba(0,229,255,0.95)';
-                dc.beginPath(); dc.arc(cx, cy, 3.5, 0, Math.PI*2); dc.fill();
+                dc.beginPath(); dc.arc(cx, cy, 3.5*s, 0, Math.PI*2); dc.fill();
                 dc.shadowBlur = 0;
                 // 小飞机轮廓（示意）
                 dc.fillStyle = 'rgba(0,229,255,0.3)';
                 dc.beginPath();
-                dc.moveTo(cx, cy-10); dc.lineTo(cx+4,cy-4); dc.lineTo(cx+3,cy+2);
-                dc.lineTo(cx,cy+4); dc.lineTo(cx-3,cy+2); dc.lineTo(cx-4,cy-4);
+                dc.moveTo(cx, cy-10*s); dc.lineTo(cx+4*s,cy-4*s); dc.lineTo(cx+3*s,cy+2*s);
+                dc.lineTo(cx,cy+4*s); dc.lineTo(cx-3*s,cy+2*s); dc.lineTo(cx-4*s,cy-4*s);
                 dc.closePath(); dc.fill();
             }
 
@@ -1654,32 +1699,35 @@
             const j = document.getElementById('ctrlIconJoy');
             if (j) {
                 const jc = j.getContext('2d');
-                jc.clearRect(0, 0, 54, 54);
-                const cx = 27, cy = 27;
+                const JW = j.width, JH = j.height;
+                jc.clearRect(0, 0, JW, JH);
+                const cx = JW/2, cy = JH/2;
+                const s = cx / 27;
                 // 底盘外圆
                 jc.strokeStyle = 'rgba(0,229,255,0.5)'; jc.lineWidth = 1.5;
                 jc.setLineDash([4, 4]);
-                jc.beginPath(); jc.arc(cx, cy, 20, 0, Math.PI*2); jc.stroke();
+                jc.beginPath(); jc.arc(cx, cy, 20*s, 0, Math.PI*2); jc.stroke();
                 jc.setLineDash([]);
                 // 四方向刻度
                 jc.strokeStyle = 'rgba(0,229,255,0.6)'; jc.lineWidth = 1.5;
                 [0, Math.PI/2, Math.PI, Math.PI*3/2].forEach(a => {
                     jc.beginPath();
-                    jc.moveTo(cx + Math.cos(a)*13, cy + Math.sin(a)*13);
-                    jc.lineTo(cx + Math.cos(a)*19, cy + Math.sin(a)*19);
+                    jc.moveTo(cx + Math.cos(a)*13*s, cy + Math.sin(a)*13*s);
+                    jc.lineTo(cx + Math.cos(a)*19*s, cy + Math.sin(a)*19*s);
                     jc.stroke();
                 });
                 // 底盘中心点
                 jc.fillStyle = 'rgba(0,229,255,0.25)';
-                jc.beginPath(); jc.arc(cx, cy, 3, 0, Math.PI*2); jc.fill();
+                jc.beginPath(); jc.arc(cx, cy, 3*s, 0, Math.PI*2); jc.fill();
                 // 旋钮（偏移表示"可以拨动"）
-                const kx = cx - 7, ky = cy - 7;
+                const kx = cx - 7*s, ky = cy - 7*s;
                 jc.shadowBlur = 10; jc.shadowColor = '#00D8FF';
-                const kg = jc.createRadialGradient(kx-2, ky-2, 1, kx, ky, 10);
+                const knobR = 10*s;
+                const kg = jc.createRadialGradient(kx-2*s, ky-2*s, 1, kx, ky, knobR);
                 kg.addColorStop(0, 'rgba(160,235,255,0.95)');
                 kg.addColorStop(0.6, 'rgba(0,150,255,0.85)');
                 kg.addColorStop(1, 'rgba(0,60,180,0.8)');
-                jc.beginPath(); jc.arc(kx, ky, 10, 0, Math.PI*2);
+                jc.beginPath(); jc.arc(kx, ky, knobR, 0, Math.PI*2);
                 jc.fillStyle = kg; jc.fill();
                 jc.shadowBlur = 0;
                 jc.strokeStyle = 'rgba(0,220,255,0.85)'; jc.lineWidth = 1.2;
@@ -1691,7 +1739,7 @@
         }
 
         function updateCtrlSelection() {
-            document.querySelectorAll('.ctrl-btn').forEach(b => {
+            document.querySelectorAll('.ctrl-btn-lg').forEach(b => {
                 b.classList.toggle('selected', b.dataset.mode === controlMode);
             });
         }
@@ -1771,13 +1819,15 @@
 
         // 登录面板逻辑 - 放在游戏启动前
         const selectPanel = document.getElementById('selectPanel');
+        const controlPanel = document.getElementById('controlPanel');
         const loginPanel = document.getElementById('loginPanel');
         const loginBtn = document.getElementById('loginBtn');
         const playerNameInput = document.getElementById('playerName');
         const bestScoreDisplay = document.getElementById('bestScoreDisplay');
-        
-        // 默认隐藏选机面板，显示登录面板
+
+        // 默认隐藏选机面板和控制面板，显示登录面板
         if (selectPanel) selectPanel.style.display = 'none';
+        if (controlPanel) controlPanel.style.display = 'none';
         
         // 服务器地址（同一台机器上运行服务器时自动匹配，部署后改为实际地址）
         const API_BASE = 'http://43.128.118.144:3001';
@@ -1853,14 +1903,14 @@
             playerNameInput.value = playerName;
         }
         
-        // 点击开始游戏
+        // 点击开始游戏 → 进入操控选择页
         if (loginBtn) {
             loginBtn.addEventListener('click', () => {
                 const name = playerNameInput.value.trim() || '匿名';
                 playerName = name;
                 localStorage.setItem('thunderWarriorPlayerName', name);
                 if (loginPanel) loginPanel.style.display = 'none';
-                if (selectPanel) selectPanel.style.display = 'block';
+                if (controlPanel) controlPanel.style.display = 'flex';
                 gameState = 'select';
                 updateUI();
             });
@@ -1877,12 +1927,14 @@
             b.addEventListener('click', () => selectPlane(parseInt(b.dataset.plane)));
         });
 
-        // 控制方案按钮
-        document.querySelectorAll('.ctrl-btn').forEach(b => {
+        // 控制方案按钮 → 选完后进入飞机选择页
+        document.querySelectorAll('.ctrl-btn-lg').forEach(b => {
             b.addEventListener('click', () => {
                 controlMode = b.dataset.mode;
                 localStorage.setItem('thunderWarriorControl', controlMode);
                 updateCtrlSelection();
+                if (controlPanel) controlPanel.style.display = 'none';
+                if (selectPanel) selectPanel.style.display = 'block';
             });
         });
 
