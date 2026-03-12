@@ -78,6 +78,7 @@
         <div id="bulletIndicator">🔫<span id="bulletLevel">1</span></div>
         <div id="missileIndicator">🎯<span id="missileLevel">0</span></div>
         <div id="leechIndicator">🩸<span id="leechLevel">0</span></div>
+        <div id="freezeIndicator">❄️<span id="freezeLevelDisplay">0</span></div>
         <div id="loginPanel">
             <h2>🎮 雷电战机</h2>
             <input type="text" id="playerName" placeholder="输入你的名字" maxlength="10">
@@ -117,6 +118,10 @@
                 <div class="skill-name">🎯 跟踪弹</div>
                 <div class="skill-desc">跟踪弹 +1 (当前: <span id="missileVal">0</span>/3)</div>
             </div>
+            <div class="skill-option" onclick="selectSkill('freeze')" id="freezeOption">
+                <div class="skill-name">❄️ 冰冻弹</div>
+                <div class="skill-desc">命中冻结敌机 +0.5秒 (当前: Lv<span id="freezeVal">0</span>/5, 冻结<span id="freezeDurVal">0</span>秒)</div>
+            </div>
         </div>
         <div id="gameOver">
             <h2>游戏结束</h2>
@@ -151,7 +156,7 @@
 
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 10000, currentHp = 10000, selectedPlane = 0;
-        let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0;
+        let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
         // 总积分（累计所有游戏的积分）
         let playerName = localStorage.getItem('thunderWarriorPlayerName') || '';
         let bestScore = parseInt(localStorage.getItem('thunderWarriorBestScore') || '0');
@@ -518,7 +523,7 @@
             const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
             for (let i = 0; i < bulletCount; i++) {
                 const a = (startAngle + i * spread) * Math.PI / 180;
-                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false});
+                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false, isFreeze: freezeLevel > 0});
             }
         }
 
@@ -531,7 +536,8 @@
                     vx: 0, 
                     vy: -4, 
                     isMissile: true,
-                    damage: 2
+                    damage: 2,
+                    isFreeze: freezeLevel > 0
                 });
             }
         }
@@ -571,6 +577,14 @@
                 } else {
                     document.getElementById('leechOption').style.display = 'block';
                 }
+                // 冰冻弹满5时隐藏选项
+                document.getElementById('freezeVal').textContent = freezeLevel;
+                document.getElementById('freezeDurVal').textContent = ((freezeLevel + 1) * 0.5).toFixed(1);
+                if (freezeLevel >= 5) {
+                    document.getElementById('freezeOption').style.display = 'none';
+                } else {
+                    document.getElementById('freezeOption').style.display = 'block';
+                }
             }
             updateUI();
         }
@@ -584,6 +598,8 @@
                 missileCount++;
             } else if (s === 'leech' && leechLevel < 20) {
                 leechLevel++;
+            } else if (s === 'freeze' && freezeLevel < 5) {
+                freezeLevel++;
             } else if (s === 'heal') {
                 currentHp = Math.min(maxHp, currentHp + 3000);
             }
@@ -640,14 +656,17 @@
 
             // 更新敌机
             enemies.forEach(e => {
-                e.y += e.speed;
-                if (Math.random() < 0.01 && e.y > 50) {
-                    if (!e.bullets) e.bullets = [];
-                    // 追踪玩家
-                    const dx = player.x - e.x;
-                    const dy = player.y - (e.y + e.h/2);
-                    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                    e.bullets.push({x: e.x, y: e.y + e.h/2, vx: (dx/dist) * 2.5, vy: (dy/dist) * 2.5});
+                const frozen = e.frozenUntil && Date.now() < e.frozenUntil;
+                if (!frozen) {
+                    e.y += e.speed;
+                    if (Math.random() < 0.01 && e.y > 50) {
+                        if (!e.bullets) e.bullets = [];
+                        // 追踪玩家
+                        const dx = player.x - e.x;
+                        const dy = player.y - (e.y + e.h/2);
+                        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                        e.bullets.push({x: e.x, y: e.y + e.h/2, vx: (dx/dist) * 2.5, vy: (dy/dist) * 2.5});
+                    }
                 }
                 if (e.bullets) e.bullets = e.bullets.filter(b => { b.x += b.vx; b.y += b.vy; return b.y < HEIGHT && b.x > 0 && b.x < WIDTH; });
             });
@@ -659,6 +678,10 @@
                 enemies = enemies.filter(e => {
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
                         e.currentHp--; hit = true;
+                        // 冰冻效果
+                        if (b.isFreeze && freezeLevel > 0) {
+                            e.frozenUntil = Date.now() + freezeLevel * 500;
+                        }
                         if (e.currentHp <= 0) {
                             score += e.score;
                             // 吸血效果
@@ -800,6 +823,15 @@
                     ctx.shadowBlur = 0;
 
                     ctx.restore();
+                } else if (b.isFreeze) {
+                    // 冰冻子弹 - 蓝白冰晶
+                    ctx.shadowColor = '#88DDFF';
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = '#B8EEFF';
+                    ctx.fillRect(b.x - 2, b.y - 7, 4, 14);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(b.x - 1, b.y - 5, 2, 4);
+                    ctx.shadowBlur = 0;
                 } else {
                     // 普通子弹
                     ctx.fillStyle = '#0ff';
@@ -810,6 +842,20 @@
             // 绘制敌机
             enemies.forEach(e => {
                 drawEnemy(ctx, e.x - e.w/2, e.y - e.h/2, e.w, e.h, e.type);
+                // 冰冻效果覆盖
+                if (e.frozenUntil && Date.now() < e.frozenUntil) {
+                    const prog = (e.frozenUntil - Date.now()) / (freezeLevel * 500);
+                    ctx.fillStyle = `rgba(100, 200, 255, ${0.45 * prog})`;
+                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
+                    ctx.strokeStyle = `rgba(180, 230, 255, ${0.7 * prog})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
+                    // 冰晶粒子
+                    if (Math.random() < 0.3) {
+                        ctx.fillStyle = `rgba(200,240,255,${0.6 * prog})`;
+                        ctx.fillRect(e.x + (Math.random()-0.5)*e.w, e.y + (Math.random()-0.5)*e.h, 2, 2);
+                    }
+                }
                 if (e.bullets) {
                     ctx.fillStyle = '#f44';
                     e.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 4, 4, 8));
@@ -835,6 +881,7 @@
             document.getElementById('missileLevel').textContent = missileCount;
             document.getElementById('leechLevel').textContent = leechLevel;
             document.getElementById('bulletLevel').textContent = bulletCount;
+            document.getElementById('freezeLevelDisplay').textContent = freezeLevel;
             // 显示最高分
             const bestPlayer = localStorage.getItem('thunderWarriorBestPlayer') || '-';
             document.getElementById('bestPlayerName').textContent = `🏆 最高: ${bestPlayer}`;
@@ -868,7 +915,7 @@
 
         function restart() {
             score = 0; level = 1; maxHp = 10000; currentHp = 10000;
-            bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0;
+            bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             enemies = []; particles = []; player.bullets = [];
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
