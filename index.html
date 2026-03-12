@@ -914,9 +914,7 @@
         if (selectPanel) selectPanel.style.display = 'none';
         
         // 服务器地址（同一台机器上运行服务器时自动匹配，部署后改为实际地址）
-        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? `http://${window.location.hostname}:8080`
-            : window.location.origin;
+        const API_BASE = 'http://43.128.118.144:3001';
 
         // 玩家记录管理
         function renderPlayerList(records) {
