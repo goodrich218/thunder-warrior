@@ -477,6 +477,13 @@
         const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
         let mouseX = WIDTH/2, mouseY = HEIGHT - 100;
+        // ── 虚拟摇杆 ──
+        const JOY_R = 58;       // 摇杆底盘半径（canvas像素）
+        const JOY_KNOB_R = 24;  // 摇杆旋钮半径
+        const JOY_SPEED = 6;    // 满杆时最大移速（px/帧）
+        let joyActive = false, joyKnobDx = 0, joyKnobDy = 0, joyTouchId = null;
+        let usingTouch = false; // 区分触控/鼠标模式
+        function getJoyCenter() { return { bx: JOY_R + 22, by: HEIGHT - JOY_R - 22 }; }
         // 独立XP系统：每级所需XP = 1000 + (level-1)*500
         // L1→L2: 1000 XP, L2→L3: 1500 XP, L3→L4: 2000 XP ...
         let levelXP = 0; // 当前等级已积累的XP（升级后归零）
@@ -988,9 +995,20 @@
         function update() {
             if (gameState !== 'playing') return;
             
-            // 鼠标跟随
-            player.x = mouseX;
-            player.y = mouseY;
+            // 移动控制：触控用摇杆速度控制，鼠标直接跟随
+            if (joyActive) {
+                const dl = Math.hypot(joyKnobDx, joyKnobDy);
+                if (dl > 4) { // 死区过滤
+                    const intensity = dl / JOY_R; // 0~1，根据推杆幅度决定速度
+                    player.x += (joyKnobDx / dl) * intensity * JOY_SPEED;
+                    player.y += (joyKnobDy / dl) * intensity * JOY_SPEED;
+                }
+            } else if (!usingTouch) {
+                // PC鼠标直接跟随
+                player.x = mouseX;
+                player.y = mouseY;
+            }
+            // 触控未按摇杆时飞机保持原位（不做任何更新）
             player.x = Math.max(16, Math.min(WIDTH - 16, player.x));
             player.y = Math.max(20, Math.min(HEIGHT - 20, player.y));
 
@@ -1150,6 +1168,62 @@
 
             // 绘制玩家飞机
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+
+            // ── 虚拟摇杆（仅触控设备显示）──
+            if (usingTouch || joyActive) {
+                const { bx, by } = getJoyCenter();
+                const kx = bx + joyKnobDx;
+                const ky = by + joyKnobDy;
+                ctx.save();
+
+                // 底盘填充
+                ctx.globalAlpha = joyActive ? 0.45 : 0.18;
+                ctx.beginPath(); ctx.arc(bx, by, JOY_R, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(0,40,100,0.7)'; ctx.fill();
+
+                // 底盘边框（激活时实线，未激活时虚线）
+                ctx.globalAlpha = joyActive ? 0.75 : 0.3;
+                ctx.beginPath(); ctx.arc(bx, by, JOY_R, 0, Math.PI*2);
+                ctx.strokeStyle = '#00D8FF'; ctx.lineWidth = 2;
+                if (!joyActive) ctx.setLineDash([5, 5]);
+                ctx.stroke(); ctx.setLineDash([]);
+
+                // 方向刻度线（上下左右四个短线）
+                ctx.strokeStyle = 'rgba(0,210,255,0.6)'; ctx.lineWidth = 1.5;
+                [0, Math.PI/2, Math.PI, Math.PI*3/2].forEach(a => {
+                    ctx.beginPath();
+                    ctx.moveTo(bx + Math.cos(a)*(JOY_R-13), by + Math.sin(a)*(JOY_R-13));
+                    ctx.lineTo(bx + Math.cos(a)*(JOY_R-2),  by + Math.sin(a)*(JOY_R-2));
+                    ctx.stroke();
+                });
+
+                // 中心点
+                ctx.globalAlpha = joyActive ? 0.5 : 0.2;
+                ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI*2);
+                ctx.fillStyle = '#00D8FF'; ctx.fill();
+
+                // 推杆连接线
+                if (joyActive) {
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(kx, ky);
+                    ctx.strokeStyle = '#00D8FF'; ctx.lineWidth = 1; ctx.stroke();
+                }
+
+                // 旋钮
+                ctx.globalAlpha = joyActive ? 0.88 : 0.28;
+                ctx.shadowBlur = joyActive ? 14 : 0; ctx.shadowColor = '#00D8FF';
+                const knobGrad = ctx.createRadialGradient(kx-4, ky-4, 2, kx, ky, JOY_KNOB_R);
+                knobGrad.addColorStop(0, 'rgba(160,235,255,0.95)');
+                knobGrad.addColorStop(0.5, 'rgba(0,160,255,0.85)');
+                knobGrad.addColorStop(1, 'rgba(0,60,180,0.75)');
+                ctx.beginPath(); ctx.arc(kx, ky, JOY_KNOB_R, 0, Math.PI*2);
+                ctx.fillStyle = knobGrad; ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(0,220,255,0.9)'; ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.restore();
+            }
 
             // 绘制子弹
             player.bullets.forEach(b => {
@@ -1453,6 +1527,7 @@
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
+            joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
             enemies = []; particles = []; player.bullets = [];
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
@@ -1489,27 +1564,64 @@
         }
 
         // 触摸控制 - 手机大拇指拖动
+        // ── 触控：虚拟摇杆控制 ──
+        function toCanvasCoords(clientX, clientY) {
+            const r = canvas.getBoundingClientRect();
+            // 处理CSS缩放与canvas分辨率不一致
+            return {
+                x: (clientX - r.left) * (WIDTH / r.width),
+                y: (clientY - r.top) * (HEIGHT / r.height)
+            };
+        }
+
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
-            const r = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            mouseX = touch.clientX - r.left;
-            mouseY = touch.clientY - r.top;
+            usingTouch = true;
+            const { bx, by } = getJoyCenter();
+            for (const touch of e.changedTouches) {
+                const { x: tx, y: ty } = toCanvasCoords(touch.clientX, touch.clientY);
+                const dist = Math.hypot(tx - bx, ty - by);
+                if (!joyActive && dist < JOY_R * 2) { // 激活区稍大于底盘，好按
+                    joyActive = true;
+                    joyTouchId = touch.identifier;
+                    const ddx = tx - bx, ddy = ty - by;
+                    const dl = Math.hypot(ddx, ddy);
+                    if (dl > JOY_R) { joyKnobDx = ddx/dl*JOY_R; joyKnobDy = ddy/dl*JOY_R; }
+                    else            { joyKnobDx = ddx; joyKnobDy = ddy; }
+                }
+            }
         }, {passive: false});
-        
+
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
-            const r = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            mouseX = touch.clientX - r.left;
-            mouseY = touch.clientY - r.top;
+            const { bx, by } = getJoyCenter();
+            for (const touch of e.changedTouches) {
+                if (touch.identifier !== joyTouchId) continue;
+                const { x: tx, y: ty } = toCanvasCoords(touch.clientX, touch.clientY);
+                const ddx = tx - bx, ddy = ty - by;
+                const dl = Math.hypot(ddx, ddy);
+                if (dl > JOY_R) { joyKnobDx = ddx/dl*JOY_R; joyKnobDy = ddy/dl*JOY_R; }
+                else            { joyKnobDx = ddx; joyKnobDy = ddy; }
+            }
         }, {passive: false});
-        
-        // 鼠标控制（电脑）
+
+        canvas.addEventListener('touchend', e => {
+            for (const touch of e.changedTouches) {
+                if (touch.identifier === joyTouchId) {
+                    joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
+                }
+            }
+        });
+        canvas.addEventListener('touchcancel', () => {
+            joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
+        });
+
+        // ── 鼠标控制（PC端，直接跟随） ──
         canvas.addEventListener('mousemove', e => {
+            usingTouch = false;
             const r = canvas.getBoundingClientRect();
-            mouseX = e.clientX - r.left;
-            mouseY = e.clientY - r.top;
+            mouseX = (e.clientX - r.left) * (WIDTH / r.width);
+            mouseY = (e.clientY - r.top) * (HEIGHT / r.height);
         });
 
         // 登录面板逻辑 - 放在游戏启动前
