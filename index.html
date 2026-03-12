@@ -770,52 +770,61 @@
                 ctx.beginPath(); ctx.arc(3,24,1.5,0,Math.PI*2); ctx.fill();
                 ctx.beginPath(); ctx.arc(37,24,1.5,0,Math.PI*2); ctx.fill();
             }
-            else if (t === 7) { // 无人攻击机 — X形飞翼隐身构型
+            else if (t === 7) { // 无人攻击机 — 飞翼构型（亮蓝发光）
                 const c = 20;
-                // 主翼体
-                ctx.fillStyle = '#1B2035';
+                const dr = 0.5 + 0.5 * Math.sin(Date.now() / 110);
+                // 外发光晕
+                ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(0,190,255,0.75)';
+                // 主翼体 — 亮钢蓝
+                ctx.fillStyle = '#1A3F70';
                 ctx.beginPath();
-                ctx.moveTo(c, 5);           // 机鼻
+                ctx.moveTo(c, 5);
                 ctx.lineTo(c+4, 12);
-                ctx.lineTo(38, 30);         // 右翼尖前缘
-                ctx.lineTo(33, 36);         // 右翼尖后缘
-                ctx.lineTo(c+3, 28);        // 内右后缘
-                ctx.lineTo(c-3, 28);        // 内左后缘
-                ctx.lineTo(7, 36);          // 左翼尖后缘
-                ctx.lineTo(2, 30);          // 左翼尖前缘
+                ctx.lineTo(38, 30);
+                ctx.lineTo(33, 36);
+                ctx.lineTo(c+3, 28);
+                ctx.lineTo(c-3, 28);
+                ctx.lineTo(7, 36);
+                ctx.lineTo(2, 30);
                 ctx.lineTo(c-4, 12);
                 ctx.closePath(); ctx.fill();
-                // 左面板高光
-                ctx.fillStyle = 'rgba(55,75,120,0.5)';
+                ctx.shadowBlur = 0;
+                // 左面板亮蓝高光
+                ctx.fillStyle = 'rgba(0,190,255,0.42)';
                 ctx.beginPath();
                 ctx.moveTo(c,5); ctx.lineTo(c-4,12); ctx.lineTo(9,26); ctx.lineTo(c-2,22); ctx.lineTo(c,18);
                 ctx.closePath(); ctx.fill();
-                // 右面板高光
-                ctx.fillStyle = 'rgba(45,65,105,0.4)';
+                // 右面板
+                ctx.fillStyle = 'rgba(0,170,255,0.32)';
                 ctx.beginPath();
                 ctx.moveTo(c,5); ctx.lineTo(c+4,12); ctx.lineTo(31,26); ctx.lineTo(c+2,22); ctx.lineTo(c,18);
                 ctx.closePath(); ctx.fill();
-                // 前缘面板线
-                ctx.strokeStyle = 'rgba(70,100,160,0.65)'; ctx.lineWidth = 0.5;
+                // 前缘发光线
+                ctx.shadowBlur = 8; ctx.shadowColor = '#00D8FF';
+                ctx.strokeStyle = 'rgba(0,220,255,0.95)'; ctx.lineWidth = 0.9;
                 ctx.beginPath(); ctx.moveTo(c,5); ctx.lineTo(2,30); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(c,5); ctx.lineTo(38,30); ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(0,160,230,0.5)'; ctx.lineWidth = 0.5;
                 ctx.beginPath(); ctx.moveTo(c,20); ctx.lineTo(7,36); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(c,20); ctx.lineTo(33,36); ctx.stroke();
-                // 中央传感器舱体
-                ctx.fillStyle = '#080D18';
+                // 传感器舱
+                ctx.fillStyle = '#040C1C';
                 ctx.beginPath(); ctx.ellipse(c, 16, 3.5, 7, 0, 0, Math.PI*2); ctx.fill();
-                // 瞄准传感器红色脉冲
-                const dr = 0.5 + 0.5 * Math.sin(Date.now() / 110);
-                ctx.shadowBlur = 10; ctx.shadowColor = '#FF2200';
-                ctx.fillStyle = `rgba(255,45,0,${0.65 + 0.35 * dr})`;
-                ctx.beginPath(); ctx.arc(c, 12, 2.2, 0, Math.PI*2); ctx.fill();
+                // 瞄准传感器 — 亮红脉冲
+                ctx.shadowBlur = 16; ctx.shadowColor = '#FF0000';
+                ctx.fillStyle = `rgba(255,20,0,${0.8 + 0.2 * dr})`;
+                ctx.beginPath(); ctx.arc(c, 12, 2.8, 0, Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
-                // 双发排气口（蓝白等离子）
-                exhaust(c-4, 28, 3.5, 'rgba(120,180,255,', 'rgba(30,80,220,');
-                exhaust(c+4, 28, 3.5, 'rgba(120,180,255,', 'rgba(30,80,220,');
-                // 翼尖灯
-                ctx.fillStyle = `rgba(255,50,50,${pulse})`; ctx.beginPath(); ctx.arc(2,30,1.3,0,Math.PI*2); ctx.fill();
-                ctx.fillStyle = `rgba(50,255,50,${pulse})`; ctx.beginPath(); ctx.arc(38,30,1.3,0,Math.PI*2); ctx.fill();
+                // 双发等离子排气（亮青白）
+                exhaust(c-4, 28, 5, 'rgba(0,240,255,', 'rgba(0,120,240,');
+                exhaust(c+4, 28, 5, 'rgba(0,240,255,', 'rgba(0,120,240,');
+                // 翼尖灯（大、亮）
+                ctx.shadowBlur = 10; ctx.shadowColor = '#FF4444';
+                ctx.fillStyle = `rgba(255,70,70,${0.85+0.15*pulse})`; ctx.beginPath(); ctx.arc(2,30,2.2,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 10; ctx.shadowColor = '#44FF44';
+                ctx.fillStyle = `rgba(70,255,70,${0.85+0.15*pulse})`; ctx.beginPath(); ctx.arc(38,30,2.2,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
             }
 
             ctx.restore();
@@ -843,29 +852,28 @@
         }
 
         function spawnDroneSwarm() {
-            const count = 5 + Math.floor(score / 3000); // 5个起，高分时更多（上限8）
-            const clampedCount = Math.min(count, 8);
-            const diveTarget = HEIGHT * (0.52 + Math.random() * 0.22); // 屏幕52~74%深度折返
-            const spacing = WIDTH / (clampedCount + 1);
-            droneWarningUntil = Date.now() + 2000; // 显示警告横幅2秒
-            for (let i = 0; i < clampedCount; i++) {
-                // 每架无人机稍作延迟，形成波浪入场效果
-                setTimeout(() => {
-                    if (gameState !== 'playing') return;
-                    enemies.push({
-                        x: spacing * (i + 1),
-                        y: -28,
-                        w: 22, h: 22,
-                        type: 7,
-                        hp: 1, currentHp: 1,
-                        speed: 4.8,
-                        score: 35,
-                        bullets: [],
-                        phase: 'dive',   // 'dive' → 俯冲, 'climb' → 返航向上
-                        diveTarget,
-                        vy: 4.8,
-                    });
-                }, i * 90);
+            const COUNT = 8;
+            const diveTarget = HEIGHT * (0.55 + Math.random() * 0.18); // 俯冲深度
+            const spacing = WIDTH / (COUNT + 1);
+            const now = Date.now();
+            const DIVE_GAP = 700; // 每架间隔700ms轮流俯冲
+            droneWarningUntil = now + 2000;
+            for (let i = 0; i < COUNT; i++) {
+                enemies.push({
+                    x: spacing * (i + 1),
+                    y: 28,               // 出场时就在屏幕顶部排好队
+                    w: 22, h: 22,
+                    type: 7,
+                    hp: 1, currentHp: 1,
+                    speed: 5.0,
+                    score: 35,
+                    bullets: [],
+                    phase: 'wait',       // wait→dive→climb 三阶段
+                    diveAt: now + i * DIVE_GAP, // 排队时间戳，依次触发
+                    diveTarget,
+                    vy: 0,
+                    waitX: spacing * (i + 1), // 等待时的横向位置（hover用）
+                });
             }
         }
 
@@ -1005,15 +1013,22 @@
                 const frozen = e.frozenUntil && Date.now() < e.frozenUntil;
                 if (!frozen) {
                     if (e.type === 7) {
-                        // 无人机：俯冲-折返状态机
-                        if (e.phase === 'dive') {
+                        // 无人机：wait(顶部排队) → dive(俯冲) → climb(折返向上) 三阶段
+                        if (e.phase === 'wait') {
+                            // 顶部悬停：轻微上下浮动，等待轮到自己
+                            e.y = 28 + Math.sin(Date.now() / 400 + e.waitX) * 4;
+                            if (Date.now() >= e.diveAt) {
+                                e.phase = 'dive';
+                                e.vy = e.speed;
+                            }
+                        } else if (e.phase === 'dive') {
                             e.y += e.vy;
                             if (e.y >= e.diveTarget) {
                                 e.phase = 'climb';
-                                e.vy = -e.speed * 1.3; // 折返时速度更快
+                                e.vy = -e.speed * 1.4; // 折返时更快冲出去
                             }
                         } else {
-                            e.y += e.vy; // vy为负，向上飞
+                            e.y += e.vy; // 向上飞出屏幕
                         }
                     } else {
                         e.y += e.speed;
@@ -1028,9 +1043,13 @@
                 }
                 if (e.bullets) e.bullets = e.bullets.filter(b => { b.x += b.vx; b.y += b.vy; return b.y < HEIGHT && b.x > 0 && b.x < WIDTH; });
             });
-            // 无人机折返后飞出上边界也要清除
+            // 无人机：等待阶段永不移除；折返飞出上边界才移除
             enemies = enemies.filter(e => {
-                if (e.type === 7 && e.phase === 'climb') return e.y > -e.h - 20;
+                if (e.type === 7) {
+                    if (e.phase === 'wait') return true;
+                    if (e.phase === 'climb') return e.y > -e.h - 20;
+                    return true; // dive阶段由diveTarget控制
+                }
                 return e.y < HEIGHT + e.h;
             });
 
