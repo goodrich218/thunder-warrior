@@ -28,6 +28,7 @@
         #missileIndicator { position: absolute; bottom: 10px; left: 10px; color: #FF4500; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #FF4500; pointer-events: none; }
         #leechIndicator { position: absolute; bottom: 35px; left: 10px; color: #0f0; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #0f0; pointer-events: none; }
         #bulletIndicator { position: absolute; bottom: 60px; left: 10px; color: #0ff; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #0ff; pointer-events: none; }
+        #freezeIndicator { position: absolute; bottom: 85px; left: 10px; color: #88DDFF; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #88DDFF; pointer-events: none; }
         #skillPanel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #0f0; border-radius: 15px; padding: 25px; color: #fff; display: none; z-index: 100; text-align: center; min-width: 300px; }
         #skillPanel h2 { color: #0f0; margin-bottom: 20px; font-size: 22px; }
         .skill-option { background: linear-gradient(180deg, #1a1a1a, #333); border: 2px solid #0f0; color: #fff; padding: 15px 20px; margin: 10px 0; cursor: pointer; border-radius: 8px; font-size: 16px; transition: all 0.2s; width: 100%; }
@@ -842,19 +843,88 @@
             // 绘制敌机
             enemies.forEach(e => {
                 drawEnemy(ctx, e.x - e.w/2, e.y - e.h/2, e.w, e.h, e.type);
-                // 冰冻效果覆盖
+                // 冰山效果
                 if (e.frozenUntil && Date.now() < e.frozenUntil) {
                     const prog = (e.frozenUntil - Date.now()) / (freezeLevel * 500);
-                    ctx.fillStyle = `rgba(100, 200, 255, ${0.45 * prog})`;
-                    ctx.fillRect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
-                    ctx.strokeStyle = `rgba(180, 230, 255, ${0.7 * prog})`;
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
-                    // 冰晶粒子
-                    if (Math.random() < 0.3) {
-                        ctx.fillStyle = `rgba(200,240,255,${0.6 * prog})`;
-                        ctx.fillRect(e.x + (Math.random()-0.5)*e.w, e.y + (Math.random()-0.5)*e.h, 2, 2);
+                    const ex = e.x, ey = e.y, ew = e.w, eh = e.h;
+                    const t = Date.now() / 1000;
+                    ctx.save();
+
+                    // 底部冰块基座（梯形冰山底）
+                    const baseG = ctx.createLinearGradient(ex - ew*0.6, ey + eh*0.3, ex, ey - eh*0.2);
+                    baseG.addColorStop(0,   `rgba(60,160,220,${0.75*prog})`);
+                    baseG.addColorStop(0.5, `rgba(140,220,255,${0.85*prog})`);
+                    baseG.addColorStop(1,   `rgba(220,245,255,${0.9*prog})`);
+                    ctx.fillStyle = baseG;
+                    ctx.beginPath();
+                    ctx.moveTo(ex - ew*0.6, ey + eh*0.45);
+                    ctx.lineTo(ex + ew*0.6, ey + eh*0.45);
+                    ctx.lineTo(ex + ew*0.45, ey - eh*0.1);
+                    ctx.lineTo(ex - ew*0.45, ey - eh*0.1);
+                    ctx.closePath(); ctx.fill();
+
+                    // 冰山主峰（中央高峰）
+                    const peakG = ctx.createLinearGradient(ex, ey - eh*0.9, ex + ew*0.15, ey - eh*0.1);
+                    peakG.addColorStop(0,   `rgba(240,250,255,${prog})`);
+                    peakG.addColorStop(0.4, `rgba(160,225,255,${0.95*prog})`);
+                    peakG.addColorStop(1,   `rgba(80,170,230,${0.8*prog})`);
+                    ctx.fillStyle = peakG;
+                    ctx.beginPath();
+                    ctx.moveTo(ex,          ey - eh*0.9);
+                    ctx.lineTo(ex + ew*0.28, ey - eh*0.1);
+                    ctx.lineTo(ex - ew*0.28, ey - eh*0.1);
+                    ctx.closePath(); ctx.fill();
+
+                    // 左侧副峰
+                    const lG = ctx.createLinearGradient(ex - ew*0.25, ey - eh*0.65, ex - ew*0.1, ey - eh*0.1);
+                    lG.addColorStop(0,   `rgba(220,245,255,${0.95*prog})`);
+                    lG.addColorStop(1,   `rgba(90,175,230,${0.75*prog})`);
+                    ctx.fillStyle = lG;
+                    ctx.beginPath();
+                    ctx.moveTo(ex - ew*0.25, ey - eh*0.65);
+                    ctx.lineTo(ex - ew*0.0,  ey - eh*0.1);
+                    ctx.lineTo(ex - ew*0.5,  ey - eh*0.1);
+                    ctx.closePath(); ctx.fill();
+
+                    // 右侧副峰
+                    const rG = ctx.createLinearGradient(ex + ew*0.25, ey - eh*0.55, ex + ew*0.1, ey - eh*0.1);
+                    rG.addColorStop(0,   `rgba(220,245,255,${0.95*prog})`);
+                    rG.addColorStop(1,   `rgba(90,175,230,${0.75*prog})`);
+                    ctx.fillStyle = rG;
+                    ctx.beginPath();
+                    ctx.moveTo(ex + ew*0.25, ey - eh*0.55);
+                    ctx.lineTo(ex + ew*0.5,  ey - eh*0.1);
+                    ctx.lineTo(ex + ew*0.05, ey - eh*0.1);
+                    ctx.closePath(); ctx.fill();
+
+                    // 主峰高光（雪顶）
+                    ctx.fillStyle = `rgba(255,255,255,${0.85*prog})`;
+                    ctx.beginPath();
+                    ctx.moveTo(ex,            ey - eh*0.9);
+                    ctx.lineTo(ex + ew*0.08,  ey - eh*0.72);
+                    ctx.lineTo(ex - ew*0.08,  ey - eh*0.72);
+                    ctx.closePath(); ctx.fill();
+
+                    // 冰山轮廓线
+                    ctx.strokeStyle = `rgba(200,240,255,${0.6*prog})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(ex, ey - eh*0.9);
+                    ctx.lineTo(ex + ew*0.28, ey - eh*0.1);
+                    ctx.lineTo(ex + ew*0.6,  ey + eh*0.45);
+                    ctx.lineTo(ex - ew*0.6,  ey + eh*0.45);
+                    ctx.lineTo(ex - ew*0.28, ey - eh*0.1);
+                    ctx.closePath(); ctx.stroke();
+
+                    // 闪光粒子（冰晶折射）
+                    for (let si = 0; si < 3; si++) {
+                        const sx = ex + Math.sin(t*2.1 + si*2.1) * ew*0.35;
+                        const sy = ey + Math.cos(t*1.7 + si*1.4) * eh*0.25;
+                        ctx.fillStyle = `rgba(255,255,255,${0.7*prog*Math.abs(Math.sin(t*3+si))})`;
+                        ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI*2); ctx.fill();
                     }
+
+                    ctx.restore();
                 }
                 if (e.bullets) {
                     ctx.fillStyle = '#f44';
