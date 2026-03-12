@@ -1,0 +1,13 @@
+{
+  "name": "thunder-warrior",
+  "version": "1.0.0",
+  "description": "雷电战机 - 飞机射击游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

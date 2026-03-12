@@ -862,7 +862,7 @@
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('selectPanel').style.display = 'block';
             updateUI();
-            renderPlayerList();
+            fetchPlayerList();
         }
 
         function selectPlane(i) {
@@ -913,31 +913,16 @@
         // 默认隐藏选机面板，显示登录面板
         if (selectPanel) selectPanel.style.display = 'none';
         
+        // 服务器地址（同一台机器上运行服务器时自动匹配，部署后改为实际地址）
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? `http://${window.location.hostname}:8080`
+            : window.location.origin;
+
         // 玩家记录管理
-        function getPlayerRecords() {
-            try { return JSON.parse(localStorage.getItem('thunderWarriorPlayers') || '[]'); }
-            catch(e) { return []; }
-        }
-
-        function savePlayerRecord(name, score) {
-            const records = getPlayerRecords();
-            const existing = records.find(r => r.name === name);
-            if (existing) {
-                if (score > existing.bestScore) existing.bestScore = score;
-                existing.playCount = (existing.playCount || 1) + 1;
-                existing.lastPlayed = Date.now();
-            } else {
-                records.push({ name, bestScore: score, playCount: 1, lastPlayed: Date.now() });
-            }
-            records.sort((a, b) => b.bestScore - a.bestScore);
-            localStorage.setItem('thunderWarriorPlayers', JSON.stringify(records));
-        }
-
-        function renderPlayerList() {
-            const records = getPlayerRecords();
+        function renderPlayerList(records) {
             const el = document.getElementById('playerList');
             if (!el) return;
-            if (records.length === 0) { el.innerHTML = ''; return; }
+            if (!records || records.length === 0) { el.innerHTML = ''; return; }
             const medals = ['🥇','🥈','🥉'];
             el.innerHTML = '<h3>参与玩家 (' + records.length + '人)</h3>' +
                 records.slice(0, 10).map((r, i) =>
@@ -950,6 +935,45 @@
                 ).join('');
         }
 
+        function fetchPlayerList() {
+            fetch(API_BASE + '/api/players')
+                .then(r => r.json())
+                .then(records => renderPlayerList(records))
+                .catch(() => {
+                    // 服务器不可用时降级到 localStorage
+                    try {
+                        const records = JSON.parse(localStorage.getItem('thunderWarriorPlayers') || '[]');
+                        renderPlayerList(records);
+                    } catch(e) {}
+                });
+        }
+
+        function savePlayerRecord(name, score) {
+            fetch(API_BASE + '/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, score })
+            })
+            .then(r => r.json())
+            .then(records => renderPlayerList(records))
+            .catch(() => {
+                // 降级到 localStorage
+                try {
+                    const records = JSON.parse(localStorage.getItem('thunderWarriorPlayers') || '[]');
+                    const existing = records.find(r => r.name === name);
+                    if (existing) {
+                        if (score > existing.bestScore) existing.bestScore = score;
+                        existing.playCount = (existing.playCount || 1) + 1;
+                    } else {
+                        records.push({ name, bestScore: score, playCount: 1 });
+                    }
+                    records.sort((a, b) => b.bestScore - a.bestScore);
+                    localStorage.setItem('thunderWarriorPlayers', JSON.stringify(records));
+                    renderPlayerList(records);
+                } catch(e) {}
+            });
+        }
+
         // 显示最高分
         function updateBestScoreDisplay() {
             if (bestScore > 0 && bestScoreDisplay) {
@@ -958,7 +982,7 @@
             }
         }
         updateBestScoreDisplay();
-        renderPlayerList();
+        fetchPlayerList();
         
         // 如果已有名字，自动填充
         if (playerName && playerNameInput) {
