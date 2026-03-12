@@ -203,6 +203,36 @@
         .stat-row span { font-size: 8px; color: rgba(255,255,255,0.4); width: 22px; letter-spacing: 0.5px; flex-shrink: 0; }
         .stat-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
         .stat-fill { height: 100%; border-radius: 2px; }
+        /* ── 控制方案选择 ── */
+        .ctrl-section {
+            margin-top: 14px; position: relative; z-index: 1;
+            width: 100%; max-width: 560px; padding: 0 14px; box-sizing: border-box;
+        }
+        .ctrl-hdr {
+            font-size: 8px; letter-spacing: 5px; text-transform: uppercase;
+            color: rgba(0,229,255,0.35); text-align: center; margin-bottom: 10px;
+        }
+        .ctrl-options { display: flex; gap: 10px; }
+        .ctrl-btn {
+            flex: 1; padding: 12px 10px;
+            background: rgba(0,229,255,0.04);
+            border: 1px solid rgba(0,229,255,0.15);
+            border-radius: 8px; cursor: pointer; text-align: center;
+            transition: all 0.22s; color: #fff; position: relative; overflow: hidden;
+        }
+        .ctrl-btn:hover { border-color: rgba(0,229,255,0.45); background: rgba(0,229,255,0.07); }
+        .ctrl-btn.selected {
+            border-color: rgba(0,229,255,0.8);
+            background: rgba(0,229,255,0.1);
+            box-shadow: 0 0 18px rgba(0,229,255,0.18), inset 0 0 12px rgba(0,229,255,0.05);
+        }
+        .ctrl-btn.selected::after {
+            content: '✓ 已选择'; position: absolute; top: 5px; right: 8px;
+            font-size: 7px; letter-spacing: 1px; color: rgba(0,229,255,0.7);
+        }
+        .ctrl-btn canvas { display: block; margin: 0 auto 8px; }
+        .ctrl-name { font-size: 12px; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 3px; }
+        .ctrl-desc { font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.5px; line-height: 1.5; }
         /* ── 游戏结束 ── */
         #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.92); border: 1px solid rgba(255,0,0,0.5); box-shadow: 0 0 30px rgba(255,0,0,0.2); border-radius: 10px; padding: 30px; color: #fff; text-align: center; display: none; z-index: 100; }
         #gameOver h2 { color: #f44; font-size: 26px; margin-bottom: 15px; letter-spacing: 3px; }
@@ -394,6 +424,21 @@
                     </div>
                 </div>
             </div>
+            <div class="ctrl-section">
+                <div class="ctrl-hdr">· 操控方案 · Control Scheme ·</div>
+                <div class="ctrl-options">
+                    <div class="ctrl-btn" data-mode="direct">
+                        <canvas id="ctrlIconDirect" width="54" height="54"></canvas>
+                        <div class="ctrl-name">跟随模式</div>
+                        <div class="ctrl-desc">点哪飞哪<br>简单直接</div>
+                    </div>
+                    <div class="ctrl-btn" data-mode="joystick">
+                        <canvas id="ctrlIconJoy" width="54" height="54"></canvas>
+                        <div class="ctrl-name">摇杆模式</div>
+                        <div class="ctrl-desc">360° 方向控制<br>不遮挡飞机</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="skillPanel">
             <div class="sp-label">战机强化系统</div>
@@ -477,6 +522,9 @@
         const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
         let mouseX = WIDTH/2, mouseY = HEIGHT - 100;
+        // 控制方案：'joystick' | 'direct'，持久化到 localStorage
+        let controlMode = localStorage.getItem('thunderWarriorControl') || 'joystick';
+
         // ── 虚拟摇杆 ──
         const JOY_R = 58;       // 摇杆底盘半径（canvas像素）
         const JOY_KNOB_R = 24;  // 摇杆旋钮半径
@@ -995,20 +1043,25 @@
         function update() {
             if (gameState !== 'playing') return;
             
-            // 移动控制：触控用摇杆速度控制，鼠标直接跟随
-            if (joyActive) {
+            // 移动控制：根据控制方案 + 输入方式
+            if (controlMode === 'joystick' && joyActive) {
+                // 摇杆速度控制
                 const dl = Math.hypot(joyKnobDx, joyKnobDy);
-                if (dl > 4) { // 死区过滤
-                    const intensity = dl / JOY_R; // 0~1，根据推杆幅度决定速度
+                if (dl > 4) {
+                    const intensity = dl / JOY_R;
                     player.x += (joyKnobDx / dl) * intensity * JOY_SPEED;
                     player.y += (joyKnobDy / dl) * intensity * JOY_SPEED;
                 }
+            } else if (controlMode === 'direct' && usingTouch) {
+                // 跟随模式：触控直接跟随最新触点
+                player.x = mouseX;
+                player.y = mouseY;
             } else if (!usingTouch) {
-                // PC鼠标直接跟随
+                // PC鼠标：始终直接跟随（不受 controlMode 影响）
                 player.x = mouseX;
                 player.y = mouseY;
             }
-            // 触控未按摇杆时飞机保持原位（不做任何更新）
+            // 摇杆模式下未触摸时飞机保持原位
             player.x = Math.max(16, Math.min(WIDTH - 16, player.x));
             player.y = Math.max(20, Math.min(HEIGHT - 20, player.y));
 
@@ -1169,8 +1222,8 @@
             // 绘制玩家飞机
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
 
-            // ── 虚拟摇杆（仅触控设备显示）──
-            if (usingTouch || joyActive) {
+            // ── 虚拟摇杆（仅摇杆模式 + 触控设备显示）──
+            if (controlMode === 'joystick' && (usingTouch || joyActive)) {
                 const { bx, by } = getJoyCenter();
                 const kx = bx + joyKnobDx;
                 const ky = by + joyKnobDy;
@@ -1547,7 +1600,6 @@
             for (let i = 0; i < 4; i++) {
                 const c = document.getElementById('preview' + i).getContext('2d');
                 c.clearRect(0, 0, 96, 120);
-                // Add subtle glow behind plane
                 c.save();
                 const schemes = [
                     'rgba(120,140,160,0.18)', 'rgba(180,30,30,0.18)',
@@ -1561,6 +1613,88 @@
                 c.restore();
                 drawPlane(c, 24, 28, 48, 60, i);
             }
+            // 控制方案图标
+            drawCtrlIcons();
+        }
+
+        function drawCtrlIcons() {
+            // ── 跟随模式图标：瞄准镜 + 中心点 ──
+            const d = document.getElementById('ctrlIconDirect');
+            if (d) {
+                const dc = d.getContext('2d');
+                dc.clearRect(0, 0, 54, 54);
+                const cx = 27, cy = 27;
+                // 外圆
+                dc.strokeStyle = 'rgba(0,229,255,0.65)'; dc.lineWidth = 1.5;
+                dc.beginPath(); dc.arc(cx, cy, 18, 0, Math.PI*2); dc.stroke();
+                // 中圆
+                dc.strokeStyle = 'rgba(0,229,255,0.3)'; dc.lineWidth = 1;
+                dc.beginPath(); dc.arc(cx, cy, 10, 0, Math.PI*2); dc.stroke();
+                // 十字准线
+                dc.strokeStyle = 'rgba(0,229,255,0.5)'; dc.lineWidth = 1;
+                [[cx-22,cy,cx-20,cy],[cx+20,cy,cx+22,cy],[cx,cy-22,cx,cy-20],[cx,cy+20,cx,cy+22]].forEach(([x1,y1,x2,y2])=>{
+                    dc.beginPath(); dc.moveTo(x1,y1); dc.lineTo(x2,y2); dc.stroke();
+                });
+                [[cx-16,cy,cx-4,cy],[cx+4,cy,cx+16,cy],[cx,cy-16,cx,cy-4],[cx,cy+4,cx,cy+16]].forEach(([x1,y1,x2,y2])=>{
+                    dc.beginPath(); dc.moveTo(x1,y1); dc.lineTo(x2,y2); dc.stroke();
+                });
+                // 中心发光点（手指触点）
+                dc.shadowBlur = 8; dc.shadowColor = '#00E5FF';
+                dc.fillStyle = 'rgba(0,229,255,0.95)';
+                dc.beginPath(); dc.arc(cx, cy, 3.5, 0, Math.PI*2); dc.fill();
+                dc.shadowBlur = 0;
+                // 小飞机轮廓（示意）
+                dc.fillStyle = 'rgba(0,229,255,0.3)';
+                dc.beginPath();
+                dc.moveTo(cx, cy-10); dc.lineTo(cx+4,cy-4); dc.lineTo(cx+3,cy+2);
+                dc.lineTo(cx,cy+4); dc.lineTo(cx-3,cy+2); dc.lineTo(cx-4,cy-4);
+                dc.closePath(); dc.fill();
+            }
+
+            // ── 摇杆模式图标：底盘 + 旋钮 ──
+            const j = document.getElementById('ctrlIconJoy');
+            if (j) {
+                const jc = j.getContext('2d');
+                jc.clearRect(0, 0, 54, 54);
+                const cx = 27, cy = 27;
+                // 底盘外圆
+                jc.strokeStyle = 'rgba(0,229,255,0.5)'; jc.lineWidth = 1.5;
+                jc.setLineDash([4, 4]);
+                jc.beginPath(); jc.arc(cx, cy, 20, 0, Math.PI*2); jc.stroke();
+                jc.setLineDash([]);
+                // 四方向刻度
+                jc.strokeStyle = 'rgba(0,229,255,0.6)'; jc.lineWidth = 1.5;
+                [0, Math.PI/2, Math.PI, Math.PI*3/2].forEach(a => {
+                    jc.beginPath();
+                    jc.moveTo(cx + Math.cos(a)*13, cy + Math.sin(a)*13);
+                    jc.lineTo(cx + Math.cos(a)*19, cy + Math.sin(a)*19);
+                    jc.stroke();
+                });
+                // 底盘中心点
+                jc.fillStyle = 'rgba(0,229,255,0.25)';
+                jc.beginPath(); jc.arc(cx, cy, 3, 0, Math.PI*2); jc.fill();
+                // 旋钮（偏移表示"可以拨动"）
+                const kx = cx - 7, ky = cy - 7;
+                jc.shadowBlur = 10; jc.shadowColor = '#00D8FF';
+                const kg = jc.createRadialGradient(kx-2, ky-2, 1, kx, ky, 10);
+                kg.addColorStop(0, 'rgba(160,235,255,0.95)');
+                kg.addColorStop(0.6, 'rgba(0,150,255,0.85)');
+                kg.addColorStop(1, 'rgba(0,60,180,0.8)');
+                jc.beginPath(); jc.arc(kx, ky, 10, 0, Math.PI*2);
+                jc.fillStyle = kg; jc.fill();
+                jc.shadowBlur = 0;
+                jc.strokeStyle = 'rgba(0,220,255,0.85)'; jc.lineWidth = 1.2;
+                jc.stroke();
+                // 旋钮连接线
+                jc.strokeStyle = 'rgba(0,200,255,0.3)'; jc.lineWidth = 1;
+                jc.beginPath(); jc.moveTo(cx, cy); jc.lineTo(kx, ky); jc.stroke();
+            }
+        }
+
+        function updateCtrlSelection() {
+            document.querySelectorAll('.ctrl-btn').forEach(b => {
+                b.classList.toggle('selected', b.dataset.mode === controlMode);
+            });
         }
 
         // 触摸控制 - 手机大拇指拖动
@@ -1577,11 +1711,18 @@
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
             usingTouch = true;
+            if (controlMode === 'direct') {
+                // 跟随模式：记录触点位置
+                const { x, y } = toCanvasCoords(e.touches[0].clientX, e.touches[0].clientY);
+                mouseX = x; mouseY = y;
+                return;
+            }
+            // 摇杆模式：检测是否在摇杆区域
             const { bx, by } = getJoyCenter();
             for (const touch of e.changedTouches) {
                 const { x: tx, y: ty } = toCanvasCoords(touch.clientX, touch.clientY);
                 const dist = Math.hypot(tx - bx, ty - by);
-                if (!joyActive && dist < JOY_R * 2) { // 激活区稍大于底盘，好按
+                if (!joyActive && dist < JOY_R * 2) {
                     joyActive = true;
                     joyTouchId = touch.identifier;
                     const ddx = tx - bx, ddy = ty - by;
@@ -1594,6 +1735,11 @@
 
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
+            if (controlMode === 'direct') {
+                const { x, y } = toCanvasCoords(e.touches[0].clientX, e.touches[0].clientY);
+                mouseX = x; mouseY = y;
+                return;
+            }
             const { bx, by } = getJoyCenter();
             for (const touch of e.changedTouches) {
                 if (touch.identifier !== joyTouchId) continue;
@@ -1731,6 +1877,16 @@
         document.querySelectorAll('.plane-btn').forEach(b => {
             b.addEventListener('click', () => selectPlane(parseInt(b.dataset.plane)));
         });
+
+        // 控制方案按钮
+        document.querySelectorAll('.ctrl-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                controlMode = b.dataset.mode;
+                localStorage.setItem('thunderWarriorControl', controlMode);
+                updateCtrlSelection();
+            });
+        });
+
         // restartBtn is injected dynamically in gameOver(), listener added there
         
         // 游戏循环
@@ -1753,7 +1909,8 @@
             requestAnimationFrame(gameLoop);
         }
 
-        drawPreviews();
+        drawPreviews();       // 画飞机预览 + 控制图标
+        updateCtrlSelection(); // 根据 localStorage 初始化选中状态
         updateUI();
         requestAnimationFrame(gameLoop);
     </script>
