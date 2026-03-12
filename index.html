@@ -50,6 +50,13 @@
         #loginBtn { background: linear-gradient(180deg, #006, #009); border: 2px solid #0ff; color: #fff; padding: 10px 30px; cursor: pointer; border-radius: 5px; font-size: 16px; }
         #loginBtn:hover { box-shadow: 0 0 15px #0ff; }
         #bestScoreDisplay { color: #ff0; font-size: 14px; margin-top: 10px; }
+        #playerList { margin-top: 15px; text-align: left; max-height: 160px; overflow-y: auto; border-top: 1px solid #0ff3; padding-top: 10px; }
+        #playerList h3 { color: #0ff; font-size: 13px; margin-bottom: 6px; text-align: center; }
+        .player-record { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-radius: 4px; font-size: 12px; margin-bottom: 3px; background: rgba(255,255,255,0.05); }
+        .player-record .pr-rank { color: #ff0; width: 20px; }
+        .player-record .pr-name { color: #fff; flex: 1; margin-left: 4px; }
+        .player-record .pr-score { color: #0f0; font-weight: bold; }
+        .player-record .pr-count { color: #888; font-size: 11px; margin-left: 6px; }
     </style>
 </head>
 <body>
@@ -77,6 +84,7 @@
             <br>
             <button id="loginBtn">开始游戏</button>
             <div id="bestScoreDisplay"></div>
+            <div id="playerList"></div>
         </div>
         <div id="selectPanel">
             <h2>选择你的战机</h2>
@@ -830,6 +838,7 @@
                 localStorage.setItem('thunderWarriorBestScore', bestScore.toString());
                 localStorage.setItem('thunderWarriorBestPlayer', playerName || '匿名');
             }
+            savePlayerRecord(playerName || '匿名', score);
             document.getElementById('finalScore').textContent = score;
             document.getElementById('finalLevel').textContent = level;
             document.getElementById('gameOver').innerHTML = `
@@ -853,6 +862,7 @@
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('selectPanel').style.display = 'block';
             updateUI();
+            renderPlayerList();
         }
 
         function selectPlane(i) {
@@ -903,6 +913,43 @@
         // 默认隐藏选机面板，显示登录面板
         if (selectPanel) selectPanel.style.display = 'none';
         
+        // 玩家记录管理
+        function getPlayerRecords() {
+            try { return JSON.parse(localStorage.getItem('thunderWarriorPlayers') || '[]'); }
+            catch(e) { return []; }
+        }
+
+        function savePlayerRecord(name, score) {
+            const records = getPlayerRecords();
+            const existing = records.find(r => r.name === name);
+            if (existing) {
+                if (score > existing.bestScore) existing.bestScore = score;
+                existing.playCount = (existing.playCount || 1) + 1;
+                existing.lastPlayed = Date.now();
+            } else {
+                records.push({ name, bestScore: score, playCount: 1, lastPlayed: Date.now() });
+            }
+            records.sort((a, b) => b.bestScore - a.bestScore);
+            localStorage.setItem('thunderWarriorPlayers', JSON.stringify(records));
+        }
+
+        function renderPlayerList() {
+            const records = getPlayerRecords();
+            const el = document.getElementById('playerList');
+            if (!el) return;
+            if (records.length === 0) { el.innerHTML = ''; return; }
+            const medals = ['🥇','🥈','🥉'];
+            el.innerHTML = '<h3>参与玩家 (' + records.length + '人)</h3>' +
+                records.slice(0, 10).map((r, i) =>
+                    `<div class="player-record">
+                        <span class="pr-rank">${medals[i] || (i+1)}</span>
+                        <span class="pr-name">${r.name}</span>
+                        <span class="pr-score">${r.bestScore}</span>
+                        <span class="pr-count">${r.playCount}局</span>
+                    </div>`
+                ).join('');
+        }
+
         // 显示最高分
         function updateBestScoreDisplay() {
             if (bestScore > 0 && bestScoreDisplay) {
@@ -911,6 +958,7 @@
             }
         }
         updateBestScoreDisplay();
+        renderPlayerList();
         
         // 如果已有名字，自动填充
         if (playerName && playerNameInput) {
