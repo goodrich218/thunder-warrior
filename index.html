@@ -8,9 +8,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; display: flex; justify-content: center; align-items: flex-start; padding-top: 100px; min-height: 100vh; font-family: 'Microsoft YaHei', sans-serif; overflow: hidden; }
         #gameContainer { position: relative; }
-        #gameCanvas { 
-            border: 2px solid #0ff; 
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        #gameCanvas {
+            border: none;
             max-width: 100vw;
             max-height: 100vh;
             width: 100%;
@@ -531,7 +530,7 @@
         const JOY_SPEED = 6;    // 满杆时最大移速（px/帧）
         let joyActive = false, joyKnobDx = 0, joyKnobDy = 0, joyTouchId = null;
         let usingTouch = false; // 区分触控/鼠标模式
-        function getJoyCenter() { return { bx: JOY_R + 22, by: HEIGHT - JOY_R - 22 }; }
+        function getJoyCenter() { return { bx: WIDTH - JOY_R - 22, by: HEIGHT - JOY_R - 22 }; }
         // 独立XP系统：每级所需XP = 1000 + (level-1)*500
         // L1→L2: 1000 XP, L2→L3: 1500 XP, L3→L4: 2000 XP ...
         let levelXP = 0; // 当前等级已积累的XP（升级后归零）
