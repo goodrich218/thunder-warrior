@@ -569,7 +569,7 @@
         // ── 虚拟摇杆 ──
         const JOY_R = 58;       // 摇杆底盘半径（canvas像素）
         const JOY_KNOB_R = 24;  // 摇杆旋钮半径
-        const JOY_SPEED = 6;    // 满杆时最大移速（px/帧）
+        const JOY_SPEED = 4;    // 满杆时最大移速（px/帧）
         let joyActive = false, joyKnobDx = 0, joyKnobDy = 0, joyTouchId = null;
         let usingTouch = false; // 区分触控/鼠标模式
         function getJoyCenter() { return { bx: WIDTH - JOY_R - 22, by: HEIGHT - JOY_R - 22 }; }
