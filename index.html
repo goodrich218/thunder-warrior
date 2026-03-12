@@ -618,16 +618,79 @@
             // 绘制子弹
             player.bullets.forEach(b => {
                 if (b.isMissile) {
-                    // 导弹 - 更大的红色子弹
-                    ctx.fillStyle = '#FF4500';
+                    const angle = Math.atan2(b.vy, b.vx) + Math.PI / 2;
+                    const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 80);
+
+                    // 飞行轨迹拖尾
+                    for (let i = 1; i <= 6; i++) {
+                        const tx = b.x - b.vx * i * 1.8;
+                        const ty = b.y - b.vy * i * 1.8;
+                        const alpha = (1 - i / 7) * 0.55;
+                        const tr = (5 - i * 0.6);
+                        const tg = ctx.createRadialGradient(tx, ty, 0, tx, ty, tr);
+                        tg.addColorStop(0, `rgba(255,180,30,${alpha})`);
+                        tg.addColorStop(1, `rgba(255,60,0,0)`);
+                        ctx.fillStyle = tg;
+                        ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+                    }
+
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    ctx.rotate(angle);
+
+                    // 发动机尾焰（位于弹尾）
+                    const eg = ctx.createRadialGradient(0, 9, 0, 0, 9, 11 * pulse);
+                    eg.addColorStop(0, `rgba(255,255,180,${pulse})`);
+                    eg.addColorStop(0.4, `rgba(255,140,0,${pulse * 0.8})`);
+                    eg.addColorStop(1, 'rgba(255,30,0,0)');
+                    ctx.fillStyle = eg;
+                    ctx.beginPath(); ctx.arc(0, 9, 11 * pulse, 0, Math.PI * 2); ctx.fill();
+
+                    // 外层辉光
+                    ctx.shadowBlur = 14;
+                    ctx.shadowColor = '#FF5500';
+
+                    // 弹体（渐变金属感）
+                    const bg = ctx.createLinearGradient(-3, 0, 3, 0);
+                    bg.addColorStop(0, '#B71C1C');
+                    bg.addColorStop(0.35, '#FF5722');
+                    bg.addColorStop(0.65, '#FF3D00');
+                    bg.addColorStop(1, '#7F0000');
+                    ctx.fillStyle = bg;
                     ctx.beginPath();
-                    ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
+                    ctx.moveTo(0, -10);    // 弹头尖
+                    ctx.lineTo(2.5, -5);
+                    ctx.lineTo(2.5, 5);
+                    ctx.lineTo(0, 7);
+                    ctx.lineTo(-2.5, 5);
+                    ctx.lineTo(-2.5, -5);
+                    ctx.closePath();
                     ctx.fill();
-                    // 导弹尾焰
-                    ctx.fillStyle = '#FFD700';
+                    ctx.shadowBlur = 0;
+
+                    // 弹头高光
+                    ctx.fillStyle = 'rgba(255,210,160,0.65)';
                     ctx.beginPath();
-                    ctx.arc(b.x, b.y + 5, 3, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.moveTo(0, -10); ctx.lineTo(1.2, -5); ctx.lineTo(-1.2, -5);
+                    ctx.closePath(); ctx.fill();
+
+                    // 尾翼（左右各一）
+                    ctx.fillStyle = '#7F0000';
+                    ctx.beginPath(); ctx.moveTo(-2.5, 2); ctx.lineTo(-7, 7); ctx.lineTo(-2.5, 7); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(2.5, 2); ctx.lineTo(7, 7); ctx.lineTo(2.5, 7); ctx.closePath(); ctx.fill();
+
+                    // 前翼小翼刀
+                    ctx.fillStyle = '#C62828';
+                    ctx.beginPath(); ctx.moveTo(-2.5, -5); ctx.lineTo(-5.5, -1); ctx.lineTo(-2.5, -1); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(2.5, -5); ctx.lineTo(5.5, -1); ctx.lineTo(2.5, -1); ctx.closePath(); ctx.fill();
+
+                    // 红外导引头（弹头发光点）
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#FFEB3B';
+                    ctx.fillStyle = `rgba(255,235,59,${0.8 + 0.2 * pulse})`;
+                    ctx.beginPath(); ctx.arc(0, -8, 1.8, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.restore();
                 } else {
                     // 普通子弹
                     ctx.fillStyle = '#0ff';
