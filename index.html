@@ -178,18 +178,127 @@
             return UPGRADE_THRESHOLDS[Math.min(level - 1, UPGRADE_THRESHOLDS.length - 1)];
         }
 
-        // 绘制中国战机
+        // 绘制中国战机 - 歼-35隐身舰载战斗机（俯视图）
         function drawPlane(ctx, x, y, w, h, type) {
             ctx.save(); ctx.translate(x, y);
             const scale = w / 32; ctx.scale(scale, scale);
             const bw = 32, bh = 40;
-            ctx.fillStyle = type === 0 ? '#8B0000' : type === 1 ? '#800000' : type === 2 ? '#2F0000' : '#1A0000';
-            ctx.beginPath(); ctx.moveTo(bw/2, 0); ctx.lineTo(bw/2 + 5, bh - 5); ctx.lineTo(bw/2 - 5, bh - 5); ctx.fill();
-            ctx.fillStyle = type === 0 ? '#B22222' : type === 1 ? '#A52A2A' : type === 2 ? '#4A0000' : '#330000';
-            ctx.beginPath(); ctx.moveTo(bw/2 - 3, bh * 0.4); ctx.lineTo(0, bh * 0.7); ctx.lineTo(bw/2 - 3, bh * 0.6); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(bw/2 + 3, bh * 0.4); ctx.lineTo(bw, bh * 0.7); ctx.lineTo(bw/2 + 3, bh * 0.6); ctx.fill();
-            ctx.fillStyle = type === 0 ? '#00CED1' : type === 1 ? '#20B2AA' : type === 2 ? '#FFD700' : '#4169E1';
-            ctx.beginPath(); ctx.ellipse(bw/2, bh * 0.3, 3, 5, 0, 0, 6.28); ctx.fill();
+            const cx = bw / 2;
+
+            // 配色方案：type 0 = 歼-35钢铁灰隐身涂装
+            const schemes = [
+                { body: '#5A6470', bodyDark: '#404A55', wing: '#4A5460', wingTip: '#38424C',
+                  ridge: '#7A8A96', intake: '#2A3540', cockpit: '#0A1828', glow: 'rgba(255,140,0,0.85)' },
+                { body: '#8B1A1A', bodyDark: '#6B0A0A', wing: '#6B1010', wingTip: '#4A0808',
+                  ridge: '#B03030', intake: '#3A0808', cockpit: '#00CED1', glow: 'rgba(255,80,0,0.9)' },
+                { body: '#2A4A2A', bodyDark: '#1A3A1A', wing: '#1F3F1F', wingTip: '#162E16',
+                  ridge: '#4A7A4A', intake: '#142A14', cockpit: '#FFD700', glow: 'rgba(0,255,150,0.85)' },
+                { body: '#1A1A2A', bodyDark: '#0A0A1A', wing: '#14142A', wingTip: '#0A0A1A',
+                  ridge: '#3A3A6A', intake: '#080814', cockpit: '#4169E1', glow: 'rgba(100,180,255,0.9)' },
+            ];
+            const s = schemes[Math.min(type, 3)];
+
+            function poly(pts, color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(pts[0][0], pts[0][1]);
+                for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+                ctx.closePath(); ctx.fill();
+            }
+
+            // ── 主三角翼（歼-35大后掠角三角翼）──
+            // 左翼：大后掠，翼尖略截
+            poly([
+                [cx - 3, 10],   // 翼根前缘
+                [1,  27],        // 翼尖前缘
+                [3,  31],        // 翼尖后缘
+                [cx - 4, 31],   // 翼根后缘
+            ], s.wing);
+            // 右翼
+            poly([
+                [cx + 3, 10],
+                [bw - 1, 27],
+                [bw - 3, 31],
+                [cx + 4, 31],
+            ], s.wing);
+
+            // 翼尖深色
+            poly([[1, 27],[3, 31],[5, 29]], s.wingTip);
+            poly([[bw-1, 27],[bw-3, 31],[bw-5, 29]], s.wingTip);
+
+            // ── 后缘小平尾（全动尾翼）──
+            poly([
+                [cx - 4, 31],
+                [cx - 11, 39],
+                [cx - 6,  39],
+                [cx - 3,  33],
+            ], s.wing);
+            poly([
+                [cx + 4, 31],
+                [cx + 11, 39],
+                [cx + 6,  39],
+                [cx + 3,  33],
+            ], s.wing);
+
+            // ── 机身主体（流线尖头，宽扁隐身截面）──
+            poly([
+                [cx,      1],    // 机鼻尖
+                [cx + 4,  8],    // 右前肩
+                [cx + 6,  20],   // 右腹鼓
+                [cx + 5,  33],   // 右尾收窄
+                [cx + 2,  38],   // 右喷口边
+                [cx - 2,  38],   // 左喷口边
+                [cx - 5,  33],   // 左尾收窄
+                [cx - 6,  20],   // 左腹鼓
+                [cx - 4,  8],    // 左前肩
+            ], s.body);
+
+            // ── DSI鼓包进气道（两侧）──
+            poly([
+                [cx - 4,  12],
+                [cx - 8,  13],
+                [cx - 8,  21],
+                [cx - 5,  22],
+                [cx - 4,  18],
+            ], s.intake);
+            poly([
+                [cx + 4,  12],
+                [cx + 8,  13],
+                [cx + 8,  21],
+                [cx + 5,  22],
+                [cx + 4,  18],
+            ], s.intake);
+
+            // ── 脊线高光（隐身棱线）──
+            poly([
+                [cx,      2],
+                [cx + 2,  9],
+                [cx + 2,  30],
+                [cx,      34],
+                [cx - 2,  30],
+                [cx - 2,  9],
+            ], s.ridge);
+
+            // ── 座舱盖 ──
+            ctx.fillStyle = s.cockpit;
+            ctx.beginPath();
+            ctx.ellipse(cx, 9.5, 2.5, 4.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 座舱高光（反光）
+            ctx.fillStyle = 'rgba(200,230,255,0.35)';
+            ctx.beginPath();
+            ctx.ellipse(cx - 0.6, 7.8, 1.1, 2.2, -0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ── 双发尾喷口 ──
+            ctx.fillStyle = '#1A1A1A';
+            ctx.beginPath(); ctx.ellipse(cx - 2.2, 37, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(cx + 2.2, 37, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
+            // 发动机内焰芯
+            ctx.fillStyle = s.glow;
+            ctx.beginPath(); ctx.ellipse(cx - 2.2, 37, 1.2, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(cx + 2.2, 37, 1.2, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+
             ctx.restore();
         }
 
