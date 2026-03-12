@@ -193,338 +193,175 @@
             ctx.restore();
         }
 
-        // 绘制敌机 - 美国战斗机（参考真实外形）
+        // 绘制敌机 - 美国战斗机（炫酷版）
         function drawEnemy(ctx, x, y, w, h, t) {
             ctx.save(); ctx.translate(x, y); ctx.scale(w/40, h/40);
-            
-            // 美国空军灰/银色
-            const bodyColor = '#9CA3AF'; // 银灰色
-            const wingColor = '#6B7280'; // 深灰
-            const cockpitColor = '#60A5FA'; // 蓝色座舱
-            const engineColor = '#1F2937'; // 深黑发动机
-            
-            // 常见绘制函数
-            function drawTriangle(p1, p2, p3, color) {
+
+            const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 200);
+
+            function poly(pts, color) {
                 ctx.fillStyle = color;
                 ctx.beginPath();
-                ctx.moveTo(p1[0], p1[1]);
-                ctx.lineTo(p2[0], p2[1]);
-                ctx.lineTo(p3[0], p3[1]);
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(pts[0][0], pts[0][1]);
+                for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+                ctx.closePath(); ctx.fill();
+            }
+            function gradBody(pts, x1, y1, x2, y2, c1, c2) {
+                const g = ctx.createLinearGradient(x1, y1, x2, y2);
+                g.addColorStop(0, c1); g.addColorStop(1, c2);
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.moveTo(pts[0][0], pts[0][1]);
+                for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+                ctx.closePath(); ctx.fill();
+            }
+            function exhaust(ex, ey, r, c1, c2) {
+                c1 = c1 || 'rgba(255,220,100,';
+                c2 = c2 || 'rgba(255,80,0,';
+                const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, r);
+                g.addColorStop(0, c1 + pulse + ')');
+                g.addColorStop(0.5, c2 + (pulse*0.7) + ')');
+                g.addColorStop(1, 'rgba(255,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = `rgba(255,255,220,${pulse})`;
+                ctx.beginPath(); ctx.arc(ex, ey, r*0.3, 0, Math.PI*2); ctx.fill();
+            }
+            function cockpitGlow(cx, cy, rx, ry, c, gc) {
+                ctx.shadowBlur = 10; ctx.shadowColor = gc;
+                ctx.fillStyle = c;
+                ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            function wingTipLight(lx, ly, rx, ry) {
+                ctx.fillStyle = `rgba(255,60,60,${pulse})`;
+                ctx.beginPath(); ctx.arc(lx, ly, 1.2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = `rgba(60,255,60,${pulse})`;
+                ctx.beginPath(); ctx.arc(rx, ry, 1.2, 0, Math.PI*2); ctx.fill();
             }
             
-            if (t === 0) { // F-16 Fighting Falcon (战隼)
-                // 标志性单发、三角翼、气泡座舱
-                // 机身 - 下粗上细的流线型
-                ctx.fillStyle = bodyColor;
-                ctx.beginPath();
-                ctx.moveTo(20, 2);   // 机头
-                ctx.lineTo(25, 15);
-                ctx.lineTo(24, 38);
-                ctx.lineTo(20, 40);
-                ctx.lineTo(16, 38);
-                ctx.lineTo(15, 15);
-                ctx.closePath();
-                ctx.fill();
-                
-                // 三角主翼 - 宽基三角翼
-                ctx.fillStyle = wingColor;
-                drawTriangle([20, 18], [0, 30], [15, 26], wingColor);  // 左翼
-                drawTriangle([20, 18], [40, 30], [25, 26], wingColor); // 右翼
-                
-                // 尾翼 - 水平尾翼
-                drawTriangle([20, 32], [12, 38], [18, 36], '#4B5563');
-                drawTriangle([20, 32], [28, 38], [22, 36], '#4B5563');
-                
-                // 腹鳍 - F-16特征
-                drawTriangle([20, 28], [17, 36], [20, 34], '#374151');
-                
-                // 气泡座舱 - 标志性特征
-                ctx.fillStyle = cockpitColor;
-                ctx.beginPath();
-                ctx.ellipse(20, 12, 3, 6, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 进气口
-                ctx.fillStyle = '#374151';
-                ctx.fillRect(16, 20, 3, 4);
-                ctx.fillRect(21, 20, 3, 4);
+            if (t === 0) { // F-16 战隼 - 轻型，青色高亮
+                gradBody([[20,1],[24,8],[25,36],[20,40],[15,36],[16,8]], 0,20,40,20, '#B0BEC5','#546E7A');
+                poly([[20,16],[1,32],[15,27]], '#607D8B');
+                poly([[20,16],[39,32],[25,27]], '#607D8B');
+                poly([[20,16],[1,32],[3,29]], '#90A4AE'); // 前缘高光
+                poly([[20,16],[39,32],[37,29]], '#90A4AE');
+                poly([[18,32],[10,39],[16,37]], '#37474F');
+                poly([[22,32],[30,39],[24,37]], '#37474F');
+                poly([[20,27],[17,36],[23,36]], '#263238'); // 腹鳍
+                ctx.fillStyle = '#1A237E'; ctx.fillRect(16,19,3,5); ctx.fillRect(21,19,3,5); // 进气口
+                cockpitGlow(20, 11, 2.8, 5.5, '#80DEEA', '#00BCD4');
+                exhaust(20, 41, 6);
+                wingTipLight(1.5, 32, 38.5, 32);
             }
-            else if (t === 1) { // F-15 Eagle (鹰式)
-                // 双发、双垂尾、大型边条翼
-                // 机身 - 更粗壮
-                ctx.fillStyle = bodyColor;
-                ctx.beginPath();
-                ctx.moveTo(20, 2);
-                ctx.lineTo(26, 12);
-                ctx.lineTo(28, 38);
-                ctx.lineTo(24, 40);
-                ctx.lineTo(20, 38);
-                ctx.lineTo(16, 40);
-                ctx.lineTo(12, 38);
-                ctx.lineTo(14, 12);
-                ctx.closePath();
-                ctx.fill();
-                
-                // 大型梯形翼
-                ctx.fillStyle = wingColor;
-                drawTriangle([18, 14], [-2, 28], [14, 26], wingColor);
-                drawTriangle([22, 14], [42, 28], [26, 26], wingColor);
-                
-                // 双垂直尾翼 - F-15标志性特征
-                ctx.fillStyle = '#4B5563';
-                drawTriangle([14, 22], [8, 38], [14, 34], '#4B5563');  // 左垂尾
-                drawTriangle([26, 22], [32, 38], [26, 34], '#4B5563');  // 右垂尾
-                
-                // 水平尾翼
-                drawTriangle([18, 32], [10, 38], [16, 36], '#374151');
-                drawTriangle([22, 32], [30, 38], [24, 36], '#374151');
-                
-                // 双发喷口
-                ctx.fillStyle = '#DC2626';
-                ctx.fillRect(14, 38, 4, 2);
-                ctx.fillRect(22, 38, 4, 2);
-                
-                // 座舱
-                ctx.fillStyle = cockpitColor;
-                ctx.beginPath();
-                ctx.ellipse(20, 10, 3.5, 5, 0, 0, Math.PI * 2);
-                ctx.fill();
+            else if (t === 1) { // F-15 鹰 - 中型，双发橙焰
+                gradBody([[20,1],[26,10],[28,36],[24,40],[20,38],[16,40],[12,36],[14,10]], 0,20,40,20, '#CFD8DC','#607D8B');
+                poly([[18,12],[-2,30],[12,27]], '#546E7A');
+                poly([[22,12],[42,30],[28,27]], '#546E7A');
+                poly([[18,12],[-2,30],[-1,26]], '#90A4AE');
+                poly([[22,12],[42,30],[41,26]], '#90A4AE');
+                poly([[14,20],[8,38],[14,34]], '#37474F'); // 双垂尾
+                poly([[26,20],[32,38],[26,34]], '#37474F');
+                poly([[17,30],[10,38],[15,36]], '#263238');
+                poly([[23,30],[30,38],[25,36]], '#263238');
+                cockpitGlow(20, 9, 3.2, 5, '#90CAF9', '#1565C0');
+                exhaust(15, 41, 5); exhaust(25, 41, 5);
+                wingTipLight(-1, 30, 41, 30);
             }
-            else if (t === 2) { // F/A-18 Hornet (大黄蜂)
-                // 双发、边条翼、外倾双垂尾
-                // 机身
-                ctx.fillStyle = bodyColor;
-                ctx.beginPath();
-                ctx.moveTo(20, 2);
-                ctx.lineTo(25, 10);
-                ctx.lineTo(27, 38);
-                ctx.lineTo(20, 40);
-                ctx.lineTo(13, 38);
-                ctx.lineTo(15, 10);
-                ctx.closePath();
-                ctx.fill();
-                
-                // 边条翼 - 从机头延伸到翼根
-                ctx.fillStyle = wingColor;
-                drawTriangle([20, 8], [8, 22], [14, 20], wingColor);
-                drawTriangle([20, 8], [32, 22], [26, 20], wingColor);
-                
-                // 主翼 - 后掠翼，翼尖可折叠
-                drawTriangle([16, 18], [2, 32], [14, 28], wingColor);
-                drawTriangle([24, 18], [38, 32], [26, 28], wingColor);
-                
-                // 翼尖折叠部分（斜切）
-                drawTriangle([2, 28], [0, 32], [4, 30], '#374151');
-                drawTriangle([38, 28], [40, 32], [36, 30], '#374151');
-                
-                // 外倾双垂尾 - F-18特征
-                ctx.fillStyle = '#4B5563';
-                drawTriangle([14, 24], [10, 38], [16, 34], '#4B5563');  // 左垂尾外倾
-                drawTriangle([26, 24], [30, 38], [24, 34], '#4B5563');  // 右垂尾外倾
-                
-                // 水平尾翼
-                drawTriangle([18, 32], [12, 38], [18, 36], '#374151');
-                drawTriangle([22, 32], [28, 38], [22, 36], '#374151');
-                
-                // 座舱
-                ctx.fillStyle = cockpitColor;
-                ctx.beginPath();
-                ctx.ellipse(20, 8, 3, 4.5, 0, 0, Math.PI * 2);
-                ctx.fill();
+            else if (t === 2) { // F/A-18 大黄蜂 - 中型，绿色翼尖
+                gradBody([[20,1],[25,9],[27,36],[20,40],[13,36],[15,9]], 0,20,40,20, '#B0BEC5','#4A5568');
+                poly([[20,6],[7,20],[14,18]], '#78909C'); // LEX边条翼
+                poly([[20,6],[33,20],[26,18]], '#78909C');
+                poly([[15,18],[1,32],[13,28]], '#546E7A');
+                poly([[25,18],[39,32],[27,28]], '#546E7A');
+                poly([[4,29],[1,32],[5,31]], '#37474F'); // 翼尖折叠
+                poly([[36,29],[39,32],[35,31]], '#37474F');
+                poly([[14,22],[8,39],[14,34]], '#37474F'); // 外倾双垂尾
+                poly([[26,22],[32,39],[26,34]], '#37474F');
+                poly([[17,32],[11,38],[16,36]], '#263238');
+                poly([[23,32],[29,38],[24,36]], '#263238');
+                cockpitGlow(20, 7, 2.5, 4.5, '#A5F3FC', '#06B6D4');
+                exhaust(15, 40, 4); exhaust(25, 40, 4);
+                wingTipLight(1, 32, 39, 32);
             }
-            else if (t === 3) { // F-22 Raptor (猛禽)
-                // 隐身设计：菱形翼、倾斜尾翼、内置弹舱
-                // 机身 - 多边形隐身外形
-                ctx.fillStyle = '#374151'; // 更深灰色
-                ctx.beginPath();
-                ctx.moveTo(20, 2);
-                ctx.lineTo(23, 8);
-                ctx.lineTo(25, 20);
-                ctx.lineTo(24, 36);
-                ctx.lineTo(20, 40);
-                ctx.lineTo(16, 36);
-                ctx.lineTo(15, 20);
-                ctx.lineTo(17, 8);
-                ctx.closePath();
-                ctx.fill();
-                
-                // 菱形主翼 - 隐身特征
-                ctx.fillStyle = '#1F2937';
-                drawTriangle([20, 14], [4, 24], [14, 28], '#1F2937');   // 左翼
-                drawTriangle([20, 14], [36, 24], [26, 28], '#1F2937');  // 右翼
-                
-                // 翼根延伸
-                drawTriangle([18, 12], [10, 20], [16, 22], '#1F2937');
-                drawTriangle([22, 12], [30, 20], [24, 22], '#1F2937');
-                
-                // 倾斜双垂尾 - F-22标志性特征
-                ctx.fillStyle = '#111827';
-                drawTriangle([14, 20], [8, 36], [14, 32], '#111827');   // 左垂尾外倾
-                drawTriangle([26, 20], [32, 36], [26, 32], '#111827');  // 右垂尾外倾
-                
-                // 矢量喷口 - 方形特征
-                ctx.fillStyle = '#DC2626';
-                ctx.fillRect(14, 38, 3, 2);
-                ctx.fillRect(23, 38, 3, 2);
-                
-                // 镀金座舱盖
-                ctx.fillStyle = '#D97706';
-                ctx.beginPath();
-                ctx.ellipse(20, 6, 2.5, 4, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 隐身进气口边缘
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 0.5;
-                ctx.beginPath();
-                ctx.moveTo(16, 14);
-                ctx.lineTo(18, 22);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(24, 14);
-                ctx.lineTo(22, 22);
-                ctx.stroke();
+            else if (t === 3) { // F-22 猛禽 - 重型隐身，蓝焰
+                gradBody([[20,1],[23,7],[26,20],[25,36],[20,40],[15,36],[14,20],[17,7]], 0,0,40,40, '#374151','#111827');
+                poly([[20,12],[4,24],[12,28]], '#1F2937');
+                poly([[20,12],[36,24],[28,28]], '#1F2937');
+                poly([[12,28],[4,24],[7,30]], '#111827');
+                poly([[28,28],[36,24],[33,30]], '#111827');
+                poly([[14,20],[6,36],[13,32]], '#0F172A'); // 倾斜双垂尾
+                poly([[26,20],[34,36],[27,32]], '#0F172A');
+                cockpitGlow(20, 6, 2.5, 4.5, '#FDE68A', '#D97706'); // 镀金座舱
+                ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.5;
+                ctx.beginPath(); ctx.moveTo(17,8); ctx.lineTo(15,22); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(23,8); ctx.lineTo(25,22); ctx.stroke();
+                exhaust(15, 40, 5, 'rgba(150,200,255,', 'rgba(80,130,255,');
+                exhaust(25, 40, 5, 'rgba(150,200,255,', 'rgba(80,130,255,');
+                ctx.fillStyle = '#374151'; ctx.fillRect(4,23,3,2); ctx.fillRect(33,23,3,2); // ECM吊舱
+                wingTipLight(5, 24, 35, 24);
             }
-            else if (t === 4) { // F-35 Lightning II (闪电II)
-                // 单发、DSI进气道、倾斜尾翼
-                ctx.fillStyle = '#64748B'; // 蓝灰色
-                ctx.beginPath();
-                ctx.moveTo(20, 2);
-                ctx.lineTo(23, 12);
-                ctx.lineTo(24, 20);
-                ctx.lineTo(23, 34);
-                ctx.lineTo(20, 40);
-                ctx.lineTo(17, 34);
-                ctx.lineTo(16, 20);
-                ctx.lineTo(17, 12);
-                ctx.closePath();
-                ctx.fill();
-                
-                // 后掠翼
-                ctx.fillStyle = '#475569';
-                drawTriangle([20, 16], [2, 28], [16, 26], '#475569');
-                drawTriangle([20, 16], [38, 28], [24, 26], '#475569');
-                
-                // DSI进气道鼓包
-                ctx.fillStyle = '#334155';
-                ctx.beginPath();
-                ctx.ellipse(17, 14, 2.5, 3.5, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(23, 14, 2.5, 3.5, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 倾斜垂尾
-                ctx.fillStyle = '#1E293B';
-                drawTriangle([15, 24], [10, 38], [16, 34], '#1E293B');
-                drawTriangle([25, 24], [30, 38], [24, 34], '#1E293B');
-                
-                // 单发喷口
-                ctx.fillStyle = '#DC2626';
-                ctx.fillRect(17, 38, 6, 2);
-                
-                // 金色座舱
-                ctx.fillStyle = '#FBBF24';
-                ctx.beginPath();
-                ctx.ellipse(20, 8, 2, 4, 0, 0, Math.PI * 2);
-                ctx.fill();
+            else if (t === 4) { // F-35 闪电II - 重型单发，金座舱
+                gradBody([[20,1],[23,11],[24,20],[23,34],[20,40],[17,34],[16,20],[17,11]], 0,0,40,40, '#94A3B8','#334155');
+                poly([[20,15],[2,30],[15,27]], '#475569');
+                poly([[20,15],[38,30],[25,27]], '#475569');
+                poly([[20,15],[2,30],[4,27]], '#64748B');
+                poly([[20,15],[38,30],[36,27]], '#64748B');
+                ctx.fillStyle = '#64748B';
+                ctx.beginPath(); ctx.ellipse(16,13,3,4,0,0,Math.PI*2); ctx.fill(); // DSI进气道
+                ctx.beginPath(); ctx.ellipse(24,13,3,4,0,0,Math.PI*2); ctx.fill();
+                poly([[15,24],[9,38],[15,34]], '#1E293B');
+                poly([[25,24],[31,38],[25,34]], '#1E293B');
+                ctx.strokeStyle = '#1E293B'; ctx.lineWidth = 0.5; ctx.strokeRect(17,20,6,10); // 内置弹舱线
+                cockpitGlow(20, 7, 2, 4, '#FCD34D', '#F59E0B');
+                exhaust(20, 41, 7);
+                wingTipLight(2, 30, 38, 30);
             }
-            else if (t === 5) { // F/A-18E Super Hornet (超级大黄蜂)
-                // 双发、边条翼、翼尖导弹
-                ctx.fillStyle = '#9CA3AF';
-                ctx.beginPath();
-                ctx.moveTo(20, 2);
-                ctx.lineTo(26, 12);
-                ctx.lineTo(28, 38);
-                ctx.lineTo(24, 40);
-                ctx.lineTo(20, 38);
-                ctx.lineTo(16, 40);
-                ctx.lineTo(12, 38);
-                ctx.lineTo(14, 12);
-                ctx.closePath();
-                ctx.fill();
-                
-                // 大边条翼
-                ctx.fillStyle = '#6B7280';
-                drawTriangle([20, 10], [6, 24], [14, 22], '#6B7280');
-                drawTriangle([20, 10], [34, 24], [26, 22], '#6B7280');
-                
-                // 主翼
-                drawTriangle([16, 18], [0, 30], [14, 28], '#6B7280');
-                drawTriangle([24, 18], [40, 30], [26, 28], '#6B7280');
-                
-                // 翼尖挂载导弹
-                ctx.fillStyle = '#374151';
-                ctx.fillRect(0, 28, 4, 2);
-                ctx.fillRect(36, 28, 4, 2);
-                
-                // 外倾双垂尾
-                ctx.fillStyle = '#4B5563';
-                drawTriangle([14, 24], [8, 38], [14, 34], '#4B5563');
-                drawTriangle([26, 24], [32, 38], [26, 34], '#4B5563');
-                
-                // 双发
-                ctx.fillStyle = '#1F2937';
-                ctx.fillRect(13, 36, 5, 4);
-                ctx.fillRect(18, 36, 5, 4);
-                
-                // 座舱
-                ctx.fillStyle = '#60A5FA';
-                ctx.beginPath();
-                ctx.ellipse(20, 8, 3, 5, 0, 0, Math.PI * 2);
-                ctx.fill();
+            else if (t === 5) { // F/A-18E 超级大黄蜂 - 重型，矩形进气口
+                gradBody([[20,1],[27,11],[29,36],[24,40],[20,38],[16,40],[11,36],[13,11]], 0,0,40,40, '#B0BEC5','#546E7A');
+                poly([[20,8],[5,22],[13,20]], '#78909C'); // 大LEX
+                poly([[20,8],[35,22],[27,20]], '#78909C');
+                poly([[14,18],[-1,32],[12,29]], '#546E7A');
+                poly([[26,18],[41,32],[28,29]], '#546E7A');
+                ctx.fillStyle = '#1C313A'; ctx.fillRect(13,14,5,7); ctx.fillRect(22,14,5,7); // 矩形进气口
+                poly([[13,23],[6,38],[13,34]], '#37474F');
+                poly([[27,23],[34,38],[27,34]], '#37474F');
+                ctx.fillStyle = '#263238'; ctx.fillRect(-2,29,4,3); ctx.fillRect(38,29,4,3); // 翼尖导弹
+                cockpitGlow(20, 8, 3, 5, '#93C5FD', '#3B82F6');
+                exhaust(14, 41, 5); exhaust(26, 41, 5);
+                wingTipLight(-1, 32, 41, 32);
             }
-            else if (t === 6) { // B-2 Spirit (幽灵) - 终极BOSS轰炸机
-                // 飞翼设计，无尾翼
-                ctx.fillStyle = '#1F2937'; // 深黑
-                // 整体飞翼形状
+            else if (t === 6) { // B-2 幽灵 - BOSS，紫色脉冲
+                ctx.shadowBlur = 20; ctx.shadowColor = '#7C3AED';
+                ctx.fillStyle = '#0F172A';
                 ctx.beginPath();
-                ctx.moveTo(20, 5);
-                ctx.quadraticCurveTo(40, 15, 38, 25);
-                ctx.quadraticCurveTo(35, 35, 30, 38);
+                ctx.moveTo(20, 4);
+                ctx.bezierCurveTo(32,8, 42,16, 40,26);
+                ctx.bezierCurveTo(38,32, 32,36, 30,38);
                 ctx.lineTo(10, 38);
-                ctx.quadraticCurveTo(5, 35, 2, 25);
-                ctx.quadraticCurveTo(0, 15, 20, 5);
-                ctx.fill();
-                
-                // 锯齿状后缘
-                ctx.fillStyle = '#0F172A';
+                ctx.bezierCurveTo(8,36, 2,32, 0,26);
+                ctx.bezierCurveTo(-2,16, 8,8, 20,4);
+                ctx.fill(); ctx.shadowBlur = 0;
+                // 锯齿后缘
+                ctx.fillStyle = '#1E1B4B';
                 ctx.beginPath();
-                ctx.moveTo(5, 30);
-                ctx.lineTo(12, 35);
-                ctx.lineTo(20, 30);
-                ctx.lineTo(28, 35);
-                ctx.lineTo(35, 30);
-                ctx.closePath();
-                ctx.fill();
-                
+                [4,8,12,16,20,24,28,32,36].forEach((sx,i) => i===0 ? ctx.moveTo(sx,30) : ctx.lineTo(sx, i%2===0?30:37));
+                ctx.lineTo(36,28); ctx.lineTo(4,28); ctx.closePath(); ctx.fill();
+                // 面板线
+                ctx.strokeStyle = '#312E81'; ctx.lineWidth = 0.6;
+                [[20,4],[20,28]].reduce((a,b)=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();return b;});
+                ctx.beginPath(); ctx.moveTo(20,4); ctx.lineTo(4,26); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(20,4); ctx.lineTo(36,26); ctx.stroke();
                 // 座舱
-                ctx.fillStyle = '#374151';
-                ctx.beginPath();
-                ctx.ellipse(20, 15, 4, 2, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 发动机进气口
-                ctx.fillStyle = '#0F172A';
-                ctx.beginPath();
-                ctx.ellipse(12, 22, 3, 2, 0.3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(28, 22, 3, 2, -0.3, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // 发动机喷口光
-                ctx.fillStyle = '#DC2626';
-                ctx.beginPath();
-                ctx.ellipse(10, 28, 2, 1, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(30, 28, 2, 1, 0, 0, Math.PI * 2);
-                ctx.fill();
+                cockpitGlow(20, 15, 5, 3, '#1F2937', '#4C1D95');
+                // 四发紫色脉冲喷口
+                [10,16,24,30].forEach(ex => exhaust(ex, 30, 4, 'rgba(200,180,255,', 'rgba(139,92,246,'));
+                // 警告灯
+                ctx.fillStyle = `rgba(239,68,68,${pulse})`;
+                ctx.beginPath(); ctx.arc(3,24,1.5,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(37,24,1.5,0,Math.PI*2); ctx.fill();
             }
-            
+
             ctx.restore();
         }
 
