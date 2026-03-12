@@ -361,6 +361,84 @@
         .player-record .pr-score { color: #00e5ff; font-weight: bold; }
         .player-record .pr-count { color: rgba(255,255,255,0.28); font-size: 10px; margin-left: 6px; }
         .login-footer { font-size: 7px; letter-spacing: 3px; color: rgba(255,255,255,0.1); text-transform: uppercase; position: relative; z-index: 1; }
+        /* ── 角色管理面板 & 积分商城 ── */
+        #characterPanel, #shopPanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            color: #fff; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow-y: auto; padding: 20px 0;
+        }
+        #characterPanel {
+            background: linear-gradient(160deg, #02071a 0%, #060918 60%, #080514 100%);
+        }
+        #characterPanel::before, #shopPanel::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,100,255,0.012) 3px, rgba(0,100,255,0.012) 6px);
+        }
+        #shopPanel {
+            background: linear-gradient(160deg, #020a14 0%, #060c14 60%, #07040e 100%);
+        }
+        .char-header { text-align: center; position: relative; z-index: 1; margin-bottom: 18px; }
+        .char-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(0,229,255,0.45); margin-bottom: 8px; }
+        .char-name { font-size: 26px; font-weight: 900; letter-spacing: 4px; color: #fff; margin: 0 0 4px; filter: drop-shadow(0 0 10px rgba(0,229,255,0.4)); }
+        .char-line { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, #00e5ff, transparent); margin: 8px auto 0; }
+        .char-stats-box {
+            position: relative; z-index: 1; width: 280px;
+            background: rgba(0,229,255,0.04); border: 1px solid rgba(0,229,255,0.18);
+            border-radius: 10px; padding: 14px 20px; margin-bottom: 14px;
+        }
+        .char-stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px;
+        }
+        .char-stat-row:last-child { border-bottom: none; }
+        .char-stat-label { color: rgba(255,255,255,0.45); letter-spacing: 1px; font-size: 11px; }
+        .char-stat-value { color: #FFD740; font-weight: bold; font-size: 15px; }
+        .char-equip-section { position: relative; z-index: 1; width: 280px; margin-bottom: 18px; }
+        .char-equip-title { font-size: 8px; letter-spacing: 5px; text-transform: uppercase; color: rgba(0,229,255,0.4); margin-bottom: 10px; text-align: center; }
+        .equip-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin-bottom: 8px; }
+        .equip-item.owned { border-color: rgba(255,215,0,0.35); background: rgba(255,215,0,0.05); }
+        .equip-item.not-owned { opacity: 0.45; }
+        .equip-icon { font-size: 22px; width: 36px; text-align: center; }
+        .equip-info { flex: 1; }
+        .equip-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+        .equip-desc { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+        .equip-status { font-size: 10px; font-weight: bold; white-space: nowrap; }
+        .equip-status.yes { color: #00E676; }
+        .equip-status.no { color: rgba(255,255,255,0.25); }
+        .char-btns { display: flex; gap: 12px; position: relative; z-index: 1; }
+        .char-btn-primary { padding: 12px 28px; background: linear-gradient(90deg, rgba(0,40,100,0.9), rgba(0,80,160,0.7), rgba(0,40,100,0.9)); border: 1px solid rgba(0,229,255,0.45); color: #e0f8ff; cursor: pointer; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-family: inherit; border-radius: 6px; transition: all 0.2s; }
+        .char-btn-primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.3); border-color: rgba(0,229,255,0.8); }
+        .char-btn-secondary { padding: 12px 22px; background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.3); color: #FFD740; cursor: pointer; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; border-radius: 6px; transition: all 0.2s; }
+        .char-btn-secondary:hover { box-shadow: 0 0 16px rgba(255,215,0,0.2); border-color: rgba(255,215,0,0.7); background: rgba(255,215,0,0.1); }
+        /* ── 积分兑换商城 ── */
+        .shop-header { text-align: center; position: relative; z-index: 1; margin-bottom: 14px; }
+        .shop-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(255,215,0,0.5); margin-bottom: 8px; }
+        .shop-title { font-size: 22px; font-weight: 900; letter-spacing: 4px; color: #fff; margin: 0 0 4px; }
+        .shop-line { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, #FFD740, transparent); margin: 8px auto 0; }
+        .shop-points-bar { position: relative; z-index: 1; width: 280px; background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.25); border-radius: 8px; padding: 12px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .shop-points-label { font-size: 10px; letter-spacing: 3px; color: rgba(255,215,0,0.5); text-transform: uppercase; }
+        .shop-points-value { font-size: 20px; font-weight: bold; color: #FFD740; }
+        .shop-item-card { position: relative; z-index: 1; width: 280px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px; }
+        .shop-item-card.can-afford { border-color: rgba(255,215,0,0.3); }
+        .shop-item-card.already-owned { border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.04); }
+        .shop-item-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .shop-item-icon { font-size: 28px; }
+        .shop-item-name { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
+        .shop-item-desc { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+        .shop-item-footer { display: flex; justify-content: space-between; align-items: center; }
+        .shop-item-cost { font-size: 13px; color: #FFD740; font-weight: bold; }
+        .shop-buy-btn { padding: 7px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-family: inherit; border-radius: 5px; cursor: pointer; transition: all 0.2s; border: 1px solid; }
+        .shop-buy-btn.can-buy { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.5); color: #FFD740; }
+        .shop-buy-btn.can-buy:hover { background: rgba(255,215,0,0.22); box-shadow: 0 0 14px rgba(255,215,0,0.25); border-color: #FFD740; }
+        .shop-buy-btn.owned { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.4); color: #00E676; cursor: default; }
+        .shop-buy-btn.cant-afford { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.25); cursor: not-allowed; }
+        .shop-back-btn { position: relative; z-index: 1; margin-top: 6px; padding: 10px 26px; background: transparent; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; border-radius: 5px; transition: all 0.2s; }
+        .shop-back-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
+        /* ── 跟踪导弹锁定状态 ── */
+        .skill-card.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; filter: grayscale(0.5); }
+        .skill-card.locked .sc-name::after { content: ' 🔒'; font-size: 11px; }
+        .skill-locked-hint { font-size: 9px; color: rgba(255,200,0,0.6); margin-top: 4px; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -482,6 +560,67 @@
                 </div>
             </div>
         </div>
+        <!-- ── 角色管理面板 ── -->
+        <div id="characterPanel" style="display:none">
+            <div class="char-header">
+                <div class="char-badge">Thunder Warrior · 角色档案</div>
+                <div class="char-name" id="charNameDisplay">战机飞行员</div>
+                <div class="char-line"></div>
+            </div>
+            <div class="char-stats-box">
+                <div class="char-stat-row">
+                    <span class="char-stat-label">累计积分</span>
+                    <span class="char-stat-value" id="charTotalPoints">0</span>
+                </div>
+                <div class="char-stat-row">
+                    <span class="char-stat-label">历史最高</span>
+                    <span class="char-stat-value" id="charBestScore" style="color:#00E5FF">0</span>
+                </div>
+            </div>
+            <div class="char-equip-section">
+                <div class="char-equip-title">拥有装备</div>
+                <div class="equip-item not-owned" id="charMissileEquip">
+                    <div class="equip-icon">🎯</div>
+                    <div class="equip-info">
+                        <div class="equip-name">跟踪弹</div>
+                        <div class="equip-desc">自动锁定追踪敌机，购买后可在升级时选择跟踪导弹</div>
+                    </div>
+                    <div class="equip-status no" id="charMissileStatus">未拥有</div>
+                </div>
+            </div>
+            <div class="char-btns">
+                <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
+                <button class="char-btn-secondary" id="charShopBtn">积分兑换</button>
+            </div>
+        </div>
+
+        <!-- ── 积分兑换商城 ── -->
+        <div id="shopPanel" style="display:none">
+            <div class="shop-header">
+                <div class="shop-badge">Equipment Store · 装备商城</div>
+                <div class="shop-title">积分兑换</div>
+                <div class="shop-line"></div>
+            </div>
+            <div class="shop-points-bar">
+                <span class="shop-points-label">当前积分</span>
+                <span class="shop-points-value" id="shopPoints">0</span>
+            </div>
+            <div class="shop-item-card" id="shopMissileCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">🎯</div>
+                    <div>
+                        <div class="shop-item-name">跟踪弹</div>
+                        <div class="shop-item-desc">自动锁定并追踪敌机<br>购买后升级时可解锁跟踪导弹技能</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost">10,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopMissileBuyBtn">购买</button>
+                </div>
+            </div>
+            <button class="shop-back-btn" id="shopBackBtn">← 返回角色</button>
+        </div>
+
         <div id="skillPanel">
             <div class="sp-label">战机强化系统</div>
             <div class="sp-title">等级提升 <em id="spLevelNext">2</em></div>
@@ -577,6 +716,81 @@
         // 独立XP系统：每级所需XP = 1000 + (level-1)*500
         // L1→L2: 1000 XP, L2→L3: 1500 XP, L3→L4: 2000 XP ...
         let levelXP = 0; // 当前等级已积累的XP（升级后归零）
+
+        // ── 养成系统：玩家账户管理 ──
+        let currentAccount = null;
+
+        function loadAccount(name) {
+            try {
+                const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
+                if (data) return data;
+            } catch(e) {}
+            return { totalPoints: 0, equipment: { trackingMissile: false } };
+        }
+
+        function saveAccount() {
+            if (!currentAccount || !playerName) return;
+            localStorage.setItem('thunderWarriorAccount_' + playerName, JSON.stringify(currentAccount));
+        }
+
+        function showCharacterPanel() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('controlPanel').style.display = 'none';
+            document.getElementById('selectPanel').style.display = 'none';
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('shopPanel').style.display = 'none';
+            document.getElementById('charNameDisplay').textContent = playerName || '战机飞行员';
+            document.getElementById('charTotalPoints').textContent = (currentAccount.totalPoints || 0).toLocaleString();
+            document.getElementById('charBestScore').textContent = bestScore.toLocaleString();
+            const hasMissile = currentAccount.equipment && currentAccount.equipment.trackingMissile;
+            const missileEquip = document.getElementById('charMissileEquip');
+            const missileStatus = document.getElementById('charMissileStatus');
+            if (hasMissile) {
+                missileEquip.className = 'equip-item owned';
+                missileStatus.textContent = '✓ 已拥有';
+                missileStatus.className = 'equip-status yes';
+            } else {
+                missileEquip.className = 'equip-item not-owned';
+                missileStatus.textContent = '未拥有';
+                missileStatus.className = 'equip-status no';
+            }
+            document.getElementById('characterPanel').style.display = 'flex';
+        }
+
+        function showShopPanel() {
+            document.getElementById('characterPanel').style.display = 'none';
+            updateShopPanel();
+            document.getElementById('shopPanel').style.display = 'flex';
+        }
+
+        function updateShopPanel() {
+            document.getElementById('shopPoints').textContent = (currentAccount.totalPoints || 0).toLocaleString();
+            const hasMissile = currentAccount.equipment && currentAccount.equipment.trackingMissile;
+            const card = document.getElementById('shopMissileCard');
+            const btn = document.getElementById('shopMissileBuyBtn');
+            if (hasMissile) {
+                card.className = 'shop-item-card already-owned';
+                btn.textContent = '已拥有';
+                btn.className = 'shop-buy-btn owned';
+            } else if ((currentAccount.totalPoints || 0) >= 10000) {
+                card.className = 'shop-item-card can-afford';
+                btn.textContent = '购买';
+                btn.className = 'shop-buy-btn can-buy';
+            } else {
+                card.className = 'shop-item-card';
+                btn.textContent = '积分不足';
+                btn.className = 'shop-buy-btn cant-afford';
+            }
+        }
+
+        function purchaseMissile() {
+            if (!currentAccount || currentAccount.equipment.trackingMissile) return;
+            if ((currentAccount.totalPoints || 0) < 10000) return;
+            currentAccount.totalPoints -= 10000;
+            currentAccount.equipment.trackingMissile = true;
+            saveAccount();
+            updateShopPanel();
+        }
 
         function getLevelXPNeeded() {
             return 1000 + (level - 1) * 500;
@@ -1042,9 +1256,30 @@
             document.getElementById('leechBarFill').style.width = (leechLevel / 20 * 100) + '%';
             document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
             document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
-            document.getElementById('missileOption').style.display   = missileCount  >= 3  ? 'none' : '';
             document.getElementById('freezeOption').style.display    = freezeLevel   >= 5  ? 'none' : '';
             document.getElementById('leechOption').style.display     = leechLevel    >= 20 ? 'none' : '';
+            // 跟踪导弹：已满3枚则隐藏；未购买装备则显示但锁定
+            const hasMissileEquip = currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile;
+            const missileEl = document.getElementById('missileOption');
+            if (missileCount >= 3) {
+                missileEl.style.display = 'none';
+                missileEl.className = 'skill-card';
+            } else if (!hasMissileEquip) {
+                missileEl.style.display = '';
+                missileEl.className = 'skill-card locked';
+                // 确保锁定提示存在
+                if (!missileEl.querySelector('.skill-locked-hint')) {
+                    const hint = document.createElement('div');
+                    hint.className = 'skill-locked-hint';
+                    hint.textContent = '需在商城购买跟踪弹装备';
+                    missileEl.appendChild(hint);
+                }
+            } else {
+                missileEl.style.display = '';
+                missileEl.className = 'skill-card';
+                const hint = missileEl.querySelector('.skill-locked-hint');
+                if (hint) hint.remove();
+            }
             document.getElementById('skillPanel').style.display = 'block';
         }
 
@@ -1069,7 +1304,7 @@
                 bulletCount++;
             } else if (s === 'ricochet') {
                 if (ricochetCount < 3) ricochetCount++;
-            } else if (s === 'missile' && missileCount < 3) {
+            } else if (s === 'missile' && missileCount < 3 && currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile) {
                 missileCount++;
             } else if (s === 'leech' && leechLevel < 20) {
                 leechLevel++;
@@ -1596,6 +1831,11 @@
                 localStorage.setItem('thunderWarriorBestScore', bestScore.toString());
                 localStorage.setItem('thunderWarriorBestPlayer', playerName || '匿名');
             }
+            // 累计积分到角色账户
+            if (currentAccount) {
+                currentAccount.totalPoints = (currentAccount.totalPoints || 0) + score;
+                saveAccount();
+            }
             savePlayerRecord(playerName || '匿名', score);
             const isNewBest = score >= bestScore;
             document.getElementById('gameOver').innerHTML = `
@@ -1614,11 +1854,22 @@
                         <span style="color:rgba(255,255,255,0.45);letter-spacing:2px">最高等级</span>
                         <span style="color:#00e5ff">LV.${level}</span>
                     </div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px">
+                        <span style="color:rgba(255,255,255,0.45);letter-spacing:2px">累计积分</span>
+                        <span style="color:#FFD740;font-weight:bold">${(currentAccount ? currentAccount.totalPoints : 0).toLocaleString()}</span>
+                    </div>
                 </div>
-                <button id="restartBtn">再次出击</button>
+                <div style="display:flex;gap:10px">
+                    <button id="restartBtn">再次出击</button>
+                    <button id="charBtn" style="background:linear-gradient(180deg,rgba(0,40,80,0.9),rgba(0,60,120,0.7));border:1px solid rgba(0,229,255,0.4);color:#e0f8ff;padding:10px 18px;cursor:pointer;border-radius:4px;font-size:13px;letter-spacing:2px;margin-top:15px;transition:all 0.2s;font-family:inherit">查看角色</button>
+                </div>
             `;
             document.getElementById('gameOver').style.display = 'block';
             document.getElementById('restartBtn').addEventListener('click', restart);
+            document.getElementById('charBtn').addEventListener('click', () => {
+                document.getElementById('gameOver').style.display = 'none';
+                showCharacterPanel();
+            });
         }
 
         function restart() {
@@ -1631,10 +1882,11 @@
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
-            if (controlPanel) controlPanel.style.display = 'flex';
+            if (controlPanel) controlPanel.style.display = 'none';
             if (selectPanel) selectPanel.style.display = 'none';
             updateUI();
             fetchPlayerList();
+            showCharacterPanel();
         }
 
         function selectPlane(i) {
@@ -1903,21 +2155,22 @@
         updateBestScoreDisplay();
         fetchPlayerList();
         
-        // 如果已有名字，自动填充
+        // 如果已有名字，自动填充；并预加载账户数据
         if (playerName && playerNameInput) {
             playerNameInput.value = playerName;
+            currentAccount = loadAccount(playerName);
         }
         
-        // 点击开始游戏 → 进入操控选择页
+        // 点击开始游戏 → 加载账户 → 进入角色管理页
         if (loginBtn) {
             loginBtn.addEventListener('click', () => {
                 const name = playerNameInput.value.trim() || '匿名';
                 playerName = name;
                 localStorage.setItem('thunderWarriorPlayerName', name);
-                if (loginPanel) loginPanel.style.display = 'none';
-                if (controlPanel) controlPanel.style.display = 'flex';
+                currentAccount = loadAccount(name);
                 gameState = 'select';
                 updateUI();
+                showCharacterPanel();
             });
         }
         
@@ -1930,6 +2183,20 @@
 
         document.querySelectorAll('.plane-btn').forEach(b => {
             b.addEventListener('click', () => selectPlane(parseInt(b.dataset.plane)));
+        });
+
+        // 角色管理面板按钮
+        document.getElementById('charPlayBtn').addEventListener('click', () => {
+            document.getElementById('characterPanel').style.display = 'none';
+            if (controlPanel) controlPanel.style.display = 'flex';
+        });
+        document.getElementById('charShopBtn').addEventListener('click', showShopPanel);
+
+        // 商城面板按钮
+        document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
+        document.getElementById('shopBackBtn').addEventListener('click', () => {
+            document.getElementById('shopPanel').style.display = 'none';
+            showCharacterPanel();
         });
 
         // 控制方案按钮 → 选完后进入飞机选择页
