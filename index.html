@@ -65,8 +65,8 @@
             color: rgba(255,255,255,0.45); letter-spacing: 0.3px;
         }
         #score-row span { color: #FFD740; font-weight: bold; font-size: 14px; }
-        /* 右侧：等级 + 升级进度 */
-        #hud-right { text-align: right; }
+        /* 右侧：等级 + XP进度条 */
+        #hud-right { text-align: right; width: 130px; }
         #lv-label {
             font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
             color: rgba(0,200,255,0.45);
@@ -76,8 +76,24 @@
             color: #00E5FF; line-height: 1.05;
             text-shadow: 0 0 18px rgba(0,200,255,0.55);
         }
+        #xp-header {
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-top: 5px; margin-bottom: 3px;
+        }
+        #xp-label { font-size: 8px; letter-spacing: 2px; color: rgba(255,200,0,0.45); text-transform: uppercase; }
+        #xp-text { font-size: 10px; color: rgba(255,255,255,0.45); font-variant-numeric: tabular-nums; }
+        #xpBar {
+            width: 100%; height: 6px;
+            background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden;
+        }
+        #xpFill {
+            height: 100%; width: 0%; border-radius: 3px;
+            background: linear-gradient(90deg, #ff8f00, #ffd740);
+            box-shadow: 0 0 8px rgba(255,200,0,0.6);
+            transition: width 0.3s ease;
+        }
         #nextUpgrade {
-            font-size: 10px; color: rgba(255,200,0,0.45);
+            font-size: 9px; color: rgba(255,200,0,0.35);
             margin-top: 3px; letter-spacing: 0.2px;
         }
         #missileIndicator { position: absolute; bottom: 10px; left: 10px; color: #FF4500; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #FF4500; pointer-events: none; }
@@ -295,7 +311,12 @@
             <div id="hud-right">
                 <div id="lv-label">Level</div>
                 <span id="level">1</span>
-                <div id="nextUpgrade">升级还需 1000 分</div>
+                <div id="xp-header">
+                    <span id="xp-label">XP</span>
+                    <span id="xp-text">0 / 1000</span>
+                </div>
+                <div id="xpBar"><div id="xpFill"></div></div>
+                <div id="nextUpgrade">还需 1000 XP</div>
             </div>
         </div>
         <div id="bulletIndicator">🔫<span id="bulletLevel">1</span></div>
@@ -456,22 +477,12 @@
         const player = { x: WIDTH/2, y: HEIGHT - 100, width: 32, height: 40, bullets: [] };
         let enemies = [], particles = [];
         let mouseX = WIDTH/2, mouseY = HEIGHT - 100;
-        // 100级升级表（累计总分）：1000→2200→3700→5500...
-        // 每次升级需要的增量：1000, 1200, 1500, 1800...
-        const UPGRADE_THRESHOLDS = (() => {
-            const arr = [];
-            let total = 0;
-            let increment = 1000;
-            for (let i = 0; i < 100; i++) {
-                total += increment;
-                arr.push(total);
-                increment += 200;
-            }
-            return arr;
-        })();
-        
-        function getUpgradeThreshold() {
-            return UPGRADE_THRESHOLDS[Math.min(level - 1, UPGRADE_THRESHOLDS.length - 1)];
+        // 独立XP系统：每级所需XP = 1000 + (level-1)*500
+        // L1→L2: 1000 XP, L2→L3: 1500 XP, L3→L4: 2000 XP ...
+        let levelXP = 0; // 当前等级已积累的XP（升级后归零）
+
+        function getLevelXPNeeded() {
+            return 1000 + (level - 1) * 500;
         }
 
         // 绘制中国战机 - 歼-35隐身舰载战斗机（俯视图）
@@ -923,22 +934,33 @@
             ).join('');
         }
 
+        function showSkillPanel() {
+            gameState = 'upgrade';
+            enemies.forEach(e => { if (e.bullets) e.bullets = []; });
+            document.getElementById('spLevelNext').textContent = level;
+            renderPips('multishotPips', bulletCount, 5);
+            renderPips('ricochetPips', ricochetCount, 3);
+            renderPips('missilePips', missileCount, 3);
+            renderPips('freezePips', freezeLevel, 5);
+            document.getElementById('leechBarFill').style.width = (leechLevel / 20 * 100) + '%';
+            document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
+            document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
+            document.getElementById('missileOption').style.display   = missileCount  >= 3  ? 'none' : '';
+            document.getElementById('freezeOption').style.display    = freezeLevel   >= 5  ? 'none' : '';
+            document.getElementById('leechOption').style.display     = leechLevel    >= 20 ? 'none' : '';
+            document.getElementById('skillPanel').style.display = 'block';
+        }
+
         function checkUpgrade() {
-            if (score >= getUpgradeThreshold()) {
-                level++; gameState = 'upgrade';
-                enemies.forEach(e => { if (e.bullets) e.bullets = []; });
-                document.getElementById('spLevelNext').textContent = level;
-                renderPips('multishotPips', bulletCount, 5);
-                renderPips('ricochetPips', ricochetCount, 3);
-                renderPips('missilePips', missileCount, 3);
-                renderPips('freezePips', freezeLevel, 5);
-                document.getElementById('leechBarFill').style.width = (leechLevel / 20 * 100) + '%';
-                document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
-                document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
-                document.getElementById('missileOption').style.display   = missileCount  >= 3  ? 'none' : '';
-                document.getElementById('freezeOption').style.display    = freezeLevel   >= 5  ? 'none' : '';
-                document.getElementById('leechOption').style.display     = leechLevel    >= 20 ? 'none' : '';
-                document.getElementById('skillPanel').style.display = 'block';
+            let didLevelUp = false;
+            // XP溢出自动累计到下一级（支持一次连升多级）
+            while (levelXP >= getLevelXPNeeded()) {
+                levelXP -= getLevelXPNeeded();
+                level++;
+                didLevelUp = true;
+            }
+            if (didLevelUp && gameState === 'playing') {
+                showSkillPanel();
             }
             updateUI();
         }
@@ -1065,6 +1087,7 @@
                         }
                         if (e.currentHp <= 0) {
                             score += e.score;
+                            levelXP += e.score; // XP独立于得分，升级后归零
                             // 吸血效果
                             if (leechLevel > 0) {
                                 currentHp = Math.min(maxHp, currentHp + leechLevel);
@@ -1379,7 +1402,11 @@
             document.getElementById('healthText').textContent = `${Math.max(0, currentHp)} / ${maxHp}`;
             document.getElementById('score').textContent = score;
             document.getElementById('level').textContent = level;
-            document.getElementById('nextUpgrade').textContent = `升级还需 ${Math.max(0, getUpgradeThreshold() - score)} 分`;
+            const xpNeeded = getLevelXPNeeded();
+            const xpPct = Math.min(levelXP / xpNeeded, 1);
+            document.getElementById('xpFill').style.width = (xpPct * 100) + '%';
+            document.getElementById('xp-text').textContent = `${levelXP} / ${xpNeeded}`;
+            document.getElementById('nextUpgrade').textContent = `还需 ${Math.max(0, xpNeeded - levelXP)} XP`;
             document.getElementById('missileLevel').textContent = missileCount;
             document.getElementById('leechLevel').textContent = leechLevel;
             document.getElementById('bulletLevel').textContent = bulletCount;
@@ -1425,6 +1452,7 @@
             score = 0; level = 1; maxHp = 10000; currentHp = 10000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
+            levelXP = 0;
             enemies = []; particles = []; player.bullets = [];
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
