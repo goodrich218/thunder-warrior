@@ -6,7 +6,8 @@
     <title>雷电战机 - Thunder Warrior</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; display: flex; justify-content: center; align-items: center; margin: 0; min-height: 100vh; font-family: 'Microsoft YaHei', sans-serif; overflow: hidden; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body { background: #000; display: flex; justify-content: center; align-items: center; font-family: 'Microsoft YaHei', sans-serif; }
         #gameContainer { position: relative; }
         #gameCanvas {
             border: none;
@@ -534,8 +535,8 @@
         // 自适应屏幕尺寸
         let WIDTH, HEIGHT;
         function resizeCanvas() {
-            const maxWidth = window.innerWidth - 20;
-            const maxHeight = window.innerHeight - 20;
+            const maxWidth = window.innerWidth;
+            const maxHeight = window.innerHeight;
             const aspect = 600 / 1000;
             
             if (maxWidth / maxHeight > aspect) {
