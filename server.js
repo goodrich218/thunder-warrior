@@ -51,6 +51,18 @@ app.post('/api/players', (req, res) => {
     res.json(players);
 });
 
+// 密码验证（密码只存服务端，不暴露给前端）
+app.post('/api/auth', (req, res) => {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ ok: false, msg: '请输入密码' });
+    const correct = process.env.GAME_PASSWORD || '8888';
+    if (password === correct) {
+        res.json({ ok: true });
+    } else {
+        res.json({ ok: false, msg: '密码错误' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`雷电战机服务器运行中: http://localhost:${PORT}`);
 });

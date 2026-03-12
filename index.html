@@ -345,6 +345,17 @@
         }
         #loginBtn:hover { box-shadow: 0 0 22px rgba(0,229,255,0.28); border-color: rgba(0,229,255,0.7); }
         #loginBtn:hover::before { left: 100%; }
+        #gamePassword {
+            background: rgba(0,229,255,0.04); border: 1px solid rgba(0,229,255,0.18);
+            border-bottom: 2px solid rgba(0,229,255,0.35);
+            color: #fff; padding: 10px 14px; font-size: 14px; letter-spacing: 4px;
+            width: 100%; text-align: center; outline: none;
+            border-radius: 4px 4px 3px 3px; font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        #gamePassword::placeholder { color: rgba(255,255,255,0.18); letter-spacing: 1px; font-size: 12px; }
+        #gamePassword:focus { border-color: rgba(0,229,255,0.55); border-bottom-color: rgba(0,229,255,0.8); background: rgba(0,229,255,0.06); box-shadow: 0 0 14px rgba(0,229,255,0.1); }
+        #loginError { font-size: 11px; color: #ff5252; letter-spacing: 1px; min-height: 16px; text-align: center; position: relative; z-index: 1; }
         #bestScoreDisplay { font-size: 11px; color: rgba(255,215,0,0.65); letter-spacing: 1px; position: relative; z-index: 1; }
         #playerList { position: relative; z-index: 1; width: 250px; max-height: 180px; overflow-y: auto; }
         #playerList h3 {
@@ -480,8 +491,11 @@
             <div class="login-form">
                 <div class="login-field-label">战机代号 &middot; Callsign</div>
                 <input type="text" id="playerName" placeholder="输入你的名字" maxlength="10" autocomplete="off">
+                <div class="login-field-label" style="margin-top:4px">访问密码 &middot; Password</div>
+                <input type="password" id="gamePassword" placeholder="输入密码" maxlength="20" autocomplete="off">
                 <button id="loginBtn">进入战场</button>
             </div>
+            <div id="loginError"></div>
             <div id="bestScoreDisplay"></div>
             <div id="playerList"></div>
             <div class="login-footer">Thunder Warrior v2.0 &middot; 2026</div>
@@ -587,6 +601,14 @@
                     </div>
                     <div class="equip-status no" id="charMissileStatus">未拥有</div>
                 </div>
+                <div class="equip-item not-owned" id="charFreezeEquip">
+                    <div class="equip-icon">❄️</div>
+                    <div class="equip-info">
+                        <div class="equip-name">冰冻弹</div>
+                        <div class="equip-desc">命中后冻结敌机，购买后可在升级时选择冰冻弹</div>
+                    </div>
+                    <div class="equip-status no" id="charFreezeStatus">未拥有</div>
+                </div>
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
@@ -614,8 +636,21 @@
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost">10,000 积分</span>
+                    <span class="shop-item-cost">50,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopMissileBuyBtn">购买</button>
+                </div>
+            </div>
+            <div class="shop-item-card" id="shopFreezeCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">❄️</div>
+                    <div>
+                        <div class="shop-item-name">冰冻弹</div>
+                        <div class="shop-item-desc">命中后冻结敌机<br>购买后升级时可解锁冰冻弹技能</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost">20,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopFreezeBuyBtn">购买</button>
                 </div>
             </div>
             <button class="shop-back-btn" id="shopBackBtn">← 返回角色</button>
@@ -725,7 +760,7 @@
                 const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
                 if (data) return data;
             } catch(e) {}
-            return { totalPoints: 0, equipment: { trackingMissile: false } };
+            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false } };
         }
 
         function saveAccount() {
@@ -742,18 +777,15 @@
             document.getElementById('charNameDisplay').textContent = playerName || '战机飞行员';
             document.getElementById('charTotalPoints').textContent = (currentAccount.totalPoints || 0).toLocaleString();
             document.getElementById('charBestScore').textContent = bestScore.toLocaleString();
-            const hasMissile = currentAccount.equipment && currentAccount.equipment.trackingMissile;
-            const missileEquip = document.getElementById('charMissileEquip');
-            const missileStatus = document.getElementById('charMissileStatus');
-            if (hasMissile) {
-                missileEquip.className = 'equip-item owned';
-                missileStatus.textContent = '✓ 已拥有';
-                missileStatus.className = 'equip-status yes';
-            } else {
-                missileEquip.className = 'equip-item not-owned';
-                missileStatus.textContent = '未拥有';
-                missileStatus.className = 'equip-status no';
+            const eq = currentAccount.equipment || {};
+            function setEquipDisplay(id, statusId, owned) {
+                document.getElementById(id).className = 'equip-item ' + (owned ? 'owned' : 'not-owned');
+                const s = document.getElementById(statusId);
+                s.textContent = owned ? '✓ 已拥有' : '未拥有';
+                s.className = 'equip-status ' + (owned ? 'yes' : 'no');
             }
+            setEquipDisplay('charMissileEquip', 'charMissileStatus', eq.trackingMissile);
+            setEquipDisplay('charFreezeEquip', 'charFreezeStatus', eq.freezeBullet);
             document.getElementById('characterPanel').style.display = 'flex';
         }
 
@@ -764,30 +796,41 @@
         }
 
         function updateShopPanel() {
-            document.getElementById('shopPoints').textContent = (currentAccount.totalPoints || 0).toLocaleString();
-            const hasMissile = currentAccount.equipment && currentAccount.equipment.trackingMissile;
-            const card = document.getElementById('shopMissileCard');
-            const btn = document.getElementById('shopMissileBuyBtn');
-            if (hasMissile) {
-                card.className = 'shop-item-card already-owned';
-                btn.textContent = '已拥有';
-                btn.className = 'shop-buy-btn owned';
-            } else if ((currentAccount.totalPoints || 0) >= 10000) {
-                card.className = 'shop-item-card can-afford';
-                btn.textContent = '购买';
-                btn.className = 'shop-buy-btn can-buy';
-            } else {
-                card.className = 'shop-item-card';
-                btn.textContent = '积分不足';
-                btn.className = 'shop-buy-btn cant-afford';
+            const pts = currentAccount.totalPoints || 0;
+            document.getElementById('shopPoints').textContent = pts.toLocaleString();
+            const eq = currentAccount.equipment || {};
+            function refreshItem(cardId, btnId, owned, price) {
+                const card = document.getElementById(cardId);
+                const btn = document.getElementById(btnId);
+                if (owned) {
+                    card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已拥有'; btn.className = 'shop-buy-btn owned';
+                } else if (pts >= price) {
+                    card.className = 'shop-item-card can-afford';
+                    btn.textContent = '购买'; btn.className = 'shop-buy-btn can-buy';
+                } else {
+                    card.className = 'shop-item-card';
+                    btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                }
             }
+            refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
+            refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
         }
 
         function purchaseMissile() {
             if (!currentAccount || currentAccount.equipment.trackingMissile) return;
-            if ((currentAccount.totalPoints || 0) < 10000) return;
-            currentAccount.totalPoints -= 10000;
+            if ((currentAccount.totalPoints || 0) < 50000) return;
+            currentAccount.totalPoints -= 50000;
             currentAccount.equipment.trackingMissile = true;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function purchaseFreeze() {
+            if (!currentAccount || currentAccount.equipment.freezeBullet) return;
+            if ((currentAccount.totalPoints || 0) < 20000) return;
+            currentAccount.totalPoints -= 20000;
+            currentAccount.equipment.freezeBullet = true;
             saveAccount();
             updateShopPanel();
         }
@@ -1256,30 +1299,28 @@
             document.getElementById('leechBarFill').style.width = (leechLevel / 20 * 100) + '%';
             document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
             document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
-            document.getElementById('freezeOption').style.display    = freezeLevel   >= 5  ? 'none' : '';
             document.getElementById('leechOption').style.display     = leechLevel    >= 20 ? 'none' : '';
-            // 跟踪导弹：已满3枚则隐藏；未购买装备则显示但锁定
-            const hasMissileEquip = currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile;
-            const missileEl = document.getElementById('missileOption');
-            if (missileCount >= 3) {
-                missileEl.style.display = 'none';
-                missileEl.className = 'skill-card';
-            } else if (!hasMissileEquip) {
-                missileEl.style.display = '';
-                missileEl.className = 'skill-card locked';
-                // 确保锁定提示存在
-                if (!missileEl.querySelector('.skill-locked-hint')) {
-                    const hint = document.createElement('div');
-                    hint.className = 'skill-locked-hint';
-                    hint.textContent = '需在商城购买跟踪弹装备';
-                    missileEl.appendChild(hint);
+
+            // 需要装备才能解锁的技能：统一处理锁定逻辑
+            function applyEquipLock(elId, maxed, hasEquip, hint) {
+                const el = document.getElementById(elId);
+                if (maxed) {
+                    el.style.display = 'none'; el.className = 'skill-card';
+                } else if (!hasEquip) {
+                    el.style.display = ''; el.className = 'skill-card locked';
+                    if (!el.querySelector('.skill-locked-hint')) {
+                        const d = document.createElement('div');
+                        d.className = 'skill-locked-hint'; d.textContent = hint;
+                        el.appendChild(d);
+                    }
+                } else {
+                    el.style.display = ''; el.className = 'skill-card';
+                    const d = el.querySelector('.skill-locked-hint'); if (d) d.remove();
                 }
-            } else {
-                missileEl.style.display = '';
-                missileEl.className = 'skill-card';
-                const hint = missileEl.querySelector('.skill-locked-hint');
-                if (hint) hint.remove();
             }
+            const eq = (currentAccount && currentAccount.equipment) || {};
+            applyEquipLock('missileOption', missileCount >= 3, eq.trackingMissile, '需在商城购买跟踪弹装备');
+            applyEquipLock('freezeOption',  freezeLevel  >= 5, eq.freezeBullet,    '需在商城购买冰冻弹装备');
             document.getElementById('skillPanel').style.display = 'block';
         }
 
@@ -1308,7 +1349,7 @@
                 missileCount++;
             } else if (s === 'leech' && leechLevel < 20) {
                 leechLevel++;
-            } else if (s === 'freeze' && freezeLevel < 5) {
+            } else if (s === 'freeze' && freezeLevel < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.freezeBullet) {
                 freezeLevel++;
             } else if (s === 'heal') {
                 currentHp = Math.min(maxHp, currentHp + 300);
@@ -2161,22 +2202,48 @@
             currentAccount = loadAccount(playerName);
         }
         
-        // 点击开始游戏 → 加载账户 → 进入角色管理页
+        // 点击进入战场 → 先验证密码（后端），成功后加载账户 → 角色管理页
         if (loginBtn) {
             loginBtn.addEventListener('click', () => {
                 const name = playerNameInput.value.trim() || '匿名';
-                playerName = name;
-                localStorage.setItem('thunderWarriorPlayerName', name);
-                currentAccount = loadAccount(name);
-                gameState = 'select';
-                updateUI();
-                showCharacterPanel();
+                const pwd = document.getElementById('gamePassword').value;
+                const errEl = document.getElementById('loginError');
+                if (!pwd) { errEl.textContent = '请输入访问密码'; return; }
+                errEl.textContent = '';
+                loginBtn.disabled = true;
+                loginBtn.textContent = '验证中...';
+                fetch(API_BASE + '/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pwd })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.ok) {
+                        playerName = name;
+                        localStorage.setItem('thunderWarriorPlayerName', name);
+                        currentAccount = loadAccount(name);
+                        gameState = 'select';
+                        updateUI();
+                        showCharacterPanel();
+                    } else {
+                        errEl.textContent = res.msg || '密码错误，请重试';
+                    }
+                })
+                .catch(() => { errEl.textContent = '无法连接服务器，请检查网络'; })
+                .finally(() => { loginBtn.disabled = false; loginBtn.textContent = '进入战场'; });
             });
         }
         
-        // 回车也能提交
+        // 回车也能提交（姓名框或密码框）
         if (playerNameInput) {
             playerNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') document.getElementById('gamePassword').focus();
+            });
+        }
+        const pwdInput = document.getElementById('gamePassword');
+        if (pwdInput) {
+            pwdInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && loginBtn) loginBtn.click();
             });
         }
@@ -2194,6 +2261,7 @@
 
         // 商城面板按钮
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
+        document.getElementById('shopFreezeBuyBtn').addEventListener('click', purchaseFreeze);
         document.getElementById('shopBackBtn').addEventListener('click', () => {
             document.getElementById('shopPanel').style.display = 'none';
             showCharacterPanel();
