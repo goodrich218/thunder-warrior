@@ -942,10 +942,10 @@
                 {t: 0, w: 24, h: 24, hp: 1, s: 1.5, sc: 50, name: 'F-16'},
                 {t: 1, w: 30, h: 30, hp: 2, s: 1.25, sc: 100, name: 'F-15'},
                 {t: 2, w: 36, h: 36, hp: 5, s: 0.75, sc: 250, name: 'F/A-18'},
-                {t: 3, w: 42, h: 42, hp: 15, s: 0.4, sc: 1000, name: 'F-22'},
-                {t: 4, w: 39, h: 39, hp: 20, s: 0.35, sc: 1500, name: 'F-35'},
-                {t: 5, w: 44, h: 44, hp: 25, s: 0.3, sc: 1750, name: 'F/A-18E'},
-                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 5000, name: 'B-2'}
+                {t: 3, w: 42, h: 42, hp: 15, s: 0.4, sc: 500, name: 'F-22'},
+                {t: 4, w: 39, h: 39, hp: 20, s: 0.35, sc: 750, name: 'F-35'},
+                {t: 5, w: 44, h: 44, hp: 25, s: 0.3, sc: 875, name: 'F/A-18E'},
+                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 2500, name: 'B-2'}
             ];
             let weights = [40, 25, 15, 10, 5, 3, 2];
             if (score > 2000) weights = [30, 25, 20, 12, 6, 4, 3];
@@ -959,7 +959,7 @@
         }
 
         function spawnDroneSwarm() {
-            const COUNT = 8;
+            const COUNT = 12;
             const diveTarget = HEIGHT * (0.55 + Math.random() * 0.18); // 俯冲深度
             const spacing = WIDTH / (COUNT + 1);
             const now = Date.now();
@@ -1538,7 +1538,9 @@
                 }
                 if (e.bullets) {
                     ctx.fillStyle = '#f44';
-                    e.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 4, 4, 8));
+                    e.bullets.forEach(b => {
+                        ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill();
+                    });
                 }
                 // 血条
                 if (e.currentHp < e.hp) {
