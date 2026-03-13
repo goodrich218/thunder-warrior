@@ -1041,7 +1041,14 @@
             <div class="sp-divider"></div>
             <div class="skill-grid">
                 <div class="skill-card" onclick="selectSkill('multishot')" id="multishotOption" style="--accent:#00E5FF">
-                    <span class="sc-icon">🔫</span>
+                    <span class="sc-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle">
+                        <line x1="16" y1="29" x2="16" y2="8" stroke="#00E5FF" stroke-width="2.5" stroke-linecap="round"/>
+                        <polygon points="16,3 13.5,9 18.5,9" fill="#00E5FF"/>
+                        <line x1="16" y1="29" x2="6" y2="11" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+                        <polygon points="4.5,6.5 5,12.5 9.5,9.5" fill="#00E5FF" opacity="0.75"/>
+                        <line x1="16" y1="29" x2="26" y2="11" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+                        <polygon points="27.5,6.5 22.5,9.5 27,12.5" fill="#00E5FF" opacity="0.75"/>
+                    </svg></span>
                     <div class="sc-name">多重子弹</div>
                     <div class="sc-desc">同时发射弹数 +1，形成散射覆盖</div>
                     <div class="sc-pips" id="multishotPips"></div>
@@ -1112,6 +1119,41 @@
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
         let paused = false;
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0;
+
+        // ── 音效系统（Web Audio API）──
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        function playBulletSound() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.06);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.06);
+            } catch(e) {}
+        }
+        function playMissileSound() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(280, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
+            } catch(e) {}
+        }
         const LEECH_HEAL = [0, 2, 4, 6, 8, 20];
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
@@ -1558,7 +1600,7 @@
             document.getElementById('pauseHp').textContent = `${Math.max(0, currentHp)} / ${maxHp}`;
             const total = dmgMainGun + dmgMissile + dmgWingman + dmgHQ9 || 1;
             function setDmgRow(barId, valId, val) {
-                document.getElementById(valId).textContent = Math.round(val);
+                document.getElementById(valId).textContent = val >= 1000 ? (val/1000).toFixed(1)+'k' : Math.round(val);
                 document.getElementById(barId).style.width = (val / total * 100) + '%';
             }
             setDmgRow('dmgBarMain',    'dmgValMain',    dmgMainGun);
@@ -2002,6 +2044,7 @@
                 const a = (startAngle + i * spread) * Math.PI / 180;
                 player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false, damage: wbMult, isFreeze: freezeLevel > 0});
             }
+            playBulletSound();
         }
 
         function playerShootMissile() {
@@ -2020,6 +2063,7 @@
                     isFreeze: freezeLevel > 0
                 });
             }
+            playMissileSound();
         }
 
         function renderPips(id, current, max) {
@@ -2348,13 +2392,13 @@
                 enemies = enemies.filter(e => {
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
                         const dmg = b.damage || 1;
-                        const actualDmg = Math.min(e.currentHp, dmg);
                         e.currentHp -= dmg; hit = true;
-                        // 伤害统计
-                        if (b.isHQ9) dmgHQ9 += actualDmg;
-                        else if (b.isMissile) dmgMissile += actualDmg;
-                        else if (b.isWingman) dmgWingman += actualDmg;
-                        else dmgMainGun += actualDmg;
+                        // 伤害统计：按攻击力累计（×100使数字直观）
+                        const dmgPts = dmg * 100;
+                        if (b.isHQ9) dmgHQ9 += dmgPts;
+                        else if (b.isMissile) dmgMissile += dmgPts;
+                        else if (b.isWingman) dmgWingman += dmgPts;
+                        else dmgMainGun += dmgPts;
                         // 冰冻效果
                         if (b.isFreeze && freezeLevel > 0) {
                             e.frozenUntil = Date.now() + freezeLevel * 500;
