@@ -2047,7 +2047,7 @@
                 player.lastShot = Date.now();
             }
             // 射击 - 跟踪弹（间隔更慢，400ms）
-            if (missileCount > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 400)) {
+            if (missileCount > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 800)) {
                 playerShootMissile();
                 player.lastMissileShot = Date.now();
             }
