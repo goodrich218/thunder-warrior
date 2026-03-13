@@ -452,7 +452,7 @@
         .skill-locked-hint { font-size: 9px; color: rgba(255,200,0,0.6); margin-top: 4px; letter-spacing: 0.5px; }
         /* ── 电磁干扰技能按钮 ── */
         #emfBtn {
-            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 14px; left: calc(50% - 68px);
             width: 64px; background: rgba(4, 6, 20, 0.92);
             border: 1px solid rgba(110, 60, 255, 0.4); border-radius: 12px;
             padding: 8px 10px 7px; cursor: pointer; display: none;
@@ -489,6 +489,43 @@
         .emf-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(200,140,255,0.85); margin-bottom: 4px; min-height: 10px; }
         #emfBar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #emfBarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #5B2FC0, #A855F7); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(140,60,255,0.6); }
+        /* ── HQ-9 红旗防空系统按钮 ── */
+        #hq9Btn {
+            position: absolute; bottom: 14px; left: calc(50% + 4px);
+            width: 64px; background: rgba(20, 4, 4, 0.92);
+            border: 1px solid rgba(255, 60, 30, 0.4); border-radius: 12px;
+            padding: 8px 10px 7px; cursor: pointer; display: none;
+            flex-direction: column; align-items: center;
+            pointer-events: auto; z-index: 10; text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            user-select: none; -webkit-user-select: none;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        #hq9Btn::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,80,30,0.8), transparent);
+            border-radius: 12px 12px 0 0;
+        }
+        #hq9Btn:hover:not(.on-cooldown) {
+            border-color: rgba(255, 80, 30, 0.8);
+            box-shadow: 0 0 28px rgba(255, 50, 20, 0.35), 0 4px 24px rgba(0,0,0,0.6);
+        }
+        #hq9Btn.firing {
+            border-color: rgba(255, 180, 60, 0.95);
+            animation: hq9BtnPulse 0.15s ease-in-out 3;
+        }
+        #hq9Btn.on-cooldown { opacity: 0.55; cursor: not-allowed; }
+        @keyframes hq9BtnPulse {
+            from { box-shadow: 0 0 18px rgba(255, 80, 20, 0.5), 0 4px 24px rgba(0,0,0,0.6); }
+            to   { box-shadow: 0 0 42px rgba(255, 180, 60, 0.9), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(255,200,80,1); }
+        }
+        .hq9-btn-icon { font-size: 24px; line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 0 6px rgba(255,80,20,0.8)); }
+        .hq9-btn-pips { display: flex; gap: 2px; justify-content: center; margin-bottom: 4px; }
+        .hq9-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.2s, box-shadow 0.2s; }
+        .hq9-pip.on { background: #EF4444; box-shadow: 0 0 5px #EF4444; }
+        .hq9-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(255,160,80,0.9); margin-bottom: 4px; min-height: 10px; }
+        #hq9Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+        #hq9BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #C0392B, #FF6B35); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(255,60,20,0.6); }
     </style>
 </head>
 <body>
@@ -524,8 +561,15 @@
             <div class="emf-btn-name">电磁干扰</div>
             <div class="emf-btn-sub">EMF · Lv.<span id="emfLevelText">1</span></div>
             <div class="emf-btn-pips" id="emfPips"></div>
-            <div class="emf-btn-status" id="emfStatusText">就绪</div>
+            <div class="emf-btn-status" id="emfStatusText"></div>
             <div id="emfBar"><div id="emfBarFill"></div></div>
+        </div>
+        <!-- HQ-9 红旗防空系统按钮 -->
+        <div id="hq9Btn">
+            <div class="hq9-btn-icon">🚀</div>
+            <div class="hq9-btn-pips" id="hq9Pips"></div>
+            <div class="hq9-btn-status" id="hq9StatusText"></div>
+            <div id="hq9Bar"><div id="hq9BarFill"></div></div>
         </div>
         <div id="loginPanel">
             <div class="login-orb login-orb-1"></div>
@@ -665,6 +709,14 @@
                     </div>
                     <div class="equip-status no" id="charEmfStatus">未拥有</div>
                 </div>
+                <div class="equip-item not-owned" id="charHq9Equip">
+                    <div class="equip-icon">🚀</div>
+                    <div class="equip-info">
+                        <div class="equip-name">HQ-9 红旗防空系统</div>
+                        <div class="equip-desc">同时发射9枚跟踪导弹，满5级升为全屏覆盖攻击</div>
+                    </div>
+                    <div class="equip-status no" id="charHq9Status">未拥有</div>
+                </div>
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
@@ -707,6 +759,19 @@
                 <div class="shop-item-footer">
                     <span class="shop-item-cost">20,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopFreezeBuyBtn">购买</button>
+                </div>
+            </div>
+            <div class="shop-item-card" id="shopHq9Card">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">🚀</div>
+                    <div>
+                        <div class="shop-item-name">HQ-9 红旗防空系统 <span id="shopHq9LevelBadge" style="font-size:10px;color:rgba(255,120,60,0.85);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">同时发射9枚跟踪导弹，初始300%导弹威力<br>每升1级+50%，满5级升为全屏覆盖攻击</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost" id="shopHq9Cost">50,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopHq9BuyBtn">购买</button>
                 </div>
             </div>
             <div class="shop-item-card" id="shopEmfCard">
@@ -800,6 +865,8 @@
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
+        let hq9Level = 0, hq9CooldownUntil = 0, hq9LaunchedAt = 0;
+        const HQ9_COOLDOWN = 25000; // 冷却时间25秒
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
         // 总积分（累计所有游戏的积分）
         let playerName = localStorage.getItem('thunderWarriorPlayerName') || '';
@@ -831,7 +898,7 @@
                 const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
                 if (data) return data;
             } catch(e) {}
-            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0 } };
+            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0 } };
         }
 
         function saveAccount() {
@@ -863,6 +930,12 @@
             const emfS = document.getElementById('charEmfStatus');
             emfS.textContent = emfLv > 0 ? `Lv.${emfLv} / 5` : '未拥有';
             emfS.className = 'equip-status ' + (emfLv > 0 ? 'yes' : 'no');
+            // HQ-9：按等级显示
+            const hq9Lv = eq.hq9Level || 0;
+            document.getElementById('charHq9Equip').className = 'equip-item ' + (hq9Lv > 0 ? 'owned' : 'not-owned');
+            const hq9S = document.getElementById('charHq9Status');
+            hq9S.textContent = hq9Lv > 0 ? `Lv.${hq9Lv} / 5` : '未拥有';
+            hq9S.className = 'equip-status ' + (hq9Lv > 0 ? 'yes' : 'no');
             document.getElementById('characterPanel').style.display = 'flex';
         }
 
@@ -892,6 +965,30 @@
             }
             refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
+            // HQ-9：分5级，每级50000，逐级购买
+            (function() {
+                const lv = eq.hq9Level || 0;
+                const price = 50000;
+                const card = document.getElementById('shopHq9Card');
+                const btn  = document.getElementById('shopHq9BuyBtn');
+                const badge = document.getElementById('shopHq9LevelBadge');
+                const costEl = document.getElementById('shopHq9Cost');
+                if (lv >= 5) {
+                    badge.textContent = 'Lv.5 · 已满级'; card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned'; costEl.textContent = '—';
+                } else {
+                    badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
+                }
+            })();
             // EMF：分5级，每级15000，逐级购买
             const emfLv = eq.emfLevel || 0;
             const emfPrice = 40000;
@@ -944,6 +1041,17 @@
             if ((currentAccount.totalPoints || 0) < 40000) return;
             currentAccount.totalPoints -= 40000;
             currentAccount.equipment.emfLevel = lv + 1;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function purchaseHQ9() {
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.hq9Level || 0;
+            if (lv >= 5) return;
+            if ((currentAccount.totalPoints || 0) < 50000) return;
+            currentAccount.totalPoints -= 50000;
+            currentAccount.equipment.hq9Level = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -1537,6 +1645,91 @@
             btn.classList.toggle('on-cooldown', onCooldown);
         }
 
+        function activateHQ9() {
+            if (gameState !== 'playing') return;
+            if (hq9Level <= 0) return;
+            if (Date.now() < hq9CooldownUntil) return;
+            // 伤害：L1=300%(=6), L2=350%(=7), L3=400%(=8), L4=450%(=9), L5=500%(=10)
+            const damage = 2 * (3 + 0.5 * (hq9Level - 1));
+            const speed = 5;
+            if (hq9Level >= 5 && enemies.length > 0) {
+                // 全屏覆盖：每个敌机分配一枚导弹
+                enemies.forEach((target, i) => {
+                    const offset = (i - (enemies.length - 1) / 2) * 12;
+                    player.bullets.push({
+                        x: Math.max(16, Math.min(WIDTH - 16, player.x + offset)),
+                        y: player.y - 20,
+                        vx: 0, vy: -speed,
+                        isMissile: true, isHQ9: true,
+                        damage: damage,
+                        assignedTarget: target,
+                        isFreeze: freezeLevel > 0
+                    });
+                });
+            } else {
+                // 9枚追踪导弹齐射
+                for (let i = 0; i < 9; i++) {
+                    const offset = (i - 4) * 13;
+                    player.bullets.push({
+                        x: Math.max(16, Math.min(WIDTH - 16, player.x + offset)),
+                        y: player.y - 20,
+                        vx: 0, vy: -speed,
+                        isMissile: true, isHQ9: true,
+                        damage: damage,
+                        isFreeze: freezeLevel > 0
+                    });
+                }
+            }
+            hq9CooldownUntil = Date.now() + HQ9_COOLDOWN;
+            hq9LaunchedAt = Date.now();
+            // 发射粒子特效
+            for (let i = 0; i < 3; i++) createExplosion(player.x + (i-1)*20, player.y - 10, '#FF6B35', 8);
+            updateHQ9Btn();
+        }
+
+        function updateHQ9Btn() {
+            const btn = document.getElementById('hq9Btn');
+            if (!btn) return;
+            const visible = hq9Level > 0 && (gameState === 'playing' || gameState === 'upgrade');
+            btn.style.display = visible ? 'flex' : 'none';
+            if (!visible) return;
+            const now = Date.now();
+            const onCooldown = now < hq9CooldownUntil;
+            // pips
+            const pipsEl = document.getElementById('hq9Pips');
+            if (pipsEl) pipsEl.innerHTML = Array.from({length: 5}, (_, i) =>
+                `<div class="hq9-pip${i < hq9Level ? ' on' : ''}"></div>`).join('');
+            // status
+            const statusEl = document.getElementById('hq9StatusText');
+            if (statusEl) {
+                if (onCooldown) {
+                    const rem = Math.ceil((hq9CooldownUntil - now) / 1000);
+                    statusEl.textContent = `${rem}s`;
+                    statusEl.style.display = '';
+                } else {
+                    statusEl.textContent = '';
+                    statusEl.style.display = 'none';
+                }
+            }
+            // bar
+            const fillEl = document.getElementById('hq9BarFill');
+            if (fillEl) {
+                if (onCooldown) {
+                    const pct = (hq9CooldownUntil - now) / HQ9_COOLDOWN;
+                    fillEl.style.width = (Math.max(0, pct) * 100) + '%';
+                    fillEl.style.background = 'linear-gradient(90deg, #4A1010, #7A2020)';
+                    fillEl.style.boxShadow = 'none';
+                } else {
+                    fillEl.style.width = '100%';
+                    fillEl.style.background = 'linear-gradient(90deg, #C0392B, #FF6B35)';
+                    fillEl.style.boxShadow = '0 0 6px rgba(255,60,20,0.6)';
+                }
+            }
+            btn.classList.toggle('on-cooldown', onCooldown);
+            // 发射闪光动画（300ms内）
+            btn.classList.toggle('firing', now - hq9LaunchedAt < 400);
+        }
+
         function update() {
             if (gameState !== 'playing') return;
             
@@ -1576,17 +1769,22 @@
             // 更新子弹
             player.bullets = player.bullets.filter(b => {
                 if (b.isMissile && enemies.length > 0) {
-                    // 导弹追踪最近的敌人
-                    let nearest = enemies[0];
-                    let minDist = Math.sqrt((b.x - nearest.x) ** 2 + (b.y - nearest.y) ** 2);
-                    for (const e of enemies) {
-                        const d = Math.sqrt((b.x - e.x) ** 2 + (b.y - e.y) ** 2);
-                        if (d < minDist) { minDist = d; nearest = e; }
+                    // HQ-9指定目标优先，否则追踪最近敌人
+                    let nearest;
+                    if (b.assignedTarget && enemies.includes(b.assignedTarget)) {
+                        nearest = b.assignedTarget;
+                    } else {
+                        b.assignedTarget = null;
+                        nearest = enemies[0];
+                        let minDist = Math.sqrt((b.x - nearest.x) ** 2 + (b.y - nearest.y) ** 2);
+                        for (const e of enemies) {
+                            const d = Math.sqrt((b.x - e.x) ** 2 + (b.y - e.y) ** 2);
+                            if (d < minDist) { minDist = d; nearest = e; }
+                        }
                     }
                     const dx = nearest.x - b.x;
                     const dy = nearest.y - b.y;
                     const angle = Math.atan2(dy, dx);
-                    // 慢慢转向目标
                     b.vx = Math.cos(angle) * 4;
                     b.vy = Math.sin(angle) * 4;
                 }
@@ -1648,7 +1846,7 @@
                 let hit = false;
                 enemies = enemies.filter(e => {
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
-                        e.currentHp--; hit = true;
+                        e.currentHp -= (b.damage || 1); hit = true;
                         // 冰冻效果
                         if (b.isFreeze && freezeLevel > 0) {
                             e.frozenUntil = Date.now() + freezeLevel * 500;
@@ -2037,8 +2235,16 @@
                 }
                 ctx.restore();
             }
-            // 每帧刷新EMF按钮状态（冷却倒计时）
+            // 每帧刷新技能按钮状态（冷却倒计时）
             updateEMFBtn();
+            updateHQ9Btn();
+            // HQ-9发射时短暂红色闪光
+            if (Date.now() - hq9LaunchedAt < 120) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 60, 0, 0.12)';
+                ctx.fillRect(0, 0, WIDTH, HEIGHT);
+                ctx.restore();
+            }
         }
 
         function updateUI() {
@@ -2073,6 +2279,7 @@
         function gameOver() {
             gameState = 'gameover';
             document.getElementById('emfBtn').style.display = 'none';
+            document.getElementById('hq9Btn').style.display = 'none';
             // 保存上一局分数和最高分
             lastScore = score;
             localStorage.setItem('thunderWarriorLastScore', lastScore.toString());
@@ -2126,6 +2333,7 @@
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
+            hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
@@ -2144,10 +2352,11 @@
             selectedPlane = i;
             document.getElementById('selectPanel').style.display = 'none';
             emfLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.emfLevel) || 0;
-            emfActiveUntil = 0;
-            emfCooldownUntil = 0;
+            emfActiveUntil = 0; emfCooldownUntil = 0;
+            hq9Level = (currentAccount && currentAccount.equipment && currentAccount.equipment.hq9Level) || 0;
+            hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             gameState = 'playing';
-            updateEMFBtn();
+            updateEMFBtn(); updateHQ9Btn();
         }
 
         function drawPreviews() {
@@ -2477,7 +2686,9 @@
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
         document.getElementById('shopFreezeBuyBtn').addEventListener('click', purchaseFreeze);
         document.getElementById('shopEmfBuyBtn').addEventListener('click', purchaseEMF);
+        document.getElementById('shopHq9BuyBtn').addEventListener('click', purchaseHQ9);
         document.getElementById('emfBtn').addEventListener('click', activateEMF);
+        document.getElementById('hq9Btn').addEventListener('click', activateHQ9);
         document.getElementById('shopBackBtn').addEventListener('click', () => {
             document.getElementById('shopPanel').style.display = 'none';
             showCharacterPanel();
