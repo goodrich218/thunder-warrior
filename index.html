@@ -1445,12 +1445,12 @@
         let missionB2Spawned = 0;        // 关卡3已强制生成的B-2数量
         let missionCompleteFired = false; // 防止重复触发任务完成
         const MISSIONS = [
-            { id: 0, name: '小试牛刀', target: 100, reward: 1 },
-            { id: 1, name: '守卫上海', target: 150, reward: 1 },
-            { id: 2, name: '一路向北', target: 200, reward: 1 },
-            { id: 3, name: '盐城之战', target: 100, reward: 1, special: 'b2',   specialTarget: 10,  specialLabel: 'B-2 击落' },
-            { id: 4, name: '支援连云港', target: 300, reward: 1, special: 'drone', specialTarget: 200, specialLabel: '无人机击落' },
-            { id: 5, name: '枣庄之战',  target: 150, reward: 1, special: 'f22' },
+            { id: 0, name: '小试牛刀', target: 5, reward: 20 },
+            { id: 1, name: '守卫上海', target: 10, reward: 20 },
+            { id: 2, name: '一路向北', target: 15, reward: 20 },
+            { id: 3, name: '盐城之战', target: 20, reward: 20, special: 'b2',   specialTarget: 2,  specialLabel: 'B-2 击落' },
+            { id: 4, name: '支援连云港', target: 30, reward: 20, special: 'drone', specialTarget: 20, specialLabel: '无人机击落' },
+            { id: 5, name: '枣庄之战',  target: 40, reward: 20, special: 'f22' },
         ];
 
         // ── 音效系统（Web Audio API）──
