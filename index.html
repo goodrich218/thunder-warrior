@@ -709,6 +709,11 @@
                         <div class="pause-dmg-bar-wrap"><div class="pause-dmg-bar" id="dmgBarHq9" style="background:#FF6B35;width:0%"></div></div>
                         <span class="pause-dmg-val" id="dmgValHq9">0</span>
                     </div>
+                    <div class="pause-dmg-row">
+                        <span class="pause-dmg-label">✈️ 霹雳-17</span>
+                        <div class="pause-dmg-bar-wrap"><div class="pause-dmg-bar" id="dmgBarPL17" style="background:#4CAF50;width:0%"></div></div>
+                        <span class="pause-dmg-val" id="dmgValPL17">0</span>
+                    </div>
                 </div>
                 <button class="pause-resume-btn" id="pauseResumeBtn">▶ 继续战斗</button>
             </div>
@@ -903,7 +908,7 @@
                     <div class="equip-icon">✈️</div>
                     <div class="equip-info">
                         <div class="equip-name">霹雳-17</div>
-                        <div class="equip-desc">召唤战机精准打击，对全场敌机造成500%伤害</div>
+                        <div class="equip-desc">召唤战机精准打击，共5级，满级500%伤害</div>
                     </div>
                     <div class="equip-status no" id="charPl17Status">未拥有</div>
                 </div>
@@ -970,7 +975,7 @@
                     <div class="shop-item-icon">🔥</div>
                     <div>
                         <div class="shop-item-name">弹速强化 <span id="shopBulletRateLevelBadge" style="font-size:10px;color:rgba(255,160,60,0.85);font-weight:normal"></span></div>
-                        <div class="shop-item-desc">提升子弹射速，共5级<br>初始450ms间隔，满级降至200ms</div>
+                        <div class="shop-item-desc">提升子弹射速，共5级（每级20,000积分）<br>初始450ms间隔，满级降至200ms</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
@@ -983,7 +988,7 @@
                     <div class="shop-item-icon">🚀</div>
                     <div>
                         <div class="shop-item-name">HQ-9 红旗防空系统 <span id="shopHq9LevelBadge" style="font-size:10px;color:rgba(255,120,60,0.85);font-weight:normal"></span></div>
-                        <div class="shop-item-desc">同时发射9枚跟踪导弹，初始300%导弹威力<br>每升1级+50%，满5级齐射12枚</div>
+                        <div class="shop-item-desc">同时发射跟踪导弹，初始6枚×300%威力<br>每升1级多1枚+50%威力，满5级10枚×500%</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
@@ -1021,12 +1026,12 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">✈️</div>
                     <div>
-                        <div class="shop-item-name">霹雳-17 精确打击</div>
-                        <div class="shop-item-desc">召唤战机从下至上扫场，对所有敌机造成500%伤害<br>冷却时间45秒</div>
+                        <div class="shop-item-name">霹雳-17 精确打击 <span id="shopPl17LevelBadge" style="font-size:10px;color:rgba(100,255,100,0.8);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">召唤战机从下至上扫场，共5级<br>L1=300% · L2=350% · L3=400% · L4=450% · L5=500%<br>冷却时间45秒</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost">80,000 积分</span>
+                    <span class="shop-item-cost" id="shopPl17Cost">80,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopPl17BuyBtn" onclick="purchasePL17()">购买</button>
                 </div>
             </div>
@@ -1183,7 +1188,7 @@
         const MISSILE_DAMAGE = [0, 2.0, 3.0, 3.0, 4.0, 5.0]; // 每档基础伤害倍数
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
         let paused = false;
-        let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0;
+        let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
 
         // ── 音效系统（Web Audio API）──
         let audioCtx = null;
@@ -1391,7 +1396,7 @@
         let bulletRateLevel = 0; // 弹速等级 0-5，L0=450ms L5=200ms
         // 射速公式：450 - bulletRateLevel * 50 (ms间隔)
         let wingmanLevel = 0; // 星链等级 0-5
-        let pl17 = false, pl17CooldownUntil = 0, pl17LaunchedAt = 0;
+        let pl17 = false, pl17Level = 0, pl17CooldownUntil = 0, pl17LaunchedAt = 0;
         let pl17Active = false, pl17JetY = 0, pl17DamageDealt = false;
         const PL17_COOLDOWN = 45000;
         let hq9Level = 0, hq9CooldownUntil = 0, hq9LaunchedAt = 0;
@@ -1439,11 +1444,11 @@
                     if (data.equipment.weaponBayLevel === undefined) data.equipment.weaponBayLevel = 0;
                     if (data.equipment.dodgeLevel === undefined) data.equipment.dodgeLevel = 0;
                     if (data.equipment.shieldLevel === undefined) data.equipment.shieldLevel = 0;
-                    if (data.equipment.pl17 === undefined) data.equipment.pl17 = false;
+                    if (data.equipment.pl17Level === undefined) { data.equipment.pl17Level = data.equipment.pl17 ? 1 : 0; delete data.equipment.pl17; }
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17: false } };
+            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
         }
 
         function saveAccount() {
@@ -1504,11 +1509,11 @@
             leechS.textContent = leechLv > 0 ? `Lv.${leechLv} / 5` : '未拥有';
             leechS.className = 'equip-status ' + (leechLv > 0 ? 'yes' : 'no');
             // 霹雳-17
-            const pl17owned = !!(eq.pl17);
-            document.getElementById('charPl17Equip').className = 'equip-item ' + (pl17owned ? 'owned' : 'not-owned');
+            const pl17Lv = eq.pl17Level || 0;
+            document.getElementById('charPl17Equip').className = 'equip-item ' + (pl17Lv > 0 ? 'owned' : 'not-owned');
             const pl17S = document.getElementById('charPl17Status');
-            pl17S.textContent = pl17owned ? '✓ 已拥有' : '未拥有';
-            pl17S.className = 'equip-status ' + (pl17owned ? 'yes' : 'no');
+            pl17S.textContent = pl17Lv > 0 ? `Lv.${pl17Lv} / 5` : '未拥有';
+            pl17S.className = 'equip-status ' + (pl17Lv > 0 ? 'yes' : 'no');
             document.getElementById('arsenalPanel').style.display = 'none';
             document.getElementById('characterPanel').style.display = 'flex';
         }
@@ -1587,10 +1592,10 @@
                     }
                 }
             })();
-            // 弹速强化：分5级，每级10000
+            // 弹速强化：分5级，每级20000
             (function() {
                 const lv = eq.bulletRateLevel || 0;
-                const price = 10000;
+                const price = 20000;
                 const card = document.getElementById('shopBulletRateCard');
                 const btn  = document.getElementById('shopBulletRateBuyBtn');
                 const badge = document.getElementById('shopBulletRateLevelBadge');
@@ -1685,20 +1690,30 @@
                     }
                 }
             })();
-            // 霹雳-17：一次性购买
+            // 霹雳-17：共5级，每级80000
             (function() {
-                const owned = !!(eq.pl17);
+                const lv = eq.pl17Level || 0;
+                const price = 80000;
                 const card = document.getElementById('shopPl17Card');
                 const btn  = document.getElementById('shopPl17BuyBtn');
-                if (owned) {
+                const badge = document.getElementById('shopPl17LevelBadge');
+                const costEl = document.getElementById('shopPl17Cost');
+                if (lv >= 5) {
+                    if (badge) badge.textContent = 'Lv.5 · 已满级';
                     card.className = 'shop-item-card already-owned';
-                    btn.textContent = '已拥有'; btn.className = 'shop-buy-btn owned';
-                } else if (pts >= 80000) {
-                    card.className = 'shop-item-card can-afford';
-                    btn.textContent = '购买'; btn.className = 'shop-buy-btn can-buy';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned';
+                    if (costEl) costEl.textContent = '—';
                 } else {
-                    card.className = 'shop-item-card';
-                    btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    if (badge) badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    if (costEl) costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
                 }
             })();
         }
@@ -1749,8 +1764,8 @@
             if (!currentAccount) return;
             const lv = currentAccount.equipment.bulletRateLevel || 0;
             if (lv >= 5) return;
-            if ((currentAccount.totalPoints || 0) < 10000) return;
-            currentAccount.totalPoints -= 10000;
+            if ((currentAccount.totalPoints || 0) < 20000) return;
+            currentAccount.totalPoints -= 20000;
             currentAccount.equipment.bulletRateLevel = lv + 1;
             saveAccount();
             updateShopPanel();
@@ -1781,10 +1796,12 @@
         }
 
         function purchasePL17() {
-            if (!currentAccount || currentAccount.equipment.pl17) return;
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.pl17Level || 0;
+            if (lv >= 5) return;
             if ((currentAccount.totalPoints || 0) < 80000) return;
             currentAccount.totalPoints -= 80000;
-            currentAccount.equipment.pl17 = true;
+            currentAccount.equipment.pl17Level = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -1869,7 +1886,7 @@
             document.getElementById('pauseScore').textContent = score.toLocaleString();
             document.getElementById('pauseLevel').textContent = level;
             document.getElementById('pauseHp').textContent = `${Math.max(0, currentHp)} / ${maxHp}`;
-            const total = dmgMainGun + dmgMissile + dmgWingman + dmgHQ9 || 1;
+            const total = dmgMainGun + dmgMissile + dmgWingman + dmgHQ9 + dmgPL17 || 1;
             function setDmgRow(barId, valId, val) {
                 document.getElementById(valId).textContent = val >= 1000 ? (val/1000).toFixed(1)+'k' : Math.round(val);
                 document.getElementById(barId).style.width = (val / total * 100) + '%';
@@ -1878,6 +1895,7 @@
             setDmgRow('dmgBarMissile', 'dmgValMissile', dmgMissile);
             setDmgRow('dmgBarWingman', 'dmgValWingman', dmgWingman);
             setDmgRow('dmgBarHq9',     'dmgValHq9',     dmgHQ9);
+            setDmgRow('dmgBarPL17',    'dmgValPL17',    dmgPL17);
             document.getElementById('pausePanel').style.display = 'flex';
         }
 
@@ -1921,13 +1939,8 @@
             const now = Date.now();
             const onCooldown = now < pl17CooldownUntil;
             const pipsEl = document.getElementById('pl17Pips');
-            if (pipsEl && pipsEl.children.length === 0) {
-                const pip = document.createElement('div');
-                pip.className = 'pl17-pip' + (onCooldown ? '' : ' on');
-                pipsEl.appendChild(pip);
-            } else if (pipsEl && pipsEl.children.length > 0) {
-                pipsEl.children[0].className = 'pl17-pip' + (onCooldown ? '' : ' on');
-            }
+            if (pipsEl) pipsEl.innerHTML = Array.from({length: 5}, (_, i) =>
+                `<div class="pl17-pip${i < pl17Level ? ' on' : ''}"></div>`).join('');
             const statusEl = document.getElementById('pl17StatusText');
             if (statusEl) statusEl.textContent = onCooldown ? `${Math.ceil((pl17CooldownUntil - now) / 1000)}s` : '';
             const fillEl = document.getElementById('pl17BarFill');
@@ -1948,7 +1961,7 @@
         }
 
         function getLevelXPNeeded() {
-            return 2000 + (level - 1) * 1000;
+            return 2000 + (level - 1) * 2000;
         }
 
         // 绘制中国战机 - 歼-35隐身舰载战斗机（俯视图）
@@ -2315,7 +2328,7 @@
                 {t: 3, w: 42, h: 42, hp: 15, s: 0.4, sc: 500, name: 'F-22'},
                 {t: 4, w: 39, h: 39, hp: 20, s: 0.35, sc: 750, name: 'F-35'},
                 {t: 5, w: 44, h: 44, hp: 25, s: 0.3, sc: 875, name: 'F/A-18E'},
-                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 2500, name: 'B-2'}
+                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 1200, name: 'B-2'}
             ];
             let weights = [40, 25, 15, 10, 5, 3, 2];
             if (score > 2000) weights = [30, 25, 20, 12, 6, 4, 3];
@@ -2539,7 +2552,7 @@
             // 伤害：L1=300%(=6), L2=350%(=7), L3=400%(=8), L4=450%(=9), L5=500%(=10)
             const damage = 2 * (3 + 0.5 * (hq9Level - 1));
             const speed = 5;
-            const count = hq9Level >= 5 ? 12 : 9; // 满级12颗
+            const count = 5 + hq9Level; // Lv1=6, Lv2=7, Lv3=8, Lv4=9, Lv5=10
             for (let i = 0; i < count; i++) {
                 const offset = (i - (count - 1) / 2) * 12;
                 player.bullets.push({
@@ -2651,10 +2664,11 @@
                 // 到达中部时对所有敌机造成500%伤害
                 if (!pl17DamageDealt && pl17JetY < HEIGHT * 0.55) {
                     pl17DamageDealt = true;
+                    const pl17Mult = 2.5 + 0.5 * pl17Level; // L1=3, L2=3.5, L3=4, L4=4.5, L5=5
                     enemies.forEach(e => {
-                        const dmg = e.hp * 5;
+                        const dmg = e.hp * pl17Mult;
                         e.currentHp -= dmg;
-                        dmgHQ9 += dmg * 100; // 归入HQ9伤害统计
+                        dmgPL17 += dmg * 100;
                         if (e.currentHp <= 0) {
                             score += e.score;
                             levelXP += e.score;
@@ -3347,8 +3361,8 @@
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; missileTier = 0; freezeLevel = 0;
             leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0;
-            paused = false; dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0;
-            pl17 = false; pl17Active = false; pl17CooldownUntil = 0;
+            paused = false; dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
+            pl17 = false; pl17Level = 0; pl17Active = false; pl17CooldownUntil = 0;
             document.getElementById('pauseBtn').style.display = 'none';
             document.getElementById('pl17Btn').style.display = 'none';
             document.getElementById('pausePanel').style.display = 'none';
@@ -3385,9 +3399,10 @@
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
             dodgeLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.dodgeLevel) || 0;
             shieldLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.shieldLevel) || 0;
-            pl17 = !!(currentAccount && currentAccount.equipment && currentAccount.equipment.pl17);
+            pl17Level = (currentAccount && currentAccount.equipment && currentAccount.equipment.pl17Level) || 0;
+            pl17 = pl17Level > 0;
             pl17CooldownUntil = 0; pl17LaunchedAt = 0; pl17Active = false; pl17JetY = 0; pl17DamageDealt = false;
-            dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0;
+            dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
             paused = false;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
