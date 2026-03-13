@@ -522,7 +522,7 @@
         .skill-locked-hint { font-size: 9px; color: rgba(255,200,0,0.6); margin-top: 4px; letter-spacing: 0.5px; }
         /* ── 电磁干扰技能按钮 ── */
         #emfBtn {
-            position: absolute; bottom: 14px; left: calc(50% - 46px);
+            position: absolute; bottom: 14px; left: 68px;
             width: 52px; background: rgba(4, 6, 20, 0.92);
             border: 1px solid rgba(110, 60, 255, 0.4); border-radius: 10px;
             padding: 5px 7px 5px; cursor: pointer; display: none;
@@ -561,7 +561,7 @@
         #emfBarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #5B2FC0, #A855F7); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(140,60,255,0.6); }
         /* ── HQ-9 红旗防空系统按钮 ── */
         #hq9Btn {
-            position: absolute; bottom: 14px; left: calc(50% + 12px);
+            position: absolute; bottom: 14px; left: 126px;
             width: 52px; background: rgba(20, 4, 4, 0.92);
             border: 1px solid rgba(255, 60, 30, 0.4); border-radius: 10px;
             padding: 5px 7px 5px; cursor: pointer; display: none;
@@ -598,7 +598,7 @@
         #hq9BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #C0392B, #FF6B35); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(255,60,20,0.6); }
         /* ── 霹雳-17 按钮 ── */
         #pl17Btn {
-            position: absolute; bottom: 14px; left: calc(50% - 104px);
+            position: absolute; bottom: 14px; left: 10px;
             width: 52px; background: rgba(4, 16, 4, 0.92);
             border: 1px solid rgba(60, 220, 60, 0.4); border-radius: 10px;
             padding: 5px 7px 5px; cursor: pointer; display: none;
@@ -637,38 +637,40 @@
         #campaignPanel {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(160deg, #020a18 0%, #050c1a 60%, #020408 100%);
-            color: #fff; z-index: 100; display: flex; flex-direction: column;
-            align-items: center; justify-content: flex-start;
-            padding: 30px 20px; overflow-y: auto;
+            color: #fff; z-index: 100; overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
-        .campaign-header { text-align: center; margin-bottom: 20px; }
-        .campaign-badge { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,160,0,0.6); margin-bottom: 8px; }
-        .campaign-title { font-size: 26px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(90deg, #FFD740, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .campaign-subtitle { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; letter-spacing: 1px; }
-        .campaign-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,160,0,0.3), transparent); margin-bottom: 20px; width: 100%; }
+        .campaign-inner {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 18px 14px 22px; min-height: 100%; box-sizing: border-box;
+        }
+        .campaign-header { text-align: center; margin-bottom: 10px; width: 100%; }
+        .campaign-badge { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,160,0,0.6); margin-bottom: 6px; }
+        .campaign-title { font-size: 22px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(90deg, #FFD740, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .campaign-subtitle { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 4px; letter-spacing: 1px; }
+        .campaign-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,160,0,0.3), transparent); margin-bottom: 12px; width: 100%; }
+        .mission-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 568px; margin-bottom: 12px; }
         .mission-card {
-            width: 100%; max-width: 360px; margin-bottom: 14px;
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,160,0,0.2);
-            border-radius: 14px; padding: 18px 20px; cursor: pointer;
+            border-radius: 10px; padding: 12px 12px 10px; cursor: pointer;
             transition: all 0.2s; position: relative; overflow: hidden;
         }
         .mission-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #FF6F00, #FFD740, #FF6F00); opacity: 0.6; }
-        .mission-card:hover { background: rgba(255,160,0,0.07); border-color: rgba(255,160,0,0.5); box-shadow: 0 0 24px rgba(255,160,0,0.1); transform: translateY(-2px); }
-        .mission-card.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        .mission-card:hover { background: rgba(255,160,0,0.07); border-color: rgba(255,160,0,0.5); box-shadow: 0 0 16px rgba(255,160,0,0.1); transform: translateY(-1px); }
+        .mission-card.locked { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
         .mission-card.completed { border-color: rgba(0,230,118,0.4); }
         .mission-card.completed::before { background: linear-gradient(90deg, #00c853, #69f0ae, #00c853); }
-        .mission-num { font-size: 9px; letter-spacing: 4px; color: rgba(255,160,0,0.6); margin-bottom: 6px; text-transform: uppercase; }
-        .mission-name { font-size: 20px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
-        .mission-story { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 12px; }
-        .mission-objectives { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-        .mission-obj-tag { background: rgba(255,160,0,0.1); border: 1px solid rgba(255,160,0,0.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #FFD740; }
+        .mission-num { font-size: 8px; letter-spacing: 2px; color: rgba(255,160,0,0.6); margin-bottom: 4px; text-transform: uppercase; }
+        .mission-name { font-size: 15px; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 5px; line-height: 1.2; }
+        .mission-story { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.5; margin-bottom: 8px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .mission-objectives { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        .mission-obj-tag { background: rgba(255,160,0,0.1); border: 1px solid rgba(255,160,0,0.25); border-radius: 4px; padding: 3px 8px; font-size: 10px; color: #FFD740; display: inline-block; }
         .mission-card.completed .mission-obj-tag { background: rgba(0,200,80,0.1); border-color: rgba(0,200,80,0.3); color: #69f0ae; }
-        .mission-reward-row { display: flex; align-items: center; gap: 8px; }
-        .mission-reward-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 1px; }
-        .mission-reward-val { font-size: 12px; font-weight: bold; color: #FFD740; background: rgba(255,200,0,0.1); border: 1px solid rgba(255,200,0,0.3); border-radius: 4px; padding: 2px 8px; }
-        .mission-card.completed .mission-reward-val { color: #69f0ae; background: rgba(0,200,80,0.1); border-color: rgba(0,200,80,0.3); }
-        .mission-complete-badge { position: absolute; top: 16px; right: 16px; font-size: 10px; color: #69f0ae; letter-spacing: 2px; background: rgba(0,200,80,0.12); border: 1px solid rgba(0,200,80,0.3); border-radius: 4px; padding: 3px 10px; }
-        .campaign-back-btn { margin-top: 6px; padding: 10px 32px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 3px; border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .mission-reward-row { display: flex; align-items: center; gap: 6px; }
+        .mission-reward-label { font-size: 9px; color: rgba(255,255,255,0.3); }
+        .mission-reward-val { font-size: 11px; font-weight: bold; color: #FFD740; background: rgba(255,200,0,0.08); border: 1px solid rgba(255,200,0,0.25); border-radius: 3px; padding: 1px 6px; }
+        .mission-card.completed .mission-reward-val { color: #69f0ae; background: rgba(0,200,80,0.08); border-color: rgba(0,200,80,0.3); }
+        .mission-complete-badge { position: absolute; top: 10px; right: 10px; font-size: 9px; color: #69f0ae; letter-spacing: 1px; background: rgba(0,200,80,0.12); border: 1px solid rgba(0,200,80,0.3); border-radius: 3px; padding: 2px 7px; }
+        .campaign-back-btn { margin-top: 4px; padding: 9px 28px; background: transparent; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.45); font-size: 11px; letter-spacing: 3px; border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
         .campaign-back-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
         /* ── 任务完成面板 ── */
         #missionCompletePanel {
@@ -1228,87 +1230,91 @@
 
         <!-- ── 剧情关卡面板 ── -->
         <div id="campaignPanel" style="display:none">
+          <div class="campaign-inner">
             <div class="campaign-header">
                 <div class="campaign-badge">Story Mode · 剧情模式</div>
                 <div class="campaign-title">为国出征</div>
                 <div class="campaign-subtitle">守护领空，捍卫家国</div>
             </div>
             <div class="campaign-divider"></div>
-            <div class="mission-card" id="missionCard0" onclick="startMission(0)">
-                <div class="mission-num">Mission 01 · 第一关</div>
-                <div class="mission-name">小试牛刀</div>
-                <div class="mission-story">雷电战机首次出击。敌军试探性来袭，正是初显身手的绝佳时机，让敌人见识中国空军的实力。</div>
-                <div class="mission-objectives">
-                    <div class="mission-obj-tag">击落 100 架敌机</div>
-                </div>
-                <div class="mission-reward-row">
-                    <div class="mission-reward-label">奖励</div>
-                    <div class="mission-reward-val">+1 技能点</div>
-                </div>
-            </div>
-            <div class="mission-card" id="missionCard1" onclick="startMission(1)">
-                <div class="mission-num">Mission 02 · 第二关</div>
-                <div class="mission-name">守卫上海</div>
-                <div class="mission-story">敌军大规模空袭上海。作为拦截主力，你必须击退敌军，守卫这座城市不受侵犯，捍卫国家领空尊严。</div>
-                <div class="mission-objectives">
-                    <div class="mission-obj-tag">击落 150 架敌机</div>
-                </div>
-                <div class="mission-reward-row">
-                    <div class="mission-reward-label">奖励</div>
-                    <div class="mission-reward-val">+1 技能点</div>
-                </div>
-            </div>
-            <div class="mission-card" id="missionCard2" onclick="startMission(2)">
-                <div class="mission-num">Mission 03 · 第三关</div>
-                <div class="mission-name">一路向北</div>
-                <div class="mission-story">敌军突破南线防御，持续北进。全速拦截，不让一架敌机越过防线，保卫北方领土安全。</div>
-                <div class="mission-objectives">
-                    <div class="mission-obj-tag">击落 200 架敌机</div>
-                </div>
-                <div class="mission-reward-row">
-                    <div class="mission-reward-label">奖励</div>
-                    <div class="mission-reward-val">+1 技能点</div>
-                </div>
-            </div>
-            <div class="mission-card" id="missionCard3" onclick="startMission(3)">
-                <div class="mission-num">Mission 04 · 第四关</div>
-                <div class="mission-name">盐城之战</div>
-                <div class="mission-story">敌方出动 B-2 隐身轰炸机群，企图突防盐城要地。需在混战中精准识别并歼灭全部 B-2 编队。</div>
-                <div class="mission-objectives">
-                    <div class="mission-obj-tag">击落 100 架敌机</div>
-                    <div class="mission-obj-tag">含 10 架 B-2 轰炸机</div>
-                </div>
-                <div class="mission-reward-row">
-                    <div class="mission-reward-label">奖励</div>
-                    <div class="mission-reward-val">+1 技能点</div>
-                </div>
-            </div>
-            <div class="mission-card" id="missionCard4" onclick="startMission(4)">
-                <div class="mission-num">Mission 05 · 第五关</div>
-                <div class="mission-name">支援连云港</div>
-                <div class="mission-story">敌方饱和攻击，无人机海与常规战机混编突防连云港。面对数量优势，以一当十，坚守至最后一刻。</div>
-                <div class="mission-objectives">
-                    <div class="mission-obj-tag">击落 300 架敌机</div>
-                    <div class="mission-obj-tag">含 200 架无人机</div>
-                </div>
-                <div class="mission-reward-row">
-                    <div class="mission-reward-label">奖励</div>
-                    <div class="mission-reward-val">+1 技能点</div>
-                </div>
-            </div>
-            <div class="mission-card" id="missionCard5" onclick="startMission(5)">
-                <div class="mission-num">Mission 06 · 第六关</div>
-                <div class="mission-name">枣庄之战</div>
-                <div class="mission-story">美军第五代 F-22 猛禽战斗机群大规模压境枣庄。以更高超技术，在顶尖对抗中取得最终胜利。</div>
-                <div class="mission-objectives">
-                    <div class="mission-obj-tag">击落 150 架 F-22</div>
-                </div>
-                <div class="mission-reward-row">
-                    <div class="mission-reward-label">奖励</div>
-                    <div class="mission-reward-val">+1 技能点</div>
-                </div>
+            <div class="mission-grid">
+              <div class="mission-card" id="missionCard0" onclick="startMission(0)">
+                  <div class="mission-num">01 · 第一关</div>
+                  <div class="mission-name">小试牛刀</div>
+                  <div class="mission-story">雷电战机首次出击，敌军试探性来袭，初显身手的绝佳时机。</div>
+                  <div class="mission-objectives">
+                      <div class="mission-obj-tag">击落 100 架</div>
+                  </div>
+                  <div class="mission-reward-row">
+                      <div class="mission-reward-label">奖励</div>
+                      <div class="mission-reward-val">+1 技能点</div>
+                  </div>
+              </div>
+              <div class="mission-card" id="missionCard1" onclick="startMission(1)">
+                  <div class="mission-num">02 · 第二关</div>
+                  <div class="mission-name">守卫上海</div>
+                  <div class="mission-story">敌军大规模空袭上海，作为拦截主力击退敌军。</div>
+                  <div class="mission-objectives">
+                      <div class="mission-obj-tag">击落 150 架</div>
+                  </div>
+                  <div class="mission-reward-row">
+                      <div class="mission-reward-label">奖励</div>
+                      <div class="mission-reward-val">+1 技能点</div>
+                  </div>
+              </div>
+              <div class="mission-card" id="missionCard2" onclick="startMission(2)">
+                  <div class="mission-num">03 · 第三关</div>
+                  <div class="mission-name">一路向北</div>
+                  <div class="mission-story">敌军突破南线防御持续北进，全速拦截保卫北方领土。</div>
+                  <div class="mission-objectives">
+                      <div class="mission-obj-tag">击落 200 架</div>
+                  </div>
+                  <div class="mission-reward-row">
+                      <div class="mission-reward-label">奖励</div>
+                      <div class="mission-reward-val">+1 技能点</div>
+                  </div>
+              </div>
+              <div class="mission-card" id="missionCard3" onclick="startMission(3)">
+                  <div class="mission-num">04 · 第四关</div>
+                  <div class="mission-name">盐城之战</div>
+                  <div class="mission-story">B-2 隐身轰炸机群突防盐城，混战中精准歼灭 B-2 编队。</div>
+                  <div class="mission-objectives">
+                      <div class="mission-obj-tag">击落 100 架</div>
+                      <div class="mission-obj-tag">含 10 架 B-2</div>
+                  </div>
+                  <div class="mission-reward-row">
+                      <div class="mission-reward-label">奖励</div>
+                      <div class="mission-reward-val">+1 技能点</div>
+                  </div>
+              </div>
+              <div class="mission-card" id="missionCard4" onclick="startMission(4)">
+                  <div class="mission-num">05 · 第五关</div>
+                  <div class="mission-name">支援连云港</div>
+                  <div class="mission-story">无人机海与战机混编饱和攻击连云港，坚守至最后一刻。</div>
+                  <div class="mission-objectives">
+                      <div class="mission-obj-tag">击落 300 架</div>
+                      <div class="mission-obj-tag">含 200 无人机</div>
+                  </div>
+                  <div class="mission-reward-row">
+                      <div class="mission-reward-label">奖励</div>
+                      <div class="mission-reward-val">+1 技能点</div>
+                  </div>
+              </div>
+              <div class="mission-card" id="missionCard5" onclick="startMission(5)">
+                  <div class="mission-num">06 · 第六关</div>
+                  <div class="mission-name">枣庄之战</div>
+                  <div class="mission-story">F-22 猛禽战斗机群压境枣庄，顶尖对抗取得最终胜利。</div>
+                  <div class="mission-objectives">
+                      <div class="mission-obj-tag">击落 150 架 F-22</div>
+                  </div>
+                  <div class="mission-reward-row">
+                      <div class="mission-reward-label">奖励</div>
+                      <div class="mission-reward-val">+1 技能点</div>
+                  </div>
+              </div>
             </div>
             <button class="campaign-back-btn" id="campaignBackBtn">返回</button>
+          </div>
         </div>
 
         <!-- ── 任务完成面板 ── -->
