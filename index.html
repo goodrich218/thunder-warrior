@@ -1211,6 +1211,19 @@
                     <button class="arsenal-upgrade-btn no-sp" id="arsenalShieldBtn" onclick="upgradeShield()">升级 (1点)</button>
                 </div>
             </div>
+            <div class="arsenal-part" id="arsenalKnockbackCard">
+                <div class="arsenal-part-top">
+                    <div class="arsenal-part-icon">💥</div>
+                    <div>
+                        <div class="arsenal-part-name">击退炮弹 <span id="arsenalKnockbackBadge" style="font-size:10px;color:rgba(255,120,60,0.8);font-weight:normal"></span></div>
+                        <div class="arsenal-part-desc">子弹有概率将敌机击退至出发位置<br>基础概率10%，每级+2%，最高45级</div>
+                    </div>
+                </div>
+                <div class="arsenal-part-footer">
+                    <span class="arsenal-part-stat" id="arsenalKnockbackStat" style="color:#FF7043">击退 10%</span>
+                    <button class="arsenal-upgrade-btn no-sp" id="arsenalKnockbackBtn" onclick="upgradeKnockback()">升级 (1点)</button>
+                </div>
+            </div>
             <button class="shop-back-btn" id="arsenalBackBtn">← 返回角色</button>
         </div>
 
@@ -1422,7 +1435,7 @@
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, missileTier = 0, leechLevel = 0, freezeLevel = 0;
         const MISSILE_COUNT  = [0, 1, 1, 2, 3, 3];   // 每档发射数量
         const MISSILE_DAMAGE = [0, 2.0, 3.0, 3.0, 4.0, 5.0]; // 每档基础伤害倍数
-        let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
+        let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0, knockbackLevel = 0;
         let paused = false;
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
@@ -2320,6 +2333,7 @@
             const weaponLv = eq.weaponBayLevel || 0;
             const dodgeLv = eq.dodgeLevel || 0;
             const shieldLv = eq.shieldLevel || 0;
+            const knockbackLv = eq.knockbackLevel || 0;
             document.getElementById('arsenalSP').textContent = sp;
             document.getElementById('arsenalArmorBadge').textContent = armorLv > 0 ? `Lv.${armorLv}` : '未升级';
             document.getElementById('arsenalArmorStat').textContent = `防御 +${armorLv * 10}`;
@@ -2331,11 +2345,15 @@
             const shieldMaxed = shieldLv >= 30;
             document.getElementById('arsenalShieldBadge').textContent = shieldLv > 0 ? (shieldMaxed ? 'Lv.30 · 已满级' : `Lv.${shieldLv}`) : '未升级';
             document.getElementById('arsenalShieldStat').textContent = `减伤 ${shieldLv * 2}%`;
+            const knockbackMaxed = knockbackLv >= 45;
+            document.getElementById('arsenalKnockbackBadge').textContent = knockbackLv > 0 ? (knockbackMaxed ? 'Lv.45 · 已满级' : `Lv.${knockbackLv}`) : '未升级';
+            document.getElementById('arsenalKnockbackStat').textContent = `击退 ${10 + knockbackLv * 2}%`;
             const canUpgrade = sp >= 1;
             document.getElementById('arsenalArmorBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade ? 'can-upgrade' : 'no-sp');
             document.getElementById('arsenalWeaponBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade ? 'can-upgrade' : 'no-sp');
             document.getElementById('arsenalDodgeBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade && !dodgeMaxed ? 'can-upgrade' : 'no-sp');
             document.getElementById('arsenalShieldBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade && !shieldMaxed ? 'can-upgrade' : 'no-sp');
+            document.getElementById('arsenalKnockbackBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade && !knockbackMaxed ? 'can-upgrade' : 'no-sp');
         }
 
         function upgradeArmor() {
@@ -2372,6 +2390,16 @@
             if ((currentAccount.equipment.shieldLevel || 0) >= 30) return;
             currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
             currentAccount.equipment.shieldLevel = (currentAccount.equipment.shieldLevel || 0) + 1;
+            saveAccount();
+            updateArsenalPanel();
+        }
+
+        function upgradeKnockback() {
+            if (!currentAccount) return;
+            if ((currentAccount.skillPoints || 0) < 1) return;
+            if ((currentAccount.equipment.knockbackLevel || 0) >= 45) return;
+            currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
+            currentAccount.equipment.knockbackLevel = (currentAccount.equipment.knockbackLevel || 0) + 1;
             saveAccount();
             updateArsenalPanel();
         }
@@ -3324,6 +3352,9 @@
                         if (b.isFreeze && freezeLevel > 0) {
                             e.frozenUntil = Date.now() + freezeLevel * 500;
                         }
+                        if (knockbackLevel > 0 && Math.random() * 100 < 10 + knockbackLevel * 2) {
+                            e.y = -e.h; // 击退至出发位置
+                        }
                         if (e.currentHp <= 0) {
                             score += e.score;
                             levelXP += e.score; // XP独立于得分，升级后归零
@@ -3895,7 +3926,7 @@
         function restart() {
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; missileTier = 0; freezeLevel = 0;
-            leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0;
+            leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0; knockbackLevel = 0;
             paused = false; dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
             pl17 = false; pl17Level = 0; pl17Active = false; pl17CooldownUntil = 0;
             document.getElementById('pauseBtn').style.display = 'none';
@@ -3935,6 +3966,7 @@
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
             dodgeLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.dodgeLevel) || 0;
             shieldLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.shieldLevel) || 0;
+            knockbackLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.knockbackLevel) || 0;
             pl17Level = (currentAccount && currentAccount.equipment && currentAccount.equipment.pl17Level) || 0;
             pl17 = pl17Level > 0;
             pl17CooldownUntil = 0; pl17LaunchedAt = 0; pl17Active = false; pl17JetY = 0; pl17DamageDealt = false;
@@ -4280,7 +4312,6 @@
         });
         document.getElementById('mcReturnBtn').addEventListener('click', () => {
             document.getElementById('missionCompletePanel').style.display = 'none';
-            document.getElementById('missionHUD').style.display = 'none';
             document.getElementById('controlPanel').style.display = 'none';
             // 累计积分
             if (currentAccount) {
