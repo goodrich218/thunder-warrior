@@ -1168,6 +1168,65 @@
                 osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
             } catch(e) {}
         }
+        // 共享噪声缓冲（所有导弹复用，避免重复分配）
+        let _sharedNoiseBuf = null;
+        function getSharedNoiseBuf() {
+            if (_sharedNoiseBuf) return _sharedNoiseBuf;
+            const ctx = getAudioCtx();
+            _sharedNoiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+            const d = _sharedNoiseBuf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            return _sharedNoiseBuf;
+        }
+
+        function createHQ9MissileGlide() {
+            try {
+                const ctx = getAudioCtx();
+                const master = ctx.createGain();
+                master.gain.setValueAtTime(0.055, ctx.currentTime);
+                master.connect(ctx.destination);
+
+                // 噪声"嗤"声（模拟导弹尾焰气流）
+                const nSrc = ctx.createBufferSource();
+                nSrc.buffer = getSharedNoiseBuf();
+                nSrc.loop = true;
+                const nFilt = ctx.createBiquadFilter();
+                nFilt.type = 'bandpass';
+                nFilt.frequency.setValueAtTime(1200, ctx.currentTime);
+                nFilt.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 3);
+                nFilt.Q.value = 2.5;
+                const nGain = ctx.createGain();
+                nGain.gain.value = 0.4;
+                nSrc.connect(nFilt); nFilt.connect(nGain); nGain.connect(master);
+                nSrc.start();
+
+                // 主音调（三角波下扫，Doppler感）
+                const osc = ctx.createOscillator();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 3);
+                const oGain = ctx.createGain();
+                oGain.gain.value = 0.6;
+                osc.connect(oGain); oGain.connect(master);
+                osc.start();
+
+                return {
+                    stop() {
+                        try {
+                            const t = ctx.currentTime;
+                            master.gain.setValueAtTime(master.gain.value, t);
+                            master.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+                            setTimeout(() => { try { nSrc.stop(); osc.stop(); } catch(_) {} }, 100);
+                        } catch(_) {}
+                    }
+                };
+            } catch(_) { return { stop() {} }; }
+        }
+
+        function stopBulletGlide(b) {
+            if (b.glide) { b.glide.stop(); b.glide = null; }
+        }
+
         function playHQ9Sound() {
             try {
                 const ctx = getAudioCtx();
@@ -1700,8 +1759,13 @@
             updateArsenalPanel();
         }
 
+        function stopAllGlides() {
+            player.bullets.forEach(b => stopBulletGlide(b));
+        }
+
         function showPausePanel() {
             paused = true;
+            stopAllGlides();
             document.getElementById('pauseScore').textContent = score.toLocaleString();
             document.getElementById('pauseLevel').textContent = level;
             document.getElementById('pauseHp').textContent = `${Math.max(0, currentHp)} / ${maxHp}`;
@@ -2323,7 +2387,8 @@
                     vx: 0, vy: -speed,
                     isMissile: true, isHQ9: true,
                     damage: damage,
-                    isFreeze: freezeLevel > 0
+                    isFreeze: freezeLevel > 0,
+                    glide: createHQ9MissileGlide()
                 });
             }
             hq9CooldownUntil = Date.now() + HQ9_COOLDOWN;
@@ -2446,7 +2511,9 @@
                     if (b.x <= 0 || b.x >= WIDTH) { b.vx *= -0.8; b.x = b.x <= 0 ? 1 : WIDTH - 1; b.bounces++; }
                     if (b.y <= 0) { b.vy *= -0.8; b.y = 1; b.bounces++; }
                 }
-                return b.y > -50 && b.y < HEIGHT + 50;
+                const keep = b.y > -50 && b.y < HEIGHT + 50;
+                if (!keep) stopBulletGlide(b);
+                return keep;
             });
 
             // 更新敌机
@@ -2527,6 +2594,7 @@
                     }
                     return true;
                 });
+                if (hit) stopBulletGlide(b);
                 return !hit;
             });
 
@@ -3021,6 +3089,7 @@
         function gameOver() {
             gameState = 'gameover';
             paused = false;
+            stopAllGlides();
             document.getElementById('pauseBtn').style.display = 'none';
             document.getElementById('pausePanel').style.display = 'none';
             document.getElementById('emfBtn').style.display = 'none';
