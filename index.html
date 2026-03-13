@@ -594,6 +594,40 @@
         .hq9-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(255,160,80,0.9); margin-bottom: 4px; height: 10px; overflow: hidden; }
         #hq9Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #hq9BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #C0392B, #FF6B35); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(255,60,20,0.6); }
+        /* ── 霹雳-17 按钮 ── */
+        #pl17Btn {
+            position: absolute; bottom: 14px; left: calc(50% - 140px);
+            width: 64px; background: rgba(4, 16, 4, 0.92);
+            border: 1px solid rgba(60, 220, 60, 0.4); border-radius: 12px;
+            padding: 8px 10px 7px; cursor: pointer; display: none;
+            flex-direction: column; align-items: center;
+            pointer-events: auto; z-index: 10; text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            user-select: none; -webkit-user-select: none;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        #pl17Btn::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(60,220,60,0.8), transparent);
+            border-radius: 12px 12px 0 0;
+        }
+        #pl17Btn:hover:not(.on-cooldown) {
+            border-color: rgba(80, 255, 80, 0.8);
+            box-shadow: 0 0 28px rgba(40, 200, 40, 0.35), 0 4px 24px rgba(0,0,0,0.6);
+        }
+        #pl17Btn.firing {
+            border-color: rgba(180, 255, 100, 0.95);
+            animation: pl17BtnPulse 0.2s ease-in-out 4;
+        }
+        #pl17Btn.on-cooldown { opacity: 0.55; cursor: not-allowed; }
+        @keyframes pl17BtnPulse {
+            from { box-shadow: 0 0 18px rgba(40,200,40,0.4), 0 4px 24px rgba(0,0,0,0.6); }
+            to   { box-shadow: 0 0 42px rgba(120,255,80,0.9), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(180,255,100,1); }
+        }
+        .pl17-btn-icon { font-size: 22px; line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 0 6px rgba(60,220,60,0.8)); }
+        .pl17-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(100,255,100,0.85); margin-bottom: 4px; height: 10px; overflow: hidden; }
+        #pl17Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+        #pl17BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a6b1a, #4CAF50); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(60,200,60,0.6); }
     </style>
 </head>
 <body>
@@ -623,6 +657,12 @@
         <div id="missileIndicator">🎯<span id="missileLevel">0</span></div>
         <div id="leechIndicator">🩸<span id="leechLevel">0</span></div>
         <div id="freezeIndicator">❄️<span id="freezeLevelDisplay">0</span></div>
+        <!-- 霹雳-17 按钮 -->
+        <div id="pl17Btn">
+            <div class="pl17-btn-icon">✈️</div>
+            <div class="pl17-btn-status" id="pl17StatusText"></div>
+            <div id="pl17Bar"><div id="pl17BarFill"></div></div>
+        </div>
         <!-- 暂停按钮 -->
         <button id="pauseBtn">⏸</button>
         <!-- 暂停面板 -->
@@ -855,6 +895,14 @@
                     </div>
                     <div class="equip-status no" id="charLeechStatus">未拥有</div>
                 </div>
+                <div class="equip-item not-owned" id="charPl17Equip">
+                    <div class="equip-icon">✈️</div>
+                    <div class="equip-info">
+                        <div class="equip-name">霹雳-17</div>
+                        <div class="equip-desc">召唤战机精准打击，对全场敌机造成500%伤害</div>
+                    </div>
+                    <div class="equip-status no" id="charPl17Status">未拥有</div>
+                </div>
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
@@ -963,6 +1011,19 @@
                 <div class="shop-item-footer">
                     <span class="shop-item-cost" id="shopLeechCost">20,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopLeechBuyBtn" onclick="purchaseLeech()">购买</button>
+                </div>
+            </div>
+            <div class="shop-item-card" id="shopPl17Card">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">✈️</div>
+                    <div>
+                        <div class="shop-item-name">霹雳-17 精确打击</div>
+                        <div class="shop-item-desc">召唤战机从下至上扫场，对所有敌机造成500%伤害<br>冷却时间45秒</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost">80,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopPl17BuyBtn" onclick="purchasePL17()">购买</button>
                 </div>
             </div>
             <button class="shop-back-btn" id="shopBackBtn">← 返回角色</button>
@@ -1326,6 +1387,9 @@
         let bulletRateLevel = 0; // 弹速等级 0-5，L0=450ms L5=200ms
         // 射速公式：450 - bulletRateLevel * 50 (ms间隔)
         let wingmanLevel = 0; // 星链等级 0-5
+        let pl17 = false, pl17CooldownUntil = 0, pl17LaunchedAt = 0;
+        let pl17Active = false, pl17JetY = 0, pl17DamageDealt = false;
+        const PL17_COOLDOWN = 45000;
         let hq9Level = 0, hq9CooldownUntil = 0, hq9LaunchedAt = 0;
         const HQ9_COOLDOWN = 25000; // 冷却时间25秒
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
@@ -1371,10 +1435,11 @@
                     if (data.equipment.weaponBayLevel === undefined) data.equipment.weaponBayLevel = 0;
                     if (data.equipment.dodgeLevel === undefined) data.equipment.dodgeLevel = 0;
                     if (data.equipment.shieldLevel === undefined) data.equipment.shieldLevel = 0;
+                    if (data.equipment.pl17 === undefined) data.equipment.pl17 = false;
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0 } };
+            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17: false } };
         }
 
         function saveAccount() {
@@ -1434,6 +1499,12 @@
             const leechS = document.getElementById('charLeechStatus');
             leechS.textContent = leechLv > 0 ? `Lv.${leechLv} / 5` : '未拥有';
             leechS.className = 'equip-status ' + (leechLv > 0 ? 'yes' : 'no');
+            // 霹雳-17
+            const pl17owned = !!(eq.pl17);
+            document.getElementById('charPl17Equip').className = 'equip-item ' + (pl17owned ? 'owned' : 'not-owned');
+            const pl17S = document.getElementById('charPl17Status');
+            pl17S.textContent = pl17owned ? '✓ 已拥有' : '未拥有';
+            pl17S.className = 'equip-status ' + (pl17owned ? 'yes' : 'no');
             document.getElementById('arsenalPanel').style.display = 'none';
             document.getElementById('characterPanel').style.display = 'flex';
         }
@@ -1610,6 +1681,22 @@
                     }
                 }
             })();
+            // 霹雳-17：一次性购买
+            (function() {
+                const owned = !!(eq.pl17);
+                const card = document.getElementById('shopPl17Card');
+                const btn  = document.getElementById('shopPl17BuyBtn');
+                if (owned) {
+                    card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已拥有'; btn.className = 'shop-buy-btn owned';
+                } else if (pts >= 80000) {
+                    card.className = 'shop-item-card can-afford';
+                    btn.textContent = '购买'; btn.className = 'shop-buy-btn can-buy';
+                } else {
+                    card.className = 'shop-item-card';
+                    btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                }
+            })();
         }
 
         function purchaseMissile() {
@@ -1685,6 +1772,15 @@
             if ((currentAccount.totalPoints || 0) < price) return;
             currentAccount.totalPoints -= price;
             currentAccount.equipment.leechLevel = lv + 1;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function purchasePL17() {
+            if (!currentAccount || currentAccount.equipment.pl17) return;
+            if ((currentAccount.totalPoints || 0) < 80000) return;
+            currentAccount.totalPoints -= 80000;
+            currentAccount.equipment.pl17 = true;
             saveAccount();
             updateShopPanel();
         }
@@ -1786,8 +1882,61 @@
             document.getElementById('pausePanel').style.display = 'none';
         }
 
+        function playKOSound() {
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance('K   O');
+                    u.rate = 0.25;
+                    u.pitch = 0.5;
+                    u.volume = 1.0;
+                    window.speechSynthesis.speak(u);
+                }
+            } catch(e) {}
+        }
+
+        function activatePL17() {
+            if (gameState !== 'playing') return;
+            if (!pl17) return;
+            if (Date.now() < pl17CooldownUntil) return;
+            pl17Active = true;
+            pl17JetY = HEIGHT + 80;
+            pl17DamageDealt = false;
+            pl17LaunchedAt = Date.now();
+            pl17CooldownUntil = Date.now() + PL17_COOLDOWN;
+            playKOSound();
+            updatePL17Btn();
+        }
+
+        function updatePL17Btn() {
+            const btn = document.getElementById('pl17Btn');
+            if (!btn) return;
+            const visible = pl17 && (gameState === 'playing' || gameState === 'upgrade');
+            btn.style.display = visible ? 'flex' : 'none';
+            if (!visible) return;
+            const now = Date.now();
+            const onCooldown = now < pl17CooldownUntil;
+            const statusEl = document.getElementById('pl17StatusText');
+            if (statusEl) statusEl.textContent = onCooldown ? `${Math.ceil((pl17CooldownUntil - now) / 1000)}s` : '';
+            const fillEl = document.getElementById('pl17BarFill');
+            if (fillEl) {
+                if (onCooldown) {
+                    const pct = (pl17CooldownUntil - now) / PL17_COOLDOWN;
+                    fillEl.style.width = (Math.max(0, pct) * 100) + '%';
+                    fillEl.style.background = 'linear-gradient(90deg, #1a4a1a, #2a7a2a)';
+                    fillEl.style.boxShadow = 'none';
+                } else {
+                    fillEl.style.width = '100%';
+                    fillEl.style.background = 'linear-gradient(90deg, #1a6b1a, #4CAF50)';
+                    fillEl.style.boxShadow = '0 0 6px rgba(60,200,60,0.6)';
+                }
+            }
+            btn.classList.toggle('on-cooldown', onCooldown);
+            btn.classList.toggle('firing', now - pl17LaunchedAt < 400);
+        }
+
         function getLevelXPNeeded() {
-            return 1000 + (level - 1) * 500;
+            return 2000 + (level - 1) * 1000;
         }
 
         // 绘制中国战机 - 歼-35隐身舰载战斗机（俯视图）
@@ -2484,6 +2633,31 @@
                 player.lastWingmanShot = Date.now();
             }
 
+            // 霹雳-17 战机扫场动画推进
+            if (pl17Active) {
+                pl17JetY -= 5; // 每帧向上移动5px
+                // 到达中部时对所有敌机造成500%伤害
+                if (!pl17DamageDealt && pl17JetY < HEIGHT * 0.55) {
+                    pl17DamageDealt = true;
+                    enemies.forEach(e => {
+                        const dmg = e.hp * 5;
+                        e.currentHp -= dmg;
+                        dmgHQ9 += dmg * 100; // 归入HQ9伤害统计
+                        if (e.currentHp <= 0) {
+                            score += e.score;
+                            levelXP += e.score;
+                            if (leechLevel > 0) currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
+                            createExplosion(e.x, e.y, '#AAFF44', 25);
+                            playKillSound();
+                        }
+                    });
+                    enemies = enemies.filter(e => e.currentHp > 0);
+                    checkUpgrade();
+                    updateUI();
+                }
+                if (pl17JetY < -150) pl17Active = false;
+            }
+
             // 更新子弹
             player.bullets = player.bullets.filter(b => {
                 if (b.isMissile && enemies.length > 0) {
@@ -2650,6 +2824,18 @@
 
             // 绘制玩家飞机
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+
+            // 绘制霹雳-17 战机影子
+            if (pl17Active) {
+                ctx.save();
+                ctx.globalAlpha = 0.22 + 0.08 * Math.sin(Date.now() / 60);
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(120,255,80,0.8)';
+                // 大尺寸战机影子（80×100）
+                drawPlane(ctx, WIDTH/2 - 40, pl17JetY - 50, 80, 100, 2);
+                ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+                ctx.restore();
+            }
 
             // 绘制星链轨道卫星
             if (wingmanLevel > 0) {
@@ -3048,6 +3234,7 @@
             // 每帧刷新技能按钮状态（冷却倒计时）
             updateEMFBtn();
             updateHQ9Btn();
+            updatePL17Btn();
             // HQ-9发射时短暂红色闪光
             if (Date.now() - hq9LaunchedAt < 120) {
                 ctx.save();
@@ -3094,6 +3281,7 @@
             document.getElementById('pausePanel').style.display = 'none';
             document.getElementById('emfBtn').style.display = 'none';
             document.getElementById('hq9Btn').style.display = 'none';
+            document.getElementById('pl17Btn').style.display = 'none';
             // 保存上一局分数和最高分
             lastScore = score;
             localStorage.setItem('thunderWarriorLastScore', lastScore.toString());
@@ -3148,7 +3336,9 @@
             bulletCount = 1; ricochetCount = 0; missileCount = 0; missileTier = 0; freezeLevel = 0;
             leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0;
             paused = false; dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0;
+            pl17 = false; pl17Active = false; pl17CooldownUntil = 0;
             document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('pl17Btn').style.display = 'none';
             document.getElementById('pausePanel').style.display = 'none';
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
@@ -3183,11 +3373,13 @@
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
             dodgeLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.dodgeLevel) || 0;
             shieldLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.shieldLevel) || 0;
+            pl17 = !!(currentAccount && currentAccount.equipment && currentAccount.equipment.pl17);
+            pl17CooldownUntil = 0; pl17LaunchedAt = 0; pl17Active = false; pl17JetY = 0; pl17DamageDealt = false;
             dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0;
             paused = false;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
-            updateEMFBtn(); updateHQ9Btn();
+            updateEMFBtn(); updateHQ9Btn(); updatePL17Btn();
         }
 
         function drawPreviews() {
@@ -3523,6 +3715,7 @@
         document.getElementById('shopHq9BuyBtn').addEventListener('click', purchaseHQ9);
         document.getElementById('emfBtn').addEventListener('click', activateEMF);
         document.getElementById('hq9Btn').addEventListener('click', activateHQ9);
+        document.getElementById('pl17Btn').addEventListener('click', activatePL17);
         document.getElementById('shopBackBtn').addEventListener('click', () => {
             document.getElementById('shopPanel').style.display = 'none';
             showCharacterPanel();
