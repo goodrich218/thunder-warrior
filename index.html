@@ -1248,6 +1248,104 @@
             } catch(e) {}
         }
 
+        // ── 登录页背景音乐 ──
+        let bgMusic = { active: false, masterGain: null, scheduler: null };
+
+        function startLoginMusic() {
+            if (bgMusic.active) return;
+            bgMusic.active = true;
+            const actx = getAudioCtx();
+
+            const master = actx.createGain();
+            master.gain.setValueAtTime(0, actx.currentTime);
+            master.gain.linearRampToValueAtTime(0.38, actx.currentTime + 2.5); // 淡入
+            master.connect(actx.destination);
+            bgMusic.masterGain = master;
+
+            const bpm = 80, beat = 60 / bpm; // 0.75s / beat
+            const loopLen = 8 * beat;          // 6s 一循环
+
+            // A 小调五声: A C D E G
+            // 低音线（8拍，每拍一个）：厚重军事感
+            const bassFreqs = [55, 55, 82, 98, 55, 65, 82, 55]; // A1 A1 E2 G2 A1 C2 E2 A1
+            // 旋律（16个音，每半拍一个）：上行到顶、下行收尾、再起
+            const melFreqs  = [220, 262, 330, 392, 440, 392, 330, 262,
+                               220, 330, 392, 330, 262, 220, 165, 220];
+
+            function scheduleLoop(t0) {
+                if (!bgMusic.active) return;
+
+                // 持续底鼓：A1 三角波低频垫
+                const drone = actx.createOscillator(), dg = actx.createGain();
+                const df = actx.createBiquadFilter();
+                drone.type = 'triangle'; drone.frequency.value = 55;
+                df.type = 'lowpass'; df.frequency.value = 180;
+                dg.gain.setValueAtTime(0.15, t0);
+                dg.gain.setValueAtTime(0.15, t0 + loopLen - 0.05);
+                dg.gain.linearRampToValueAtTime(0, t0 + loopLen);
+                drone.connect(df); df.connect(dg); dg.connect(master);
+                drone.start(t0); drone.stop(t0 + loopLen);
+
+                // 低音脉冲
+                bassFreqs.forEach((freq, i) => {
+                    const t = t0 + i * beat;
+                    const o = actx.createOscillator(), g = actx.createGain();
+                    o.type = 'sawtooth'; o.frequency.value = freq;
+                    g.gain.setValueAtTime(0, t);
+                    g.gain.linearRampToValueAtTime(0.11, t + 0.03);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.72);
+                    o.connect(g); g.connect(master);
+                    o.start(t); o.stop(t + beat);
+                });
+
+                // 旋律线（8分音符，正弦波，轻柔）
+                melFreqs.forEach((freq, i) => {
+                    const t = t0 + i * beat * 0.5;
+                    const o = actx.createOscillator(), g = actx.createGain();
+                    o.type = 'sine'; o.frequency.value = freq;
+                    g.gain.setValueAtTime(0, t);
+                    g.gain.linearRampToValueAtTime(0.042, t + 0.025);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.4);
+                    o.connect(g); g.connect(master);
+                    o.start(t); o.stop(t + beat * 0.5);
+                });
+
+                // 高音紧张点缀：A5 轻微下滑，在第1拍和第5拍
+                [0, 4].forEach(b => {
+                    const t = t0 + b * beat;
+                    const o = actx.createOscillator(), g = actx.createGain();
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(880, t);
+                    o.frequency.exponentialRampToValueAtTime(830, t + 0.55);
+                    g.gain.setValueAtTime(0.028, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+                    o.connect(g); g.connect(master);
+                    o.start(t); o.stop(t + 0.65);
+                });
+
+                bgMusic.scheduler = setTimeout(
+                    () => scheduleLoop(t0 + loopLen),
+                    (loopLen - 0.4) * 1000
+                );
+            }
+
+            scheduleLoop(actx.currentTime + 0.08);
+        }
+
+        function stopLoginMusic() {
+            bgMusic.active = false;
+            if (bgMusic.scheduler) { clearTimeout(bgMusic.scheduler); bgMusic.scheduler = null; }
+            if (bgMusic.masterGain && audioCtx) {
+                try {
+                    const g = bgMusic.masterGain.gain;
+                    g.cancelScheduledValues(audioCtx.currentTime);
+                    g.setValueAtTime(g.value, audioCtx.currentTime);
+                    g.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                } catch(e) {}
+            }
+            bgMusic.masterGain = null;
+        }
+
         function playMissileSound() {
             try {
                 const ctx = getAudioCtx();
@@ -1486,6 +1584,7 @@
         }
 
         function showCharacterPanel() {
+            stopLoginMusic();
             document.getElementById('loginPanel').style.display = 'none';
             document.getElementById('controlPanel').style.display = 'none';
             document.getElementById('selectPanel').style.display = 'none';
@@ -3850,6 +3949,17 @@
         updateCtrlSelection(); // 根据 localStorage 初始化选中状态
         updateUI();
         requestAnimationFrame(gameLoop);
+
+        // 登录页背景音乐：首次与登录页交互后启动（遵守浏览器自动播放策略）
+        if (loginPanel) {
+            const _startBgOnce = () => {
+                startLoginMusic();
+                loginPanel.removeEventListener('click',      _startBgOnce);
+                loginPanel.removeEventListener('touchstart', _startBgOnce);
+            };
+            loginPanel.addEventListener('click',      _startBgOnce);
+            loginPanel.addEventListener('touchstart', _startBgOnce, { passive: true });
+        }
     </script>
 </body>
 </html>
