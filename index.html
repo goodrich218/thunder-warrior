@@ -450,6 +450,45 @@
         .skill-card.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; filter: grayscale(0.5); }
         .skill-card.locked .sc-name::after { content: ' 🔒'; font-size: 11px; }
         .skill-locked-hint { font-size: 9px; color: rgba(255,200,0,0.6); margin-top: 4px; letter-spacing: 0.5px; }
+        /* ── 电磁干扰技能按钮 ── */
+        #emfBtn {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            width: 128px; background: rgba(4, 6, 20, 0.92);
+            border: 1px solid rgba(110, 60, 255, 0.4); border-radius: 12px;
+            padding: 10px 14px 9px; cursor: pointer; display: none;
+            flex-direction: column; align-items: center;
+            pointer-events: auto; z-index: 10; text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            user-select: none; -webkit-user-select: none;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        #emfBtn::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(140,80,255,0.8), transparent);
+            border-radius: 12px 12px 0 0;
+        }
+        #emfBtn:hover:not(.on-cooldown) {
+            border-color: rgba(160, 90, 255, 0.8);
+            box-shadow: 0 0 28px rgba(100, 50, 255, 0.35), 0 4px 24px rgba(0,0,0,0.6);
+        }
+        #emfBtn.active {
+            border-color: rgba(190, 110, 255, 0.95);
+            animation: emfBtnPulse 0.65s ease-in-out infinite alternate;
+        }
+        #emfBtn.on-cooldown { opacity: 0.55; cursor: not-allowed; }
+        @keyframes emfBtnPulse {
+            from { box-shadow: 0 0 18px rgba(130, 60, 255, 0.4), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(160, 90, 255, 0.75); }
+            to   { box-shadow: 0 0 38px rgba(180, 90, 255, 0.75), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(210, 140, 255, 1); }
+        }
+        .emf-btn-icon { font-size: 22px; line-height: 1; margin-bottom: 3px; filter: drop-shadow(0 0 6px rgba(160,80,255,0.8)); }
+        .emf-btn-name { font-size: 11px; letter-spacing: 2px; color: rgba(180, 110, 255, 0.95); font-weight: bold; margin-bottom: 1px; }
+        .emf-btn-sub  { font-size: 7.5px; letter-spacing: 3px; color: rgba(255,255,255,0.22); text-transform: uppercase; margin-bottom: 5px; }
+        .emf-btn-pips { display: flex; gap: 3px; justify-content: center; margin-bottom: 5px; }
+        .emf-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.2s, box-shadow 0.2s; }
+        .emf-pip.on { background: #8B3FEF; box-shadow: 0 0 5px #8B3FEF; }
+        .emf-btn-status { font-size: 9px; letter-spacing: 1.5px; color: rgba(0, 255, 200, 0.8); margin-bottom: 6px; min-height: 11px; }
+        #emfBar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+        #emfBarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #5B2FC0, #A855F7); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(140,60,255,0.6); }
     </style>
 </head>
 <body>
@@ -479,6 +518,15 @@
         <div id="missileIndicator">🎯<span id="missileLevel">0</span></div>
         <div id="leechIndicator">🩸<span id="leechLevel">0</span></div>
         <div id="freezeIndicator">❄️<span id="freezeLevelDisplay">0</span></div>
+        <!-- 电磁干扰技能按钮 -->
+        <div id="emfBtn">
+            <div class="emf-btn-icon">⚡</div>
+            <div class="emf-btn-name">电磁干扰</div>
+            <div class="emf-btn-sub">EMF · Lv.<span id="emfLevelText">1</span></div>
+            <div class="emf-btn-pips" id="emfPips"></div>
+            <div class="emf-btn-status" id="emfStatusText">就绪</div>
+            <div id="emfBar"><div id="emfBarFill"></div></div>
+        </div>
         <div id="loginPanel">
             <div class="login-orb login-orb-1"></div>
             <div class="login-orb login-orb-2"></div>
@@ -609,6 +657,14 @@
                     </div>
                     <div class="equip-status no" id="charFreezeStatus">未拥有</div>
                 </div>
+                <div class="equip-item not-owned" id="charEmfEquip">
+                    <div class="equip-icon">⚡</div>
+                    <div class="equip-info">
+                        <div class="equip-name">电磁干扰装置</div>
+                        <div class="equip-desc">使用后暂停所有敌机，基础持续3秒，每升1级+1秒</div>
+                    </div>
+                    <div class="equip-status no" id="charEmfStatus">未拥有</div>
+                </div>
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
@@ -651,6 +707,19 @@
                 <div class="shop-item-footer">
                     <span class="shop-item-cost">20,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopFreezeBuyBtn">购买</button>
+                </div>
+            </div>
+            <div class="shop-item-card" id="shopEmfCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">⚡</div>
+                    <div>
+                        <div class="shop-item-name">电磁干扰装置 <span id="shopEmfLevelBadge" style="font-size:10px;color:rgba(160,100,255,0.8);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">使用后暂停所有敌机3秒<br>每升1级延长1秒（最长7秒·共5级）</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost" id="shopEmfCost">15,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopEmfBuyBtn">购买</button>
                 </div>
             </div>
             <button class="shop-back-btn" id="shopBackBtn">← 返回角色</button>
@@ -729,6 +798,8 @@
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 1000, currentHp = 1000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
+        let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
+        const EMF_COOLDOWN = 20000; // 冷却时间20秒
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
         // 总积分（累计所有游戏的积分）
         let playerName = localStorage.getItem('thunderWarriorPlayerName') || '';
@@ -760,7 +831,7 @@
                 const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
                 if (data) return data;
             } catch(e) {}
-            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false } };
+            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0 } };
         }
 
         function saveAccount() {
@@ -786,6 +857,12 @@
             }
             setEquipDisplay('charMissileEquip', 'charMissileStatus', eq.trackingMissile);
             setEquipDisplay('charFreezeEquip', 'charFreezeStatus', eq.freezeBullet);
+            // EMF：按等级显示
+            const emfLv = eq.emfLevel || 0;
+            document.getElementById('charEmfEquip').className = 'equip-item ' + (emfLv > 0 ? 'owned' : 'not-owned');
+            const emfS = document.getElementById('charEmfStatus');
+            emfS.textContent = emfLv > 0 ? `Lv.${emfLv} / 5` : '未拥有';
+            emfS.className = 'equip-status ' + (emfLv > 0 ? 'yes' : 'no');
             document.getElementById('characterPanel').style.display = 'flex';
         }
 
@@ -815,6 +892,31 @@
             }
             refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
+            // EMF：分5级，每级15000，逐级购买
+            const emfLv = eq.emfLevel || 0;
+            const emfPrice = 15000;
+            const emfCard = document.getElementById('shopEmfCard');
+            const emfBtn = document.getElementById('shopEmfBuyBtn');
+            const emfBadge = document.getElementById('shopEmfLevelBadge');
+            const emfCostEl = document.getElementById('shopEmfCost');
+            if (emfLv >= 5) {
+                emfBadge.textContent = 'Lv.5 · 已满级';
+                emfCard.className = 'shop-item-card already-owned';
+                emfBtn.textContent = '已满级'; emfBtn.className = 'shop-buy-btn owned';
+                emfCostEl.textContent = '—';
+            } else {
+                emfBadge.textContent = emfLv > 0 ? `已达 Lv.${emfLv}` : '未拥有';
+                emfCostEl.textContent = `${emfPrice.toLocaleString()} 积分`;
+                if (emfLv > 0) emfCard.className = 'shop-item-card can-afford';
+                if (pts >= emfPrice) {
+                    emfCard.className = 'shop-item-card can-afford';
+                    emfBtn.textContent = emfLv === 0 ? '购买' : `升至 Lv.${emfLv + 1}`;
+                    emfBtn.className = 'shop-buy-btn can-buy';
+                } else {
+                    if (emfLv === 0) emfCard.className = 'shop-item-card';
+                    emfBtn.textContent = '积分不足'; emfBtn.className = 'shop-buy-btn cant-afford';
+                }
+            }
         }
 
         function purchaseMissile() {
@@ -831,6 +933,17 @@
             if ((currentAccount.totalPoints || 0) < 20000) return;
             currentAccount.totalPoints -= 20000;
             currentAccount.equipment.freezeBullet = true;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function purchaseEMF() {
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.emfLevel || 0;
+            if (lv >= 5) return;
+            if ((currentAccount.totalPoints || 0) < 15000) return;
+            currentAccount.totalPoints -= 15000;
+            currentAccount.equipment.emfLevel = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -1360,6 +1473,70 @@
             updateUI();
         }
 
+        function activateEMF() {
+            if (gameState !== 'playing') return;
+            if (emfLevel <= 0) return;
+            if (Date.now() < emfCooldownUntil) return;
+            if (Date.now() < emfActiveUntil) return;
+            const duration = (2 + emfLevel) * 1000; // Lv1=3s … Lv5=7s
+            emfActiveUntil = Date.now() + duration;
+            emfCooldownUntil = Date.now() + EMF_COOLDOWN;
+            updateEMFBtn();
+        }
+
+        function updateEMFBtn() {
+            const btn = document.getElementById('emfBtn');
+            if (!btn) return;
+            const visible = emfLevel > 0 && (gameState === 'playing' || gameState === 'upgrade');
+            btn.style.display = visible ? 'flex' : 'none';
+            if (!visible) return;
+            const now = Date.now();
+            const isActive = now < emfActiveUntil;
+            const onCooldown = !isActive && now < emfCooldownUntil;
+            // level text & pips
+            document.getElementById('emfLevelText').textContent = emfLevel;
+            const pipsEl = document.getElementById('emfPips');
+            if (pipsEl) pipsEl.innerHTML = Array.from({length: 5}, (_, i) =>
+                `<div class="emf-pip${i < emfLevel ? ' on' : ''}"></div>`).join('');
+            // status text
+            const statusEl = document.getElementById('emfStatusText');
+            if (statusEl) {
+                if (isActive) {
+                    const rem = Math.ceil((emfActiveUntil - now) / 1000);
+                    statusEl.textContent = `激活中 ${rem}s`;
+                    statusEl.style.color = 'rgba(200,140,255,0.95)';
+                } else if (onCooldown) {
+                    const rem = Math.ceil((emfCooldownUntil - now) / 1000);
+                    statusEl.textContent = `冷却 ${rem}s`;
+                    statusEl.style.color = 'rgba(140,140,160,0.7)';
+                } else {
+                    statusEl.textContent = '就绪';
+                    statusEl.style.color = 'rgba(0,255,200,0.8)';
+                }
+            }
+            // progress bar
+            const fillEl = document.getElementById('emfBarFill');
+            if (fillEl) {
+                if (isActive) {
+                    const pct = (emfActiveUntil - now) / ((2 + emfLevel) * 1000);
+                    fillEl.style.width = (pct * 100) + '%';
+                    fillEl.style.background = 'linear-gradient(90deg, #9C27B0, #E040FB)';
+                    fillEl.style.boxShadow = '0 0 8px rgba(180,80,255,0.7)';
+                } else if (onCooldown) {
+                    const pct = (emfCooldownUntil - now) / EMF_COOLDOWN;
+                    fillEl.style.width = (Math.max(0, pct) * 100) + '%';
+                    fillEl.style.background = 'linear-gradient(90deg, #37474F, #546E7A)';
+                    fillEl.style.boxShadow = 'none';
+                } else {
+                    fillEl.style.width = '100%';
+                    fillEl.style.background = 'linear-gradient(90deg, #5B2FC0, #A855F7)';
+                    fillEl.style.boxShadow = '0 0 6px rgba(140,60,255,0.5)';
+                }
+            }
+            btn.classList.toggle('active', isActive);
+            btn.classList.toggle('on-cooldown', onCooldown);
+        }
+
         function update() {
             if (gameState !== 'playing') return;
             
@@ -1423,7 +1600,7 @@
 
             // 更新敌机
             enemies.forEach(e => {
-                const frozen = e.frozenUntil && Date.now() < e.frozenUntil;
+                const frozen = (e.frozenUntil && Date.now() < e.frozenUntil) || Date.now() < emfActiveUntil;
                 if (!frozen) {
                     if (e.type === 7) {
                         // 无人机：wait(顶部排队) → dive(俯冲) → climb(折返向上) 三阶段
@@ -1831,6 +2008,37 @@
             });
 
             drawParticles();
+
+            // ── 电磁干扰激活视觉效果 ──
+            if (Date.now() < emfActiveUntil) {
+                const t = Date.now();
+                const pct = (emfActiveUntil - t) / ((2 + emfLevel) * 1000);
+                // 动态边框脉冲
+                const pulse = 0.5 + 0.5 * Math.sin(t / 180);
+                ctx.save();
+                ctx.strokeStyle = `rgba(180, 90, 255, ${0.4 + 0.35 * pulse})`;
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(160, 60, 255, 0.8)';
+                ctx.strokeRect(2, 2, WIDTH - 4, HEIGHT - 4);
+                ctx.shadowBlur = 0;
+                // 紫色扫描叠层
+                ctx.fillStyle = `rgba(80, 0, 180, ${0.04 + 0.03 * pulse})`;
+                ctx.fillRect(0, 0, WIDTH, HEIGHT);
+                // 扩散圆环
+                const elapsed = 1 - pct;
+                for (let r = 0; r < 3; r++) {
+                    const rp = (elapsed * 1.5 + r * 0.33) % 1;
+                    const radius = rp * Math.max(WIDTH, HEIGHT) * 0.75;
+                    const ra = (1 - rp) * 0.22;
+                    ctx.strokeStyle = `rgba(160, 80, 255, ${ra})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(160,80,255,0.5)';
+                    ctx.beginPath(); ctx.arc(WIDTH / 2, HEIGHT / 2, radius, 0, Math.PI * 2); ctx.stroke();
+                }
+                ctx.restore();
+            }
+            // 每帧刷新EMF按钮状态（冷却倒计时）
+            updateEMFBtn();
         }
 
         function updateUI() {
@@ -1864,6 +2072,7 @@
 
         function gameOver() {
             gameState = 'gameover';
+            document.getElementById('emfBtn').style.display = 'none';
             // 保存上一局分数和最高分
             lastScore = score;
             localStorage.setItem('thunderWarriorLastScore', lastScore.toString());
@@ -1916,6 +2125,7 @@
         function restart() {
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
+            emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
@@ -1933,7 +2143,11 @@
         function selectPlane(i) {
             selectedPlane = i;
             document.getElementById('selectPanel').style.display = 'none';
+            emfLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.emfLevel) || 0;
+            emfActiveUntil = 0;
+            emfCooldownUntil = 0;
             gameState = 'playing';
+            updateEMFBtn();
         }
 
         function drawPreviews() {
@@ -2262,6 +2476,8 @@
         // 商城面板按钮
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
         document.getElementById('shopFreezeBuyBtn').addEventListener('click', purchaseFreeze);
+        document.getElementById('shopEmfBuyBtn').addEventListener('click', purchaseEMF);
+        document.getElementById('emfBtn').addEventListener('click', activateEMF);
         document.getElementById('shopBackBtn').addEventListener('click', () => {
             document.getElementById('shopPanel').style.display = 'none';
             showCharacterPanel();
