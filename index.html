@@ -100,6 +100,44 @@
         #leechIndicator { position: absolute; bottom: 35px; left: 10px; color: #0f0; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #0f0; pointer-events: none; }
         #bulletIndicator { position: absolute; bottom: 60px; left: 10px; color: #0ff; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #0ff; pointer-events: none; }
         #freezeIndicator { position: absolute; bottom: 85px; left: 10px; color: #88DDFF; font-size: 14px; font-weight: bold; text-shadow: 0 0 5px #88DDFF; pointer-events: none; }
+        /* ── 暂停按钮 ── */
+        #pauseBtn {
+            position: absolute; top: 10px; right: 10px;
+            width: 36px; height: 36px; z-index: 50;
+            background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 16px;
+            cursor: pointer; display: none; align-items: center; justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        #pauseBtn:hover { background: rgba(0,150,255,0.2); border-color: rgba(0,200,255,0.5); color: #fff; }
+        /* ── 暂停面板 ── */
+        #pausePanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 200;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+        }
+        .pause-box {
+            width: 280px; background: rgba(5,10,25,0.97);
+            border: 1px solid rgba(0,200,255,0.25); border-radius: 14px;
+            padding: 22px 24px; color: #fff;
+        }
+        .pause-title { font-size: 18px; font-weight: 900; letter-spacing: 4px; text-align: center; margin-bottom: 4px; }
+        .pause-subtitle { font-size: 8px; letter-spacing: 5px; color: rgba(0,200,255,0.45); text-align: center; text-transform: uppercase; margin-bottom: 18px; }
+        .pause-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,200,255,0.25), transparent); margin-bottom: 16px; }
+        .pause-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+        .pause-stat-row:last-of-type { border-bottom: none; }
+        .pause-stat-label { color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
+        .pause-stat-value { font-weight: bold; color: #FFD740; font-size: 13px; }
+        .pause-dmg-section { margin: 14px 0 6px; }
+        .pause-dmg-title { font-size: 8px; letter-spacing: 4px; text-transform: uppercase; color: rgba(0,200,255,0.4); margin-bottom: 10px; }
+        .pause-dmg-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .pause-dmg-row:last-child { border-bottom: none; }
+        .pause-dmg-label { font-size: 12px; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 6px; }
+        .pause-dmg-bar-wrap { flex: 1; margin: 0 10px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+        .pause-dmg-bar { height: 100%; border-radius: 2px; transition: width 0.3s; }
+        .pause-dmg-val { font-size: 12px; font-weight: bold; color: #fff; min-width: 45px; text-align: right; }
+        .pause-resume-btn { width: 100%; margin-top: 18px; padding: 11px; background: linear-gradient(90deg, rgba(0,40,100,0.9), rgba(0,80,160,0.7), rgba(0,40,100,0.9)); border: 1px solid rgba(0,200,255,0.4); color: #e0f8ff; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .pause-resume-btn:hover { box-shadow: 0 0 20px rgba(0,200,255,0.3); border-color: rgba(0,200,255,0.8); }
         /* ── 技能升级面板 ── */
         #skillPanel {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -585,6 +623,52 @@
         <div id="missileIndicator">🎯<span id="missileLevel">0</span></div>
         <div id="leechIndicator">🩸<span id="leechLevel">0</span></div>
         <div id="freezeIndicator">❄️<span id="freezeLevelDisplay">0</span></div>
+        <!-- 暂停按钮 -->
+        <button id="pauseBtn">⏸</button>
+        <!-- 暂停面板 -->
+        <div id="pausePanel">
+            <div class="pause-box">
+                <div class="pause-title">PAUSED</div>
+                <div class="pause-subtitle">· 战斗暂停 ·</div>
+                <div class="pause-divider"></div>
+                <div class="pause-stat-row">
+                    <span class="pause-stat-label">⚔️ 当前积分</span>
+                    <span class="pause-stat-value" id="pauseScore">0</span>
+                </div>
+                <div class="pause-stat-row">
+                    <span class="pause-stat-label">🏅 战斗等级</span>
+                    <span class="pause-stat-value" id="pauseLevel">1</span>
+                </div>
+                <div class="pause-stat-row">
+                    <span class="pause-stat-label">❤️ 当前生命</span>
+                    <span class="pause-stat-value" id="pauseHp">1000</span>
+                </div>
+                <div class="pause-dmg-section">
+                    <div class="pause-dmg-title">⚡ 伤害统计</div>
+                    <div class="pause-dmg-row">
+                        <span class="pause-dmg-label">🔫 主炮</span>
+                        <div class="pause-dmg-bar-wrap"><div class="pause-dmg-bar" id="dmgBarMain" style="background:#00E5FF;width:0%"></div></div>
+                        <span class="pause-dmg-val" id="dmgValMain">0</span>
+                    </div>
+                    <div class="pause-dmg-row">
+                        <span class="pause-dmg-label">🎯 跟踪弹</span>
+                        <div class="pause-dmg-bar-wrap"><div class="pause-dmg-bar" id="dmgBarMissile" style="background:#FFD740;width:0%"></div></div>
+                        <span class="pause-dmg-val" id="dmgValMissile">0</span>
+                    </div>
+                    <div class="pause-dmg-row">
+                        <span class="pause-dmg-label">🛰️ 星链</span>
+                        <div class="pause-dmg-bar-wrap"><div class="pause-dmg-bar" id="dmgBarWingman" style="background:#00FFEE;width:0%"></div></div>
+                        <span class="pause-dmg-val" id="dmgValWingman">0</span>
+                    </div>
+                    <div class="pause-dmg-row">
+                        <span class="pause-dmg-label">🚀 HQ-9</span>
+                        <div class="pause-dmg-bar-wrap"><div class="pause-dmg-bar" id="dmgBarHq9" style="background:#FF6B35;width:0%"></div></div>
+                        <span class="pause-dmg-val" id="dmgValHq9">0</span>
+                    </div>
+                </div>
+                <button class="pause-resume-btn" id="pauseResumeBtn">▶ 继续战斗</button>
+            </div>
+        </div>
         <!-- 电磁干扰技能按钮 -->
         <div id="emfBtn">
             <div class="emf-btn-icon">⚡</div>
@@ -1026,6 +1110,8 @@
         const MISSILE_COUNT  = [0, 1, 1, 2, 3, 3];   // 每档发射数量
         const MISSILE_DAMAGE = [0, 2.0, 3.0, 3.0, 4.0, 5.0]; // 每档基础伤害倍数
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
+        let paused = false;
+        let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0;
         const LEECH_HEAL = [0, 2, 4, 6, 8, 20];
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
@@ -1463,6 +1549,28 @@
             currentAccount.equipment.shieldLevel = (currentAccount.equipment.shieldLevel || 0) + 1;
             saveAccount();
             updateArsenalPanel();
+        }
+
+        function showPausePanel() {
+            paused = true;
+            document.getElementById('pauseScore').textContent = score.toLocaleString();
+            document.getElementById('pauseLevel').textContent = level;
+            document.getElementById('pauseHp').textContent = `${Math.max(0, currentHp)} / ${maxHp}`;
+            const total = dmgMainGun + dmgMissile + dmgWingman + dmgHQ9 || 1;
+            function setDmgRow(barId, valId, val) {
+                document.getElementById(valId).textContent = Math.round(val);
+                document.getElementById(barId).style.width = (val / total * 100) + '%';
+            }
+            setDmgRow('dmgBarMain',    'dmgValMain',    dmgMainGun);
+            setDmgRow('dmgBarMissile', 'dmgValMissile', dmgMissile);
+            setDmgRow('dmgBarWingman', 'dmgValWingman', dmgWingman);
+            setDmgRow('dmgBarHq9',     'dmgValHq9',     dmgHQ9);
+            document.getElementById('pausePanel').style.display = 'flex';
+        }
+
+        function resumeGame() {
+            paused = false;
+            document.getElementById('pausePanel').style.display = 'none';
         }
 
         function getLevelXPNeeded() {
@@ -2239,7 +2347,14 @@
                 let hit = false;
                 enemies = enemies.filter(e => {
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
-                        e.currentHp -= (b.damage || 1); hit = true;
+                        const dmg = b.damage || 1;
+                        const actualDmg = Math.min(e.currentHp, dmg);
+                        e.currentHp -= dmg; hit = true;
+                        // 伤害统计
+                        if (b.isHQ9) dmgHQ9 += actualDmg;
+                        else if (b.isMissile) dmgMissile += actualDmg;
+                        else if (b.isWingman) dmgWingman += actualDmg;
+                        else dmgMainGun += actualDmg;
                         // 冰冻效果
                         if (b.isFreeze && freezeLevel > 0) {
                             e.frozenUntil = Date.now() + freezeLevel * 500;
@@ -2752,6 +2867,9 @@
 
         function gameOver() {
             gameState = 'gameover';
+            paused = false;
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('pausePanel').style.display = 'none';
             document.getElementById('emfBtn').style.display = 'none';
             document.getElementById('hq9Btn').style.display = 'none';
             // 保存上一局分数和最高分
@@ -2807,6 +2925,9 @@
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; missileTier = 0; freezeLevel = 0;
             leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0;
+            paused = false; dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0;
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('pausePanel').style.display = 'none';
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             bulletRateLevel = 0; wingmanLevel = 0;
@@ -2840,6 +2961,9 @@
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
             dodgeLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.dodgeLevel) || 0;
             shieldLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.shieldLevel) || 0;
+            dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0;
+            paused = false;
+            document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn();
         }
@@ -3185,6 +3309,10 @@
             document.getElementById('arsenalPanel').style.display = 'none';
             showCharacterPanel();
         });
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (gameState === 'playing' && !paused) showPausePanel();
+        });
+        document.getElementById('pauseResumeBtn').addEventListener('click', resumeGame);
 
         // 控制方案按钮 → 选完后进入飞机选择页
         document.querySelectorAll('.ctrl-btn-lg').forEach(b => {
@@ -3204,17 +3332,19 @@
         let lastDroneSwarm = 0;
         let nextDroneInterval = 12000; // 首次12秒后出现
         function gameLoop(t) {
-            if (gameState === 'playing' && t - lastSpawn > 800) {
-                spawnEnemy();
-                lastSpawn = t;
+            if (!paused) {
+                if (gameState === 'playing' && t - lastSpawn > 800) {
+                    spawnEnemy();
+                    lastSpawn = t;
+                }
+                // 无人机编队：12~18秒一波，随积分缩短间隔
+                if (gameState === 'playing' && t - lastDroneSwarm > nextDroneInterval) {
+                    spawnDroneSwarm();
+                    lastDroneSwarm = t;
+                    nextDroneInterval = Math.max(8000, 16000 - score / 300);
+                }
+                update();
             }
-            // 无人机编队：12~18秒一波，随积分缩短间隔
-            if (gameState === 'playing' && t - lastDroneSwarm > nextDroneInterval) {
-                spawnDroneSwarm();
-                lastDroneSwarm = t;
-                nextDroneInterval = Math.max(8000, 16000 - score / 300); // 积分越高出现越频繁
-            }
-            update();
             draw();
             requestAnimationFrame(gameLoop);
         }
