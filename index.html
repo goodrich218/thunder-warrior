@@ -648,9 +648,9 @@
         .campaign-badge { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,160,0,0.6); margin-bottom: 8px; }
         .campaign-title { font-size: 26px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(90deg, #FFD740, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .campaign-subtitle { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; letter-spacing: 1px; }
-        .campaign-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,160,0,0.3), transparent); margin-bottom: 20px; width: 100%; max-width: 360px; }
+        .campaign-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,160,0,0.3), transparent); margin-bottom: 20px; width: 100%; max-width: 560px; }
         .mission-card {
-            width: 100%; max-width: 360px; margin-bottom: 14px;
+            width: 100%; max-width: 560px; margin-bottom: 14px;
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,160,0,0.2);
             border-radius: 14px; padding: 18px 20px; cursor: pointer;
             transition: all 0.2s; position: relative; overflow: hidden;
@@ -1430,6 +1430,7 @@
         let missionKillCount = 0;
         let missionSpecialKillCount = 0; // B-2击落数(关卡3) / 无人机击落数(关卡4)
         let missionB2Spawned = 0;        // 关卡3已强制生成的B-2数量
+        let missionCompleteFired = false; // 防止重复触发任务完成
         const MISSIONS = [
             { id: 0, name: '小试牛刀', target: 100, reward: 1 },
             { id: 1, name: '守卫上海', target: 150, reward: 1 },
@@ -1933,6 +1934,7 @@
             missionKillCount = 0;
             missionSpecialKillCount = 0;
             missionB2Spawned = 0;
+            missionCompleteFired = false;
             document.getElementById('campaignPanel').style.display = 'none';
             const controlPanel = document.getElementById('controlPanel');
             if (controlPanel) controlPanel.style.display = 'flex';
@@ -1961,15 +1963,15 @@
         }
 
         function checkMissionComplete() {
-            if (currentMission === null) return;
+            if (currentMission === null || missionCompleteFired) return;
             const m = MISSIONS[currentMission];
-            updateMissionHUD();
             // 主目标未达成
             if (missionKillCount < m.target) return;
             // 特殊子目标检查
             if (m.special === 'b2'    && missionSpecialKillCount < m.specialTarget) return;
             if (m.special === 'drone' && missionSpecialKillCount < m.specialTarget) return;
             // 全部条件达成 → 胜利
+            missionCompleteFired = true;
             paused = true;
             document.getElementById('pauseBtn').style.display = 'none';
             const already = currentAccount.completedMissions.includes(currentMission);
@@ -3300,7 +3302,7 @@
                 if (e.type === 7) {
                     if (e.phase === 'wait') return true;
                     if (e.phase === 'climb') return e.y > -e.h - 20;
-                    return true; // dive阶段由diveTarget控制
+                    return e.y < HEIGHT + e.h; // dive阶段：飞出下边界则移除
                 }
                 return e.y < HEIGHT + e.h;
             });
@@ -3940,6 +3942,7 @@
             missionKillCount = 0;
             missionSpecialKillCount = 0;
             missionB2Spawned = 0;
+            missionCompleteFired = false;
             paused = false;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
