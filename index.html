@@ -2501,23 +2501,16 @@
                 currentHp = Math.min(currentHp, maxHp);
                 didLevelUp = true;
             }
-            if (didLevelUp && gameState === 'playing') {
-                showSkillPanel();
+            if (didLevelUp) {
+                // 自动升级：优先多重子弹 → 弹射 → 恢复血量
+                if (bulletCount < 3) {
+                    bulletCount++;
+                } else if (ricochetCount < 1) {
+                    ricochetCount++;
+                } else {
+                    currentHp = Math.min(maxHp, currentHp + 300);
+                }
             }
-            updateUI();
-        }
-
-        function selectSkill(s) {
-            if (s === 'multishot' && bulletCount < 3) {
-                bulletCount++;
-            } else if (s === 'ricochet') {
-                if (ricochetCount < 1) ricochetCount++;
-            } else if (s === 'heal') {
-                currentHp = Math.min(maxHp, currentHp + 300);
-            }
-            // 关闭技能面板
-            document.getElementById('skillPanel').style.display = 'none';
-            gameState = 'playing';
             updateUI();
         }
 
