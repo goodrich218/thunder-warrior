@@ -631,6 +631,71 @@
         .pl17-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(100,255,100,0.85); margin-bottom: 4px; height: 10px; overflow: hidden; }
         #pl17Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #pl17BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a6b1a, #4CAF50); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(60,200,60,0.6); }
+        /* ── 剧情关卡面板 ── */
+        #campaignPanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(160deg, #020a18 0%, #050c1a 60%, #020408 100%);
+            color: #fff; z-index: 100; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            padding: 30px 20px; overflow-y: auto;
+        }
+        .campaign-header { text-align: center; margin-bottom: 20px; }
+        .campaign-badge { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,160,0,0.6); margin-bottom: 8px; }
+        .campaign-title { font-size: 26px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(90deg, #FFD740, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .campaign-subtitle { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; letter-spacing: 1px; }
+        .campaign-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,160,0,0.3), transparent); margin-bottom: 20px; width: 100%; }
+        .mission-card {
+            width: 100%; max-width: 360px; margin-bottom: 14px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,160,0,0.2);
+            border-radius: 14px; padding: 18px 20px; cursor: pointer;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .mission-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #FF6F00, #FFD740, #FF6F00); opacity: 0.6; }
+        .mission-card:hover { background: rgba(255,160,0,0.07); border-color: rgba(255,160,0,0.5); box-shadow: 0 0 24px rgba(255,160,0,0.1); transform: translateY(-2px); }
+        .mission-card.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        .mission-card.completed { border-color: rgba(0,230,118,0.4); }
+        .mission-card.completed::before { background: linear-gradient(90deg, #00c853, #69f0ae, #00c853); }
+        .mission-num { font-size: 9px; letter-spacing: 4px; color: rgba(255,160,0,0.6); margin-bottom: 6px; text-transform: uppercase; }
+        .mission-name { font-size: 20px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
+        .mission-story { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 12px; }
+        .mission-objectives { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .mission-obj-tag { background: rgba(255,160,0,0.1); border: 1px solid rgba(255,160,0,0.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #FFD740; }
+        .mission-card.completed .mission-obj-tag { background: rgba(0,200,80,0.1); border-color: rgba(0,200,80,0.3); color: #69f0ae; }
+        .mission-reward-row { display: flex; align-items: center; gap: 8px; }
+        .mission-reward-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 1px; }
+        .mission-reward-val { font-size: 12px; font-weight: bold; color: #FFD740; background: rgba(255,200,0,0.1); border: 1px solid rgba(255,200,0,0.3); border-radius: 4px; padding: 2px 8px; }
+        .mission-card.completed .mission-reward-val { color: #69f0ae; background: rgba(0,200,80,0.1); border-color: rgba(0,200,80,0.3); }
+        .mission-complete-badge { position: absolute; top: 16px; right: 16px; font-size: 10px; color: #69f0ae; letter-spacing: 2px; background: rgba(0,200,80,0.12); border: 1px solid rgba(0,200,80,0.3); border-radius: 4px; padding: 3px 10px; }
+        .campaign-back-btn { margin-top: 6px; padding: 10px 32px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 3px; border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .campaign-back-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+        /* ── 任务完成面板 ── */
+        #missionCompletePanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 300;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.82); backdrop-filter: blur(6px);
+        }
+        .mc-box { width: 320px; background: rgba(3,10,22,0.98); border: 1px solid rgba(255,200,0,0.35); border-radius: 16px; padding: 28px 26px; text-align: center; color: #fff; box-shadow: 0 0 60px rgba(255,200,0,0.15), 0 30px 80px rgba(0,0,0,0.8); }
+        .mc-badge { font-size: 9px; letter-spacing: 5px; text-transform: uppercase; color: rgba(255,200,0,0.5); margin-bottom: 10px; }
+        .mc-title { font-size: 28px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; background: linear-gradient(90deg, #FFD740, #FF9800, #FFD740); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .mc-mission-name { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 18px; letter-spacing: 1px; }
+        .mc-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,200,0,0.3), transparent); margin-bottom: 18px; }
+        .mc-stats { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+        .mc-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.04); border-radius: 8px; }
+        .mc-stat-label { font-size: 12px; color: rgba(255,255,255,0.5); }
+        .mc-stat-val { font-size: 14px; font-weight: bold; color: #FFD740; }
+        .mc-reward-box { background: rgba(0,200,80,0.08); border: 1px solid rgba(0,200,80,0.3); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; }
+        .mc-reward-label { font-size: 10px; color: rgba(0,230,118,0.6); letter-spacing: 2px; margin-bottom: 6px; }
+        .mc-reward-content { font-size: 18px; font-weight: bold; color: #69f0ae; }
+        .mc-reward-note { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+        .mc-btn { width: 100%; padding: 13px; font-family: inherit; background: linear-gradient(90deg, rgba(255,120,0,0.3), rgba(255,200,0,0.2), rgba(255,120,0,0.3)); border: 1px solid rgba(255,200,0,0.5); color: #FFD740; font-size: 14px; letter-spacing: 4px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .mc-btn:hover { box-shadow: 0 0 20px rgba(255,200,0,0.25); border-color: rgba(255,200,0,0.8); }
+        /* ── 任务进度 HUD ── */
+        #missionHUD { position: absolute; bottom: 100px; right: 10px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,200,0,0.35); border-radius: 8px; padding: 8px 12px; color: #fff; display: none; pointer-events: none; min-width: 130px; }
+        .mhud-label { font-size: 8px; letter-spacing: 3px; color: rgba(255,200,0,0.55); text-transform: uppercase; margin-bottom: 4px; }
+        .mhud-name { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 5px; letter-spacing: 0.5px; }
+        .mhud-progress { font-size: 18px; font-weight: bold; color: #FFD740; line-height: 1; margin-bottom: 5px; }
+        .mhud-bar-wrap { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+        .mhud-bar-fill { height: 100%; background: linear-gradient(90deg, #FF6F00, #FFD740); border-radius: 2px; transition: width 0.3s; }
     </style>
 </head>
 <body>
@@ -915,6 +980,7 @@
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
+                <button class="char-btn-secondary" id="charCampaignBtn" style="border-color:rgba(255,160,0,0.4);color:#FFD740;background:rgba(255,160,0,0.06)">剧情模式</button>
                 <button class="char-btn-secondary" id="charShopBtn">雷霆商店</button>
                 <button class="char-btn-secondary" id="charArsenalBtn" style="border-color:rgba(0,230,118,0.4);color:#00E676;background:rgba(0,230,118,0.06)">机甲计划</button>
             </div>
@@ -1156,6 +1222,75 @@
             </div>
         </div>
         <div id="gameOver"></div>
+
+        <!-- ── 剧情关卡面板 ── -->
+        <div id="campaignPanel" style="display:none">
+            <div class="campaign-header">
+                <div class="campaign-badge">Story Mode · 剧情模式</div>
+                <div class="campaign-title">为国出征</div>
+                <div class="campaign-subtitle">守护领空，捍卫家国</div>
+            </div>
+            <div class="campaign-divider"></div>
+            <div class="mission-card" id="missionCard0" onclick="startMission(0)">
+                <div class="mission-num">Mission 01 · 第一关</div>
+                <div class="mission-name">小试牛刀</div>
+                <div class="mission-story">雷电战机首次出击。敌军试探性来袭，正是初显身手的绝佳时机，让敌人见识中国空军的实力。</div>
+                <div class="mission-objectives">
+                    <div class="mission-obj-tag">击落 100 架敌机</div>
+                </div>
+                <div class="mission-reward-row">
+                    <div class="mission-reward-label">奖励</div>
+                    <div class="mission-reward-val">+1 技能点</div>
+                </div>
+            </div>
+            <div class="mission-card" id="missionCard1" onclick="startMission(1)">
+                <div class="mission-num">Mission 02 · 第二关</div>
+                <div class="mission-name">守卫上海</div>
+                <div class="mission-story">敌军大规模空袭上海。作为拦截主力，你必须击退敌军，守卫这座城市不受侵犯，捍卫国家领空尊严。</div>
+                <div class="mission-objectives">
+                    <div class="mission-obj-tag">击落 150 架敌机</div>
+                </div>
+                <div class="mission-reward-row">
+                    <div class="mission-reward-label">奖励</div>
+                    <div class="mission-reward-val">+1 技能点</div>
+                </div>
+            </div>
+            <button class="campaign-back-btn" id="campaignBackBtn">返回</button>
+        </div>
+
+        <!-- ── 任务完成面板 ── -->
+        <div id="missionCompletePanel">
+            <div class="mc-box">
+                <div class="mc-badge">Mission Complete · 任务完成</div>
+                <div class="mc-title">胜利</div>
+                <div class="mc-mission-name" id="mcMissionName"></div>
+                <div class="mc-divider"></div>
+                <div class="mc-stats">
+                    <div class="mc-stat-row">
+                        <div class="mc-stat-label">击落敌机</div>
+                        <div class="mc-stat-val" id="mcKills">0</div>
+                    </div>
+                    <div class="mc-stat-row">
+                        <div class="mc-stat-label">本局积分</div>
+                        <div class="mc-stat-val" id="mcScore">0</div>
+                    </div>
+                </div>
+                <div class="mc-reward-box" id="mcRewardBox">
+                    <div class="mc-reward-label">首次通关奖励</div>
+                    <div class="mc-reward-content" id="mcRewardContent">+1 技能点</div>
+                    <div class="mc-reward-note">可在 机甲计划 中使用</div>
+                </div>
+                <button class="mc-btn" id="mcReturnBtn">返回大本营</button>
+            </div>
+        </div>
+
+        <!-- ── 任务进度 HUD ── -->
+        <div id="missionHUD">
+            <div class="mhud-label">任务进度</div>
+            <div class="mhud-name" id="mhudName"></div>
+            <div class="mhud-progress"><span id="mhudKills">0</span> / <span id="mhudTarget">0</span></div>
+            <div class="mhud-bar-wrap"><div class="mhud-bar-fill" id="mhudBar" style="width:0%"></div></div>
+        </div>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -1189,6 +1324,13 @@
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
         let paused = false;
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
+        // ── 剧情模式 ──
+        let currentMission = null; // null = 自由模式, 0-1 = 关卡索引
+        let missionKillCount = 0;
+        const MISSIONS = [
+            { id: 0, name: '小试牛刀', target: 100, reward: 1 },
+            { id: 1, name: '守卫上海', target: 150, reward: 1 },
+        ];
 
         // ── 音效系统（Web Audio API）──
         let audioCtx = null;
@@ -1572,10 +1714,11 @@
                         data.equipment.freezeLevel = data.equipment.freezeBullet ? 1 : 0;
                         delete data.equipment.freezeBullet;
                     }
+                    if (!data.completedMissions) data.completedMissions = [];
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeLevel: 0, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
+            return { totalPoints: 0, skillPoints: 10, completedMissions: [], equipment: { missileTier: 0, freezeLevel: 0, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
         }
 
         function saveAccount() {
@@ -1590,6 +1733,7 @@
             document.getElementById('selectPanel').style.display = 'none';
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('shopPanel').style.display = 'none';
+            document.getElementById('campaignPanel').style.display = 'none';
             document.getElementById('charNameDisplay').textContent = playerName || '战机飞行员';
             document.getElementById('charTotalPoints').textContent = (currentAccount.totalPoints || 0).toLocaleString();
             document.getElementById('charBestScore').textContent = bestScore.toLocaleString();
@@ -1648,6 +1792,78 @@
             pl17S.className = 'equip-status ' + (pl17Lv > 0 ? 'yes' : 'no');
             document.getElementById('arsenalPanel').style.display = 'none';
             document.getElementById('characterPanel').style.display = 'flex';
+        }
+
+        function showCampaignPanel() {
+            document.getElementById('characterPanel').style.display = 'none';
+            const completed = (currentAccount && currentAccount.completedMissions) || [];
+            MISSIONS.forEach((m, i) => {
+                const card = document.getElementById('missionCard' + i);
+                if (!card) return;
+                const locked = i > 0 && !completed.includes(i - 1);
+                const done = completed.includes(i);
+                let cls = 'mission-card';
+                if (locked) cls += ' locked';
+                if (done) cls += ' completed';
+                card.className = cls;
+                let badge = card.querySelector('.mission-complete-badge');
+                if (done && !badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'mission-complete-badge';
+                    badge.textContent = '✓ 已完成';
+                    card.appendChild(badge);
+                } else if (!done && badge) {
+                    badge.remove();
+                }
+            });
+            document.getElementById('campaignPanel').style.display = 'flex';
+        }
+
+        function startMission(missionId) {
+            const completed = (currentAccount && currentAccount.completedMissions) || [];
+            if (missionId > 0 && !completed.includes(missionId - 1)) return;
+            currentMission = missionId;
+            missionKillCount = 0;
+            document.getElementById('campaignPanel').style.display = 'none';
+            const controlPanel = document.getElementById('controlPanel');
+            if (controlPanel) controlPanel.style.display = 'flex';
+        }
+
+        function updateMissionHUD() {
+            if (currentMission === null) return;
+            const m = MISSIONS[currentMission];
+            document.getElementById('mhudName').textContent = m.name;
+            document.getElementById('mhudKills').textContent = missionKillCount;
+            document.getElementById('mhudTarget').textContent = m.target;
+            const pct = Math.min(100, (missionKillCount / m.target) * 100);
+            document.getElementById('mhudBar').style.width = pct + '%';
+        }
+
+        function checkMissionComplete() {
+            if (currentMission === null) return;
+            const m = MISSIONS[currentMission];
+            updateMissionHUD();
+            if (missionKillCount >= m.target) {
+                paused = true;
+                document.getElementById('pauseBtn').style.display = 'none';
+                const already = currentAccount.completedMissions.includes(currentMission);
+                if (!already) {
+                    currentAccount.completedMissions.push(currentMission);
+                    currentAccount.skillPoints += m.reward;
+                    saveAccount();
+                }
+                document.getElementById('mcMissionName').textContent = m.name;
+                document.getElementById('mcKills').textContent = missionKillCount;
+                document.getElementById('mcScore').textContent = score.toLocaleString();
+                const rewardBox = document.getElementById('mcRewardBox');
+                if (!already) {
+                    rewardBox.style.display = 'block';
+                    document.getElementById('mcRewardContent').textContent = '+' + m.reward + ' 技能点';
+                } else {
+                    rewardBox.style.display = 'none';
+                }
+                document.getElementById('missionCompletePanel').style.display = 'flex';
+            }
         }
 
         function showShopPanel() {
@@ -2827,6 +3043,7 @@
                 if (!pl17DamageDealt && pl17JetY < HEIGHT * 0.55) {
                     pl17DamageDealt = true;
                     const pl17Mult = 2.5 + 0.5 * pl17Level; // L1=3, L2=3.5, L3=4, L4=4.5, L5=5
+                    let pl17Kills = 0;
                     enemies.forEach(e => {
                         const dmg = e.hp * pl17Mult;
                         e.currentHp -= dmg;
@@ -2834,12 +3051,14 @@
                         if (e.currentHp <= 0) {
                             score += e.score;
                             levelXP += e.score;
+                            pl17Kills++;
                             if (leechLevel > 0) currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
                             createExplosion(e.x, e.y, '#AAFF44', 25);
                             playKillSound();
                         }
                     });
                     enemies = enemies.filter(e => e.currentHp > 0);
+                    if (currentMission !== null && pl17Kills > 0) { missionKillCount += pl17Kills; checkMissionComplete(); }
                     checkUpgrade();
                     updateUI();
                 }
@@ -2951,6 +3170,7 @@
                         if (e.currentHp <= 0) {
                             score += e.score;
                             levelXP += e.score; // XP独立于得分，升级后归零
+                            if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
                             // 吸血效果
                             if (leechLevel > 0) {
                                 currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
@@ -3557,8 +3777,16 @@
             pl17 = pl17Level > 0;
             pl17CooldownUntil = 0; pl17LaunchedAt = 0; pl17Active = false; pl17JetY = 0; pl17DamageDealt = false;
             dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
+            missionKillCount = 0;
             paused = false;
             document.getElementById('pauseBtn').style.display = 'flex';
+            // 任务进度 HUD
+            if (currentMission !== null) {
+                updateMissionHUD();
+                document.getElementById('missionHUD').style.display = 'block';
+            } else {
+                document.getElementById('missionHUD').style.display = 'none';
+            }
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn(); updatePL17Btn();
         }
@@ -3881,11 +4109,31 @@
 
         // 角色管理面板按钮
         document.getElementById('charPlayBtn').addEventListener('click', () => {
+            currentMission = null;
             document.getElementById('characterPanel').style.display = 'none';
             if (controlPanel) controlPanel.style.display = 'flex';
         });
+        document.getElementById('charCampaignBtn').addEventListener('click', showCampaignPanel);
         document.getElementById('charShopBtn').addEventListener('click', showShopPanel);
         document.getElementById('charArsenalBtn').addEventListener('click', showArsenalPanel);
+        document.getElementById('campaignBackBtn').addEventListener('click', () => {
+            document.getElementById('campaignPanel').style.display = 'none';
+            showCharacterPanel();
+        });
+        document.getElementById('mcReturnBtn').addEventListener('click', () => {
+            document.getElementById('missionCompletePanel').style.display = 'none';
+            document.getElementById('missionHUD').style.display = 'none';
+            // 累计积分
+            if (currentAccount) {
+                currentAccount.totalPoints = (currentAccount.totalPoints || 0) + score;
+                saveAccount();
+            }
+            currentMission = null;
+            missionKillCount = 0;
+            paused = false;
+            gameState = 'gameover'; // 结束当前局
+            showCharacterPanel();
+        });
 
         // 商城面板按钮
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
