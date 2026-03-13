@@ -921,6 +921,32 @@
                     <button class="arsenal-upgrade-btn no-sp" id="arsenalWeaponBtn" onclick="upgradeWeaponBay()">升级 (1点)</button>
                 </div>
             </div>
+            <div class="arsenal-part" id="arsenalDodgeCard">
+                <div class="arsenal-part-top">
+                    <div class="arsenal-part-icon">👻</div>
+                    <div>
+                        <div class="arsenal-part-name">隐身战衣 <span id="arsenalDodgeBadge" style="font-size:10px;color:rgba(200,150,255,0.8);font-weight:normal"></span></div>
+                        <div class="arsenal-part-desc">被击中时有概率完全规避伤害，每级+1%<br>消耗1技能点升1级，最高30级（30%闪避）</div>
+                    </div>
+                </div>
+                <div class="arsenal-part-footer">
+                    <span class="arsenal-part-stat" id="arsenalDodgeStat" style="color:#CC99FF">闪避 0%</span>
+                    <button class="arsenal-upgrade-btn no-sp" id="arsenalDodgeBtn" onclick="upgradeDodge()">升级 (1点)</button>
+                </div>
+            </div>
+            <div class="arsenal-part" id="arsenalShieldCard">
+                <div class="arsenal-part-top">
+                    <div class="arsenal-part-icon">🔵</div>
+                    <div>
+                        <div class="arsenal-part-name">防护罩 <span id="arsenalShieldBadge" style="font-size:10px;color:rgba(100,200,255,0.8);font-weight:normal"></span></div>
+                        <div class="arsenal-part-desc">每次受击伤害按比例抵消，每级+2%<br>消耗1技能点升1级，最高30级（60%减伤）</div>
+                    </div>
+                </div>
+                <div class="arsenal-part-footer">
+                    <span class="arsenal-part-stat" id="arsenalShieldStat" style="color:#40C4FF">减伤 0%</span>
+                    <button class="arsenal-upgrade-btn no-sp" id="arsenalShieldBtn" onclick="upgradeShield()">升级 (1点)</button>
+                </div>
+            </div>
             <button class="shop-back-btn" id="arsenalBackBtn">← 返回角色</button>
         </div>
 
@@ -997,7 +1023,7 @@
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 1000, currentHp = 1000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
-        let armorLevel = 0, weaponBayLevel = 0;
+        let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
         const LEECH_HEAL = [0, 2, 4, 6, 8, 20];
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
@@ -1042,10 +1068,12 @@
                     if (data.equipment.leechLevel === undefined) data.equipment.leechLevel = 0;
                     if (data.equipment.armorLevel === undefined) data.equipment.armorLevel = 0;
                     if (data.equipment.weaponBayLevel === undefined) data.equipment.weaponBayLevel = 0;
+                    if (data.equipment.dodgeLevel === undefined) data.equipment.dodgeLevel = 0;
+                    if (data.equipment.shieldLevel === undefined) data.equipment.shieldLevel = 0;
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0 } };
+            return { totalPoints: 0, skillPoints: 10, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0 } };
         }
 
         function saveAccount() {
@@ -1343,14 +1371,24 @@
             const eq = currentAccount.equipment || {};
             const armorLv = eq.armorLevel || 0;
             const weaponLv = eq.weaponBayLevel || 0;
+            const dodgeLv = eq.dodgeLevel || 0;
+            const shieldLv = eq.shieldLevel || 0;
             document.getElementById('arsenalSP').textContent = sp;
             document.getElementById('arsenalArmorBadge').textContent = armorLv > 0 ? `Lv.${armorLv}` : '未升级';
             document.getElementById('arsenalArmorStat').textContent = `防御 +${armorLv * 10}`;
             document.getElementById('arsenalWeaponBadge').textContent = weaponLv > 0 ? `Lv.${weaponLv}` : '未升级';
             document.getElementById('arsenalWeaponStat').textContent = `攻击 +${weaponLv * 10}%`;
+            const dodgeMaxed = dodgeLv >= 30;
+            document.getElementById('arsenalDodgeBadge').textContent = dodgeLv > 0 ? (dodgeMaxed ? 'Lv.30 · 已满级' : `Lv.${dodgeLv}`) : '未升级';
+            document.getElementById('arsenalDodgeStat').textContent = `闪避 ${dodgeLv}%`;
+            const shieldMaxed = shieldLv >= 30;
+            document.getElementById('arsenalShieldBadge').textContent = shieldLv > 0 ? (shieldMaxed ? 'Lv.30 · 已满级' : `Lv.${shieldLv}`) : '未升级';
+            document.getElementById('arsenalShieldStat').textContent = `减伤 ${shieldLv * 2}%`;
             const canUpgrade = sp >= 1;
             document.getElementById('arsenalArmorBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade ? 'can-upgrade' : 'no-sp');
             document.getElementById('arsenalWeaponBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade ? 'can-upgrade' : 'no-sp');
+            document.getElementById('arsenalDodgeBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade && !dodgeMaxed ? 'can-upgrade' : 'no-sp');
+            document.getElementById('arsenalShieldBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade && !shieldMaxed ? 'can-upgrade' : 'no-sp');
         }
 
         function upgradeArmor() {
@@ -1367,6 +1405,26 @@
             if ((currentAccount.skillPoints || 0) < 1) return;
             currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
             currentAccount.equipment.weaponBayLevel = (currentAccount.equipment.weaponBayLevel || 0) + 1;
+            saveAccount();
+            updateArsenalPanel();
+        }
+
+        function upgradeDodge() {
+            if (!currentAccount) return;
+            if ((currentAccount.skillPoints || 0) < 1) return;
+            if ((currentAccount.equipment.dodgeLevel || 0) >= 30) return;
+            currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
+            currentAccount.equipment.dodgeLevel = (currentAccount.equipment.dodgeLevel || 0) + 1;
+            saveAccount();
+            updateArsenalPanel();
+        }
+
+        function upgradeShield() {
+            if (!currentAccount) return;
+            if ((currentAccount.skillPoints || 0) < 1) return;
+            if ((currentAccount.equipment.shieldLevel || 0) >= 30) return;
+            currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
+            currentAccount.equipment.shieldLevel = (currentAccount.equipment.shieldLevel || 0) + 1;
             saveAccount();
             updateArsenalPanel();
         }
@@ -2173,10 +2231,13 @@
                 if (e.bullets) {
                     e.bullets = e.bullets.filter(b => {
                         if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
-                            currentHp -= Math.max(1, 100 - armorLevel * 10);
-                            createExplosion(player.x, player.y, '#FFD700', 5);
-                            updateUI();
-                            if (currentHp <= 0) gameOver();
+                            if (Math.random() * 100 >= dodgeLevel) {
+                                const shieldMult = 1 - shieldLevel * 0.02;
+                                currentHp -= Math.max(1, Math.round((100 - armorLevel * 10) * shieldMult));
+                                createExplosion(player.x, player.y, '#FFD700', 5);
+                                updateUI();
+                                if (currentHp <= 0) gameOver();
+                            }
                             return false;
                         }
                         return true;
@@ -2187,7 +2248,9 @@
             // 敌机撞玩家
             enemies.forEach(e => {
                 if (Math.abs(e.x - player.x) < (e.w + 32)/2 && Math.abs(e.y - player.y) < (e.h + 40)/2) {
-                    currentHp -= Math.max(1, 500 - armorLevel * 10);
+                    if (Math.random() * 100 < dodgeLevel) { e.currentHp = 0; createExplosion(e.x, e.y, '#FF4444', 15); return; }
+                    const shieldMult = 1 - shieldLevel * 0.02;
+                    currentHp -= Math.max(1, Math.round((500 - armorLevel * 10) * shieldMult));
                     e.currentHp = 0;
                     createExplosion(e.x, e.y, '#FF4444', 15);
                     updateUI();
@@ -2707,7 +2770,7 @@
         function restart() {
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; missileCount = 0; freezeLevel = 0;
-            leechLevel = 0; armorLevel = 0; weaponBayLevel = 0;
+            leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0;
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             bulletRateLevel = 0; wingmanLevel = 0;
@@ -2737,6 +2800,8 @@
             leechLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.leechLevel) || 0;
             armorLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.armorLevel) || 0;
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
+            dodgeLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.dodgeLevel) || 0;
+            shieldLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.shieldLevel) || 0;
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn();
         }
