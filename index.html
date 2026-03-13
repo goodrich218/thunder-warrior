@@ -486,7 +486,7 @@
         .emf-btn-pips { display: flex; gap: 2px; justify-content: center; margin-bottom: 4px; }
         .emf-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.2s, box-shadow 0.2s; }
         .emf-pip.on { background: #8B3FEF; box-shadow: 0 0 5px #8B3FEF; }
-        .emf-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(200,140,255,0.85); margin-bottom: 4px; min-height: 10px; }
+        .emf-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(200,140,255,0.85); margin-bottom: 4px; height: 10px; overflow: hidden; }
         #emfBar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #emfBarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #5B2FC0, #A855F7); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(140,60,255,0.6); }
         /* ── HQ-9 红旗防空系统按钮 ── */
@@ -523,7 +523,7 @@
         .hq9-btn-pips { display: flex; gap: 2px; justify-content: center; margin-bottom: 4px; }
         .hq9-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.2s, box-shadow 0.2s; }
         .hq9-pip.on { background: #EF4444; box-shadow: 0 0 5px #EF4444; }
-        .hq9-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(255,160,80,0.9); margin-bottom: 4px; min-height: 10px; }
+        .hq9-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(255,160,80,0.9); margin-bottom: 4px; height: 10px; overflow: hidden; }
         #hq9Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #hq9BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #C0392B, #FF6B35); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(255,60,20,0.6); }
     </style>
@@ -1610,16 +1610,11 @@
             const statusEl = document.getElementById('emfStatusText');
             if (statusEl) {
                 if (isActive) {
-                    const rem = Math.ceil((emfActiveUntil - now) / 1000);
-                    statusEl.textContent = `${rem}s`;
-                    statusEl.style.display = '';
+                    statusEl.textContent = `${Math.ceil((emfActiveUntil - now) / 1000)}s`;
                 } else if (onCooldown) {
-                    const rem = Math.ceil((emfCooldownUntil - now) / 1000);
-                    statusEl.textContent = `${rem}s`;
-                    statusEl.style.display = '';
+                    statusEl.textContent = `${Math.ceil((emfCooldownUntil - now) / 1000)}s`;
                 } else {
                     statusEl.textContent = '';
-                    statusEl.style.display = 'none';
                 }
             }
             // progress bar
@@ -1702,14 +1697,7 @@
             // status
             const statusEl = document.getElementById('hq9StatusText');
             if (statusEl) {
-                if (onCooldown) {
-                    const rem = Math.ceil((hq9CooldownUntil - now) / 1000);
-                    statusEl.textContent = `${rem}s`;
-                    statusEl.style.display = '';
-                } else {
-                    statusEl.textContent = '';
-                    statusEl.style.display = 'none';
-                }
+                statusEl.textContent = onCooldown ? `${Math.ceil((hq9CooldownUntil - now) / 1000)}s` : '';
             }
             // bar
             const fillEl = document.getElementById('hq9BarFill');
@@ -1979,76 +1967,122 @@
                     const angle = Math.atan2(b.vy, b.vx) + Math.PI / 2;
                     const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 80);
 
-                    // 飞行轨迹拖尾
-                    for (let i = 1; i <= 6; i++) {
-                        const tx = b.x - b.vx * i * 1.8;
-                        const ty = b.y - b.vy * i * 1.8;
-                        const alpha = (1 - i / 7) * 0.55;
-                        const tr = (5 - i * 0.6);
-                        const tg = ctx.createRadialGradient(tx, ty, 0, tx, ty, tr);
-                        tg.addColorStop(0, `rgba(255,180,30,${alpha})`);
-                        tg.addColorStop(1, `rgba(255,60,0,0)`);
-                        ctx.fillStyle = tg;
-                        ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+                    if (b.isHQ9) {
+                        // ── HQ-9 红旗导弹：白灰弹体 + 十字翼 + 蓝色主动雷达导引头 ──
+                        // 白色烟雾拖尾
+                        for (let i = 1; i <= 7; i++) {
+                            const tx = b.x - b.vx * i * 1.6;
+                            const ty = b.y - b.vy * i * 1.6;
+                            const alpha = (1 - i / 8) * 0.45;
+                            const tr = 4.5 - i * 0.45;
+                            ctx.fillStyle = `rgba(210, 230, 255, ${alpha})`;
+                            ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+                        }
+                        ctx.save();
+                        ctx.translate(b.x, b.y);
+                        ctx.rotate(angle);
+
+                        // 尾焰（蓝白）
+                        const eg = ctx.createRadialGradient(0, 11, 0, 0, 11, 12 * pulse);
+                        eg.addColorStop(0, `rgba(220,240,255,${pulse})`);
+                        eg.addColorStop(0.5, `rgba(80,160,255,${pulse * 0.7})`);
+                        eg.addColorStop(1, 'rgba(0,80,200,0)');
+                        ctx.fillStyle = eg;
+                        ctx.beginPath(); ctx.arc(0, 11, 12 * pulse, 0, Math.PI * 2); ctx.fill();
+
+                        // 弹体（白灰渐变）
+                        ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(100,180,255,0.6)';
+                        const bg = ctx.createLinearGradient(-4, 0, 4, 0);
+                        bg.addColorStop(0, '#78909C');
+                        bg.addColorStop(0.3, '#ECEFF1');
+                        bg.addColorStop(0.7, '#CFD8DC');
+                        bg.addColorStop(1, '#546E7A');
+                        ctx.fillStyle = bg;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -14);
+                        ctx.lineTo(3.5, -7); ctx.lineTo(3.5, 5); ctx.lineTo(2, 9);
+                        ctx.lineTo(-2, 9); ctx.lineTo(-3.5, 5); ctx.lineTo(-3.5, -7);
+                        ctx.closePath(); ctx.fill();
+                        ctx.shadowBlur = 0;
+
+                        // 红色腰带
+                        ctx.fillStyle = 'rgba(210,30,30,0.9)';
+                        ctx.fillRect(-3.5, -1.5, 7, 3.5);
+
+                        // 十字尾翼（4片）
+                        ctx.fillStyle = '#455A64';
+                        ctx.beginPath(); ctx.moveTo(-3.5, 3); ctx.lineTo(-9, 9); ctx.lineTo(-3, 9); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(3.5, 3); ctx.lineTo(9, 9); ctx.lineTo(3, 9); ctx.closePath(); ctx.fill();
+                        // 前鸭翼
+                        ctx.fillStyle = '#607D8B';
+                        ctx.beginPath(); ctx.moveTo(-3.5, -7); ctx.lineTo(-7.5, -3); ctx.lineTo(-3.5, -2); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(3.5, -7); ctx.lineTo(7.5, -3); ctx.lineTo(3.5, -2); ctx.closePath(); ctx.fill();
+
+                        // 主动雷达导引头（蓝色脉冲）
+                        ctx.shadowBlur = 12; ctx.shadowColor = '#00E5FF';
+                        ctx.fillStyle = `rgba(0,220,255,${0.85 + 0.15 * pulse})`;
+                        ctx.beginPath(); ctx.arc(0, -12, 2.2, 0, Math.PI * 2); ctx.fill();
+                        ctx.shadowBlur = 0;
+
+                        ctx.restore();
+                    } else {
+                        // ── 跟踪导弹（空射版）：红橙细长弹体 ──
+                        // 橙红尾焰拖尾
+                        for (let i = 1; i <= 6; i++) {
+                            const tx = b.x - b.vx * i * 1.8;
+                            const ty = b.y - b.vy * i * 1.8;
+                            const alpha = (1 - i / 7) * 0.55;
+                            const tr = (5 - i * 0.6);
+                            const tg = ctx.createRadialGradient(tx, ty, 0, tx, ty, tr);
+                            tg.addColorStop(0, `rgba(255,180,30,${alpha})`);
+                            tg.addColorStop(1, `rgba(255,60,0,0)`);
+                            ctx.fillStyle = tg;
+                            ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+                        }
+
+                        ctx.save();
+                        ctx.translate(b.x, b.y);
+                        ctx.rotate(angle);
+
+                        // 发动机尾焰
+                        const eg = ctx.createRadialGradient(0, 9, 0, 0, 9, 11 * pulse);
+                        eg.addColorStop(0, `rgba(255,255,180,${pulse})`);
+                        eg.addColorStop(0.4, `rgba(255,140,0,${pulse * 0.8})`);
+                        eg.addColorStop(1, 'rgba(255,30,0,0)');
+                        ctx.fillStyle = eg;
+                        ctx.beginPath(); ctx.arc(0, 9, 11 * pulse, 0, Math.PI * 2); ctx.fill();
+
+                        ctx.shadowBlur = 14; ctx.shadowColor = '#FF5500';
+                        const bg = ctx.createLinearGradient(-3, 0, 3, 0);
+                        bg.addColorStop(0, '#B71C1C');
+                        bg.addColorStop(0.35, '#FF5722');
+                        bg.addColorStop(0.65, '#FF3D00');
+                        bg.addColorStop(1, '#7F0000');
+                        ctx.fillStyle = bg;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -10);
+                        ctx.lineTo(2.5, -5); ctx.lineTo(2.5, 5); ctx.lineTo(0, 7);
+                        ctx.lineTo(-2.5, 5); ctx.lineTo(-2.5, -5);
+                        ctx.closePath(); ctx.fill();
+                        ctx.shadowBlur = 0;
+
+                        ctx.fillStyle = 'rgba(255,210,160,0.65)';
+                        ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(1.2, -5); ctx.lineTo(-1.2, -5); ctx.closePath(); ctx.fill();
+
+                        ctx.fillStyle = '#7F0000';
+                        ctx.beginPath(); ctx.moveTo(-2.5, 2); ctx.lineTo(-7, 7); ctx.lineTo(-2.5, 7); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(2.5, 2); ctx.lineTo(7, 7); ctx.lineTo(2.5, 7); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle = '#C62828';
+                        ctx.beginPath(); ctx.moveTo(-2.5, -5); ctx.lineTo(-5.5, -1); ctx.lineTo(-2.5, -1); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(2.5, -5); ctx.lineTo(5.5, -1); ctx.lineTo(2.5, -1); ctx.closePath(); ctx.fill();
+
+                        ctx.shadowBlur = 8; ctx.shadowColor = '#FFEB3B';
+                        ctx.fillStyle = `rgba(255,235,59,${0.8 + 0.2 * pulse})`;
+                        ctx.beginPath(); ctx.arc(0, -8, 1.8, 0, Math.PI * 2); ctx.fill();
+                        ctx.shadowBlur = 0;
+
+                        ctx.restore();
                     }
-
-                    ctx.save();
-                    ctx.translate(b.x, b.y);
-                    ctx.rotate(angle);
-
-                    // 发动机尾焰（位于弹尾）
-                    const eg = ctx.createRadialGradient(0, 9, 0, 0, 9, 11 * pulse);
-                    eg.addColorStop(0, `rgba(255,255,180,${pulse})`);
-                    eg.addColorStop(0.4, `rgba(255,140,0,${pulse * 0.8})`);
-                    eg.addColorStop(1, 'rgba(255,30,0,0)');
-                    ctx.fillStyle = eg;
-                    ctx.beginPath(); ctx.arc(0, 9, 11 * pulse, 0, Math.PI * 2); ctx.fill();
-
-                    // 外层辉光
-                    ctx.shadowBlur = 14;
-                    ctx.shadowColor = '#FF5500';
-
-                    // 弹体（渐变金属感）
-                    const bg = ctx.createLinearGradient(-3, 0, 3, 0);
-                    bg.addColorStop(0, '#B71C1C');
-                    bg.addColorStop(0.35, '#FF5722');
-                    bg.addColorStop(0.65, '#FF3D00');
-                    bg.addColorStop(1, '#7F0000');
-                    ctx.fillStyle = bg;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -10);    // 弹头尖
-                    ctx.lineTo(2.5, -5);
-                    ctx.lineTo(2.5, 5);
-                    ctx.lineTo(0, 7);
-                    ctx.lineTo(-2.5, 5);
-                    ctx.lineTo(-2.5, -5);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-
-                    // 弹头高光
-                    ctx.fillStyle = 'rgba(255,210,160,0.65)';
-                    ctx.beginPath();
-                    ctx.moveTo(0, -10); ctx.lineTo(1.2, -5); ctx.lineTo(-1.2, -5);
-                    ctx.closePath(); ctx.fill();
-
-                    // 尾翼（左右各一）
-                    ctx.fillStyle = '#7F0000';
-                    ctx.beginPath(); ctx.moveTo(-2.5, 2); ctx.lineTo(-7, 7); ctx.lineTo(-2.5, 7); ctx.closePath(); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(2.5, 2); ctx.lineTo(7, 7); ctx.lineTo(2.5, 7); ctx.closePath(); ctx.fill();
-
-                    // 前翼小翼刀
-                    ctx.fillStyle = '#C62828';
-                    ctx.beginPath(); ctx.moveTo(-2.5, -5); ctx.lineTo(-5.5, -1); ctx.lineTo(-2.5, -1); ctx.closePath(); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(2.5, -5); ctx.lineTo(5.5, -1); ctx.lineTo(2.5, -1); ctx.closePath(); ctx.fill();
-
-                    // 红外导引头（弹头发光点）
-                    ctx.shadowBlur = 8; ctx.shadowColor = '#FFEB3B';
-                    ctx.fillStyle = `rgba(255,235,59,${0.8 + 0.2 * pulse})`;
-                    ctx.beginPath(); ctx.arc(0, -8, 1.8, 0, Math.PI * 2); ctx.fill();
-                    ctx.shadowBlur = 0;
-
-                    ctx.restore();
                 } else if (b.isFreeze) {
                     // 冰冻子弹 - 蓝白冰晶
                     ctx.shadowColor = '#88DDFF';
