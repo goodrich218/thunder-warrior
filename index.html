@@ -2588,16 +2588,26 @@
             const damage = 2 * (3 + 0.5 * (hq9Level - 1));
             const speed = 5;
             const count = 5 + hq9Level; // Lv1=6, Lv2=7, Lv3=8, Lv4=9, Lv5=10
+            const now = Date.now();
+            // 敌机数量：用于轮询分配目标
+            const eCount = enemies.length;
             for (let i = 0; i < count; i++) {
-                const offset = (i - (count - 1) / 2) * 12;
+                const offset = (i - (count - 1) / 2) * 14;
+                // 轮询分配目标：每枚导弹指向不同敌机，分散打击
+                const assignedTarget = eCount > 0 ? enemies[i % eCount] : null;
+                // 延迟追踪：前400ms各自散开飞行，之后再弯向目标（敌机少时适当增加散开时间）
+                const dwellExtra = eCount > 0 && eCount < count / 2 ? 200 : 0;
                 player.bullets.push({
                     x: Math.max(16, Math.min(WIDTH - 16, player.x + offset)),
                     y: player.y - 20,
-                    vx: 0, vy: -speed,
+                    vx: offset * 0.07,   // 初始横向速度让导弹扇形散开
+                    vy: -speed,
                     isMissile: true, isHQ9: true,
                     damage: damage,
                     isFreeze: freezeLevel > 0,
-                    glide: createHQ9MissileGlide()
+                    glide: createHQ9MissileGlide(),
+                    assignedTarget,
+                    homingDelay: now + 400 + dwellExtra + i * 40  // 依次错开开始追踪
                 });
             }
             hq9CooldownUntil = Date.now() + HQ9_COOLDOWN;
@@ -2722,24 +2732,26 @@
             // 更新子弹
             player.bullets = player.bullets.filter(b => {
                 if (b.isMissile && enemies.length > 0) {
-                    // HQ-9指定目标优先，否则追踪最近敌人
-                    let nearest;
-                    if (b.assignedTarget && enemies.includes(b.assignedTarget)) {
-                        nearest = b.assignedTarget;
-                    } else {
-                        b.assignedTarget = null;
-                        nearest = enemies[0];
-                        let minDist = Math.sqrt((b.x - nearest.x) ** 2 + (b.y - nearest.y) ** 2);
-                        for (const e of enemies) {
-                            const d = Math.sqrt((b.x - e.x) ** 2 + (b.y - e.y) ** 2);
-                            if (d < minDist) { minDist = d; nearest = e; }
+                    // homingDelay：延迟追踪期间只飞直线（HQ-9散开效果）
+                    if (!b.homingDelay || Date.now() >= b.homingDelay) {
+                        let nearest;
+                        if (b.assignedTarget && enemies.includes(b.assignedTarget)) {
+                            nearest = b.assignedTarget;
+                        } else {
+                            b.assignedTarget = null;
+                            nearest = enemies[0];
+                            let minDistSq = (b.x - nearest.x) ** 2 + (b.y - nearest.y) ** 2;
+                            for (const e of enemies) {
+                                const dSq = (b.x - e.x) ** 2 + (b.y - e.y) ** 2;
+                                if (dSq < minDistSq) { minDistSq = dSq; nearest = e; }
+                            }
                         }
+                        const dx = nearest.x - b.x;
+                        const dy = nearest.y - b.y;
+                        const angle = Math.atan2(dy, dx);
+                        b.vx = Math.cos(angle) * 4;
+                        b.vy = Math.sin(angle) * 4;
                     }
-                    const dx = nearest.x - b.x;
-                    const dy = nearest.y - b.y;
-                    const angle = Math.atan2(dy, dx);
-                    b.vx = Math.cos(angle) * 4;
-                    b.vy = Math.sin(angle) * 4;
                 }
                 b.x += b.vx; b.y += b.vy;
                 if (b.ricochet > 0 && b.bounces < b.ricochet) {
@@ -2750,6 +2762,12 @@
                 if (!keep) stopBulletGlide(b);
                 return keep;
             });
+            // 子弹数量上限：优先保留导弹，裁剪超量的普通子弹
+            if (player.bullets.length > 65) {
+                const ms = player.bullets.filter(b => b.isMissile);
+                const others = player.bullets.filter(b => !b.isMissile);
+                player.bullets = ms.concat(others.slice(others.length - 45));
+            }
 
             // 更新敌机
             enemies.forEach(e => {
@@ -3027,7 +3045,8 @@
                 ctx.restore();
             }
 
-            // 绘制子弹
+            // 绘制子弹（外层 save/restore 统一管理非导弹子弹状态，减少逐颗切换开销）
+            ctx.save();
             player.bullets.forEach(b => {
                 if (b.isMissile) {
                     const angle = Math.atan2(b.vy, b.vx) + Math.PI / 2;
@@ -3150,47 +3169,29 @@
                         ctx.restore();
                     }
                 } else if (b.isFreeze) {
-                    // 冰冻子弹 - 六芒冰晶
-                    ctx.save();
+                    // 冰冻子弹 - 六芒冰晶（无逐颗 save/restore，由外层统一管理）
                     ctx.shadowBlur = 10; ctx.shadowColor = '#88DDFF';
-                    // 拖尾
-                    const ft = ctx.createLinearGradient(b.x, b.y + 2, b.x, b.y + 10);
-                    ft.addColorStop(0, 'rgba(136,221,255,0.35)'); ft.addColorStop(1, 'rgba(136,221,255,0)');
-                    ctx.fillStyle = ft;
+                    ctx.fillStyle = 'rgba(136,221,255,0.28)';
                     ctx.beginPath(); ctx.ellipse(b.x, b.y + 6, 2, 6, 0, 0, Math.PI * 2); ctx.fill();
-                    // 菱形冰晶主体
                     ctx.fillStyle = 'rgba(190,238,255,0.92)';
                     ctx.beginPath();
                     ctx.moveTo(b.x, b.y - 7); ctx.lineTo(b.x + 3, b.y - 1);
                     ctx.lineTo(b.x + 2, b.y + 4); ctx.lineTo(b.x - 2, b.y + 4);
                     ctx.lineTo(b.x - 3, b.y - 1); ctx.closePath(); ctx.fill();
-                    // 高光芯
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.beginPath(); ctx.ellipse(b.x - 0.5, b.y - 2, 1, 2.5, -0.3, 0, Math.PI * 2); ctx.fill();
-                    // 横向冰刺
+                    ctx.shadowBlur = 0;
                     ctx.strokeStyle = 'rgba(160,230,255,0.7)'; ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke();
-                    ctx.shadowBlur = 0; ctx.restore();
                 } else {
-                    // 普通子弹 - 等离子能量弹
-                    ctx.save();
-                    // 拖尾光晕
-                    const pt = ctx.createLinearGradient(b.x, b.y + 2, b.x, b.y + 11);
-                    pt.addColorStop(0, 'rgba(0,255,220,0.3)'); pt.addColorStop(1, 'rgba(0,200,255,0)');
-                    ctx.fillStyle = pt;
+                    // 普通子弹 - 等离子能量弹（去掉逐颗渐变创建，改用固定色提升性能）
+                    ctx.fillStyle = 'rgba(0,255,220,0.22)';
                     ctx.beginPath(); ctx.ellipse(b.x, b.y + 6, 2, 7, 0, 0, Math.PI * 2); ctx.fill();
-                    // 外层光晕
-                    ctx.shadowBlur = 9; ctx.shadowColor = '#00FFE0';
-                    // 椭圆弹体
-                    const pg = ctx.createRadialGradient(b.x, b.y - 1, 0, b.x, b.y, 4.5);
-                    pg.addColorStop(0, '#FFFFFF');
-                    pg.addColorStop(0.35, '#00FFEE');
-                    pg.addColorStop(1, 'rgba(0,180,255,0.1)');
-                    ctx.fillStyle = pg;
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#00FFE0';
+                    ctx.fillStyle = '#00FFEE';
                     ctx.beginPath(); ctx.ellipse(b.x, b.y, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
-                    ctx.shadowBlur = 0; ctx.restore();
+                    ctx.shadowBlur = 0;
                 }
             });
+            ctx.restore();
 
             // 无人机编队警告横幅
             if (droneWarningUntil > Date.now()) {
