@@ -860,7 +860,7 @@
                     <div class="equip-icon">❄️</div>
                     <div class="equip-info">
                         <div class="equip-name">冰冻弹</div>
-                        <div class="equip-desc">命中后冻结敌机，购买后可在升级时选择冰冻弹</div>
+                        <div class="equip-desc">命中后冻结敌机，共5级，每级冰冻时间+0.5秒</div>
                     </div>
                     <div class="equip-status no" id="charFreezeStatus">未拥有</div>
                 </div>
@@ -948,12 +948,12 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">❄️</div>
                     <div>
-                        <div class="shop-item-name">冰冻弹</div>
-                        <div class="shop-item-desc">命中后冻结敌机<br>购买后升级时可解锁冰冻弹技能</div>
+                        <div class="shop-item-name">冰冻弹 <span id="shopFreezeLevelBadge" style="font-size:10px;color:rgba(100,200,255,0.85);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">命中后冻结敌机，共5级（每级20,000积分）<br>每升1级冰冻时间+0.5秒，满级冻结2.5秒</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost">20,000 积分</span>
+                    <span class="shop-item-cost" id="shopFreezeCost">20,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopFreezeBuyBtn">购买</button>
                 </div>
             </div>
@@ -1199,7 +1199,7 @@
         function playBulletSound() {
             try {
                 const ctx = getAudioCtx();
-                const count = Math.min(bulletCount, 5);
+                const count = Math.min(bulletCount, 3);
                 // 每颗子弹音调差距拉大：1颗=单音激光，多颗=和弦+低音层叠加
                 // freqs[i] = [高音, 低音]  各颗子弹的高低音对
                 const layers = [
@@ -1445,10 +1445,15 @@
                     if (data.equipment.dodgeLevel === undefined) data.equipment.dodgeLevel = 0;
                     if (data.equipment.shieldLevel === undefined) data.equipment.shieldLevel = 0;
                     if (data.equipment.pl17Level === undefined) { data.equipment.pl17Level = data.equipment.pl17 ? 1 : 0; delete data.equipment.pl17; }
+                    // 迁移旧版 freezeBullet 布尔值 → freezeLevel
+                    if (data.equipment.freezeLevel === undefined) {
+                        data.equipment.freezeLevel = data.equipment.freezeBullet ? 1 : 0;
+                        delete data.equipment.freezeBullet;
+                    }
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
+            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeLevel: 0, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
         }
 
         function saveAccount() {
@@ -1477,7 +1482,11 @@
             const mS = document.getElementById('charMissileStatus');
             mS.textContent = mTier > 0 ? `Lv.${mTier} / 5` : '未拥有';
             mS.className = 'equip-status ' + (mTier > 0 ? 'yes' : 'no');
-            setEquipDisplay('charFreezeEquip', 'charFreezeStatus', eq.freezeBullet);
+            const freezeLv = eq.freezeLevel || 0;
+            document.getElementById('charFreezeEquip').className = 'equip-item ' + (freezeLv > 0 ? 'owned' : 'not-owned');
+            const freezeS = document.getElementById('charFreezeStatus');
+            freezeS.textContent = freezeLv > 0 ? `Lv.${freezeLv} / 5` : '未拥有';
+            freezeS.className = 'equip-status ' + (freezeLv > 0 ? 'yes' : 'no');
             // EMF：按等级显示
             const emfLv = eq.emfLevel || 0;
             document.getElementById('charEmfEquip').className = 'equip-item ' + (emfLv > 0 ? 'owned' : 'not-owned');
@@ -1567,7 +1576,30 @@
                     }
                 }
             })();
-            refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
+            // 冰冻弹：5级，每级20000
+            (function() {
+                const lv = eq.freezeLevel || 0;
+                const price = 20000;
+                const card = document.getElementById('shopFreezeCard');
+                const btn  = document.getElementById('shopFreezeBuyBtn');
+                const badge = document.getElementById('shopFreezeLevelBadge');
+                const costEl = document.getElementById('shopFreezeCost');
+                if (lv >= 5) {
+                    badge.textContent = 'Lv.5 · 已满级'; card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned'; costEl.textContent = '—';
+                } else {
+                    badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
+                }
+            })();
             // 星链：分5级，每级15000
             (function() {
                 const lv = eq.wingmanLevel || 0;
@@ -1730,10 +1762,12 @@
         }
 
         function purchaseFreeze() {
-            if (!currentAccount || currentAccount.equipment.freezeBullet) return;
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.freezeLevel || 0;
+            if (lv >= 5) return;
             if ((currentAccount.totalPoints || 0) < 20000) return;
             currentAccount.totalPoints -= 20000;
-            currentAccount.equipment.freezeBullet = true;
+            currentAccount.equipment.freezeLevel = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -2396,19 +2430,22 @@
             const wbMult = 1 + weaponBayLevel * 0.1;
             const count = MISSILE_COUNT[missileTier];
             const dmg = MISSILE_DAMAGE[missileTier] * wbMult;
-            for (let i = 0; i < count; i++) {
-                const offset = (i - (count - 1) / 2) * 20;
-                player.bullets.push({
-                    x: player.x + offset,
-                    y: player.y - 20,
-                    vx: 0,
-                    vy: -4,
-                    isMissile: true,
-                    damage: dmg,
-                    isFreeze: freezeLevel > 0
-                });
-            }
             playMissileSound();
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    if (!player) return;
+                    const offset = (i - (count - 1) / 2) * 25;
+                    player.bullets.push({
+                        x: player.x + offset,
+                        y: player.y - 20,
+                        vx: offset * 0.05,
+                        vy: -4,
+                        isMissile: true,
+                        damage: dmg,
+                        isFreeze: freezeLevel > 0
+                    });
+                }, i * 180);
+            }
         }
 
         function renderPips(id, current, max) {
@@ -2423,12 +2460,12 @@
             gameState = 'upgrade';
             enemies.forEach(e => { if (e.bullets) e.bullets = []; });
             document.getElementById('spLevelNext').textContent = level;
-            renderPips('multishotPips', bulletCount, 5);
-            renderPips('ricochetPips', ricochetCount, 3);
+            renderPips('multishotPips', bulletCount, 3);
+            renderPips('ricochetPips', ricochetCount, 1);
             renderPips('missilePips', 0, 5);
             renderPips('freezePips', freezeLevel, 5);
-            document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
-            document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
+            document.getElementById('multishotOption').style.display = bulletCount  >= 3  ? 'none' : '';
+            document.getElementById('ricochetOption').style.display  = ricochetCount >= 1  ? 'none' : '';
             document.getElementById('leechOption').style.display     = 'none';
 
             // 需要装备才能解锁的技能：统一处理锁定逻辑
@@ -2450,7 +2487,7 @@
             }
             const eq = (currentAccount && currentAccount.equipment) || {};
             document.getElementById('missileOption').style.display = 'none';
-            applyEquipLock('freezeOption',  freezeLevel  >= 5, eq.freezeBullet,    '需在商城购买冰冻弹装备');
+            document.getElementById('freezeOption').style.display = 'none';
             document.getElementById('skillPanel').style.display = 'block';
         }
 
@@ -2471,12 +2508,10 @@
         }
 
         function selectSkill(s) {
-            if (s === 'multishot' && bulletCount < 5) {
+            if (s === 'multishot' && bulletCount < 3) {
                 bulletCount++;
             } else if (s === 'ricochet') {
-                if (ricochetCount < 3) ricochetCount++;
-            } else if (s === 'freeze' && freezeLevel < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.freezeBullet) {
-                freezeLevel++;
+                if (ricochetCount < 1) ricochetCount++;
             } else if (s === 'heal') {
                 currentHp = Math.min(maxHp, currentHp + 300);
             }
@@ -3394,6 +3429,7 @@
             wingmanLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.wingmanLevel) || 0;
             missileTier = (currentAccount && currentAccount.equipment && currentAccount.equipment.missileTier) || 0;
             missileCount = MISSILE_COUNT[missileTier];
+            freezeLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.freezeLevel) || 0;
             leechLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.leechLevel) || 0;
             armorLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.armorLevel) || 0;
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
