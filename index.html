@@ -713,9 +713,17 @@
                     <div class="equip-icon">🚀</div>
                     <div class="equip-info">
                         <div class="equip-name">HQ-9 红旗防空系统</div>
-                        <div class="equip-desc">同时发射9枚跟踪导弹，满5级升为全屏覆盖攻击</div>
+                        <div class="equip-desc">同时发射9枚跟踪导弹，满5级升为12枚</div>
                     </div>
                     <div class="equip-status no" id="charHq9Status">未拥有</div>
+                </div>
+                <div class="equip-item not-owned" id="charWingmanEquip">
+                    <div class="equip-icon">🛩️</div>
+                    <div class="equip-info">
+                        <div class="equip-name">友军飞机</div>
+                        <div class="equip-desc">在你右侧跟随并协同射击，满5级威力与自机相同</div>
+                    </div>
+                    <div class="equip-status no" id="charWingmanStatus">未拥有</div>
                 </div>
                 <div class="equip-item not-owned" id="charBulletRateEquip">
                     <div class="equip-icon">🔥</div>
@@ -769,6 +777,19 @@
                     <button class="shop-buy-btn cant-afford" id="shopFreezeBuyBtn">购买</button>
                 </div>
             </div>
+            <div class="shop-item-card" id="shopWingmanCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">🛩️</div>
+                    <div>
+                        <div class="shop-item-name">友军飞机 <span id="shopWingmanLevelBadge" style="font-size:10px;color:rgba(0,200,255,0.8);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">右侧僚机协同射击，共5级<br>Lv1=50%威力，每级+10%，满级=100%</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost" id="shopWingmanCost">15,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopWingmanBuyBtn">购买</button>
+                </div>
+            </div>
             <div class="shop-item-card" id="shopBulletRateCard">
                 <div class="shop-item-top">
                     <div class="shop-item-icon">🔥</div>
@@ -787,7 +808,7 @@
                     <div class="shop-item-icon">🚀</div>
                     <div>
                         <div class="shop-item-name">HQ-9 红旗防空系统 <span id="shopHq9LevelBadge" style="font-size:10px;color:rgba(255,120,60,0.85);font-weight:normal"></span></div>
-                        <div class="shop-item-desc">同时发射9枚跟踪导弹，初始300%导弹威力<br>每升1级+50%，满5级升为全屏覆盖攻击</div>
+                        <div class="shop-item-desc">同时发射9枚跟踪导弹，初始300%导弹威力<br>每升1级+50%，满5级齐射12枚</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
@@ -888,6 +909,7 @@
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
         let bulletRateLevel = 0; // 弹速等级 0-5，L0=450ms L5=200ms
         // 射速公式：450 - bulletRateLevel * 50 (ms间隔)
+        let wingmanLevel = 0; // 友军飞机等级 0-5
         let hq9Level = 0, hq9CooldownUntil = 0, hq9LaunchedAt = 0;
         const HQ9_COOLDOWN = 25000; // 冷却时间25秒
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
@@ -921,7 +943,7 @@
                 const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
                 if (data) return data;
             } catch(e) {}
-            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0 } };
+            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0 } };
         }
 
         function saveAccount() {
@@ -959,6 +981,12 @@
             const hq9S = document.getElementById('charHq9Status');
             hq9S.textContent = hq9Lv > 0 ? `Lv.${hq9Lv} / 5` : '未拥有';
             hq9S.className = 'equip-status ' + (hq9Lv > 0 ? 'yes' : 'no');
+            // 友军飞机：按等级显示
+            const wmLv = eq.wingmanLevel || 0;
+            document.getElementById('charWingmanEquip').className = 'equip-item ' + (wmLv > 0 ? 'owned' : 'not-owned');
+            const wmS = document.getElementById('charWingmanStatus');
+            wmS.textContent = wmLv > 0 ? `Lv.${wmLv} / 5` : '未拥有';
+            wmS.className = 'equip-status ' + (wmLv > 0 ? 'yes' : 'no');
             // 弹速：按等级显示
             const brLv = eq.bulletRateLevel || 0;
             document.getElementById('charBulletRateEquip').className = 'equip-item ' + (brLv > 0 ? 'owned' : 'not-owned');
@@ -994,6 +1022,30 @@
             }
             refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
+            // 友军飞机：分5级，每级15000
+            (function() {
+                const lv = eq.wingmanLevel || 0;
+                const price = 15000;
+                const card = document.getElementById('shopWingmanCard');
+                const btn  = document.getElementById('shopWingmanBuyBtn');
+                const badge = document.getElementById('shopWingmanLevelBadge');
+                const costEl = document.getElementById('shopWingmanCost');
+                if (lv >= 5) {
+                    badge.textContent = 'Lv.5 · 已满级'; card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned'; costEl.textContent = '—';
+                } else {
+                    badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
+                }
+            })();
             // 弹速强化：分5级，每级10000
             (function() {
                 const lv = eq.bulletRateLevel || 0;
@@ -1094,6 +1146,17 @@
             if ((currentAccount.totalPoints || 0) < 40000) return;
             currentAccount.totalPoints -= 40000;
             currentAccount.equipment.emfLevel = lv + 1;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function purchaseWingman() {
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.wingmanLevel || 0;
+            if (lv >= 5) return;
+            if ((currentAccount.totalPoints || 0) < 15000) return;
+            currentAccount.totalPoints -= 15000;
+            currentAccount.equipment.wingmanLevel = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -1711,33 +1774,17 @@
             // 伤害：L1=300%(=6), L2=350%(=7), L3=400%(=8), L4=450%(=9), L5=500%(=10)
             const damage = 2 * (3 + 0.5 * (hq9Level - 1));
             const speed = 5;
-            if (hq9Level >= 5 && enemies.length > 0) {
-                // 全屏覆盖：每个敌机分配一枚导弹
-                enemies.forEach((target, i) => {
-                    const offset = (i - (enemies.length - 1) / 2) * 12;
-                    player.bullets.push({
-                        x: Math.max(16, Math.min(WIDTH - 16, player.x + offset)),
-                        y: player.y - 20,
-                        vx: 0, vy: -speed,
-                        isMissile: true, isHQ9: true,
-                        damage: damage,
-                        assignedTarget: target,
-                        isFreeze: freezeLevel > 0
-                    });
+            const count = hq9Level >= 5 ? 12 : 9; // 满级12颗
+            for (let i = 0; i < count; i++) {
+                const offset = (i - (count - 1) / 2) * 12;
+                player.bullets.push({
+                    x: Math.max(16, Math.min(WIDTH - 16, player.x + offset)),
+                    y: player.y - 20,
+                    vx: 0, vy: -speed,
+                    isMissile: true, isHQ9: true,
+                    damage: damage,
+                    isFreeze: freezeLevel > 0
                 });
-            } else {
-                // 9枚追踪导弹齐射
-                for (let i = 0; i < 9; i++) {
-                    const offset = (i - 4) * 13;
-                    player.bullets.push({
-                        x: Math.max(16, Math.min(WIDTH - 16, player.x + offset)),
-                        y: player.y - 20,
-                        vx: 0, vy: -speed,
-                        isMissile: true, isHQ9: true,
-                        damage: damage,
-                        isFreeze: freezeLevel > 0
-                    });
-                }
             }
             hq9CooldownUntil = Date.now() + HQ9_COOLDOWN;
             hq9LaunchedAt = Date.now();
@@ -1816,6 +1863,13 @@
             if (missileCount > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 400)) {
                 playerShootMissile();
                 player.lastMissileShot = Date.now();
+            }
+            // 射击 - 友军飞机（与玩家同步射速）
+            if (wingmanLevel > 0 && (!player.lastWingmanShot || Date.now() - player.lastWingmanShot > 450 - bulletRateLevel * 50)) {
+                const wx = Math.min(WIDTH - 20, player.x + 55);
+                const dmgMult = wingmanLevel === 5 ? 1.0 : 0.4 + wingmanLevel * 0.1;
+                player.bullets.push({ x: wx, y: player.y - 16, vx: 0, vy: -3, isWingman: true, damage: dmgMult, isFreeze: freezeLevel > 0 });
+                player.lastWingmanShot = Date.now();
             }
 
             // 更新子弹
@@ -1968,6 +2022,21 @@
 
             // 绘制玩家飞机
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+
+            // 绘制友军飞机
+            if (wingmanLevel > 0) {
+                const wx = Math.min(WIDTH - 20, player.x + 55);
+                const wy = player.y;
+                // 小号飞机（60%缩放）
+                drawPlane(ctx, wx - 10, wy - 12, 20, 25, selectedPlane);
+                // 青色辉光标识友军
+                ctx.save();
+                ctx.globalAlpha = 0.35 + 0.15 * Math.sin(Date.now() / 300);
+                ctx.shadowBlur = 10; ctx.shadowColor = '#00E5FF';
+                ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 1.2;
+                ctx.beginPath(); ctx.ellipse(wx, wy, 14, 16, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.restore();
+            }
 
             // ── 虚拟摇杆（仅摇杆模式 + 触控设备显示）──
             if (controlMode === 'joystick' && (usingTouch || joyActive)) {
@@ -2232,88 +2301,18 @@
                 } else {
                     drawEnemy(ctx, e.x - e.w/2, e.y - e.h/2, e.w, e.h, e.type);
                 }
-                // 冰山效果
+                // 冰冻效果：蓝色光晕
                 if (e.frozenUntil && Date.now() < e.frozenUntil) {
-                    const prog = (e.frozenUntil - Date.now()) / (freezeLevel * 500);
-                    const ex = e.x, ey = e.y, ew = e.w, eh = e.h;
-                    const t = Date.now() / 1000;
+                    const prog = Math.min(1, (e.frozenUntil - Date.now()) / Math.max(1, freezeLevel * 500));
+                    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 120);
                     ctx.save();
-
-                    // 底部冰块基座（梯形冰山底）
-                    const baseG = ctx.createLinearGradient(ex - ew*0.6, ey + eh*0.3, ex, ey - eh*0.2);
-                    baseG.addColorStop(0,   `rgba(60,160,220,${0.75*prog})`);
-                    baseG.addColorStop(0.5, `rgba(140,220,255,${0.85*prog})`);
-                    baseG.addColorStop(1,   `rgba(220,245,255,${0.9*prog})`);
-                    ctx.fillStyle = baseG;
-                    ctx.beginPath();
-                    ctx.moveTo(ex - ew*0.6, ey + eh*0.45);
-                    ctx.lineTo(ex + ew*0.6, ey + eh*0.45);
-                    ctx.lineTo(ex + ew*0.45, ey - eh*0.1);
-                    ctx.lineTo(ex - ew*0.45, ey - eh*0.1);
-                    ctx.closePath(); ctx.fill();
-
-                    // 冰山主峰（中央高峰）
-                    const peakG = ctx.createLinearGradient(ex, ey - eh*0.9, ex + ew*0.15, ey - eh*0.1);
-                    peakG.addColorStop(0,   `rgba(240,250,255,${prog})`);
-                    peakG.addColorStop(0.4, `rgba(160,225,255,${0.95*prog})`);
-                    peakG.addColorStop(1,   `rgba(80,170,230,${0.8*prog})`);
-                    ctx.fillStyle = peakG;
-                    ctx.beginPath();
-                    ctx.moveTo(ex,          ey - eh*0.9);
-                    ctx.lineTo(ex + ew*0.28, ey - eh*0.1);
-                    ctx.lineTo(ex - ew*0.28, ey - eh*0.1);
-                    ctx.closePath(); ctx.fill();
-
-                    // 左侧副峰
-                    const lG = ctx.createLinearGradient(ex - ew*0.25, ey - eh*0.65, ex - ew*0.1, ey - eh*0.1);
-                    lG.addColorStop(0,   `rgba(220,245,255,${0.95*prog})`);
-                    lG.addColorStop(1,   `rgba(90,175,230,${0.75*prog})`);
-                    ctx.fillStyle = lG;
-                    ctx.beginPath();
-                    ctx.moveTo(ex - ew*0.25, ey - eh*0.65);
-                    ctx.lineTo(ex - ew*0.0,  ey - eh*0.1);
-                    ctx.lineTo(ex - ew*0.5,  ey - eh*0.1);
-                    ctx.closePath(); ctx.fill();
-
-                    // 右侧副峰
-                    const rG = ctx.createLinearGradient(ex + ew*0.25, ey - eh*0.55, ex + ew*0.1, ey - eh*0.1);
-                    rG.addColorStop(0,   `rgba(220,245,255,${0.95*prog})`);
-                    rG.addColorStop(1,   `rgba(90,175,230,${0.75*prog})`);
-                    ctx.fillStyle = rG;
-                    ctx.beginPath();
-                    ctx.moveTo(ex + ew*0.25, ey - eh*0.55);
-                    ctx.lineTo(ex + ew*0.5,  ey - eh*0.1);
-                    ctx.lineTo(ex + ew*0.05, ey - eh*0.1);
-                    ctx.closePath(); ctx.fill();
-
-                    // 主峰高光（雪顶）
-                    ctx.fillStyle = `rgba(255,255,255,${0.85*prog})`;
-                    ctx.beginPath();
-                    ctx.moveTo(ex,            ey - eh*0.9);
-                    ctx.lineTo(ex + ew*0.08,  ey - eh*0.72);
-                    ctx.lineTo(ex - ew*0.08,  ey - eh*0.72);
-                    ctx.closePath(); ctx.fill();
-
-                    // 冰山轮廓线
-                    ctx.strokeStyle = `rgba(200,240,255,${0.6*prog})`;
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(ex, ey - eh*0.9);
-                    ctx.lineTo(ex + ew*0.28, ey - eh*0.1);
-                    ctx.lineTo(ex + ew*0.6,  ey + eh*0.45);
-                    ctx.lineTo(ex - ew*0.6,  ey + eh*0.45);
-                    ctx.lineTo(ex - ew*0.28, ey - eh*0.1);
-                    ctx.closePath(); ctx.stroke();
-
-                    // 闪光粒子（冰晶折射）
-                    for (let si = 0; si < 3; si++) {
-                        const sx = ex + Math.sin(t*2.1 + si*2.1) * ew*0.35;
-                        const sy = ey + Math.cos(t*1.7 + si*1.4) * eh*0.25;
-                        ctx.fillStyle = `rgba(255,255,255,${0.7*prog*Math.abs(Math.sin(t*3+si))})`;
-                        ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI*2); ctx.fill();
-                    }
-
-                    ctx.restore();
+                    ctx.shadowBlur = 14 * prog; ctx.shadowColor = 'rgba(100,220,255,0.9)';
+                    ctx.strokeStyle = `rgba(140,220,255,${0.75 * prog * pulse})`;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath(); ctx.ellipse(e.x, e.y, e.w * 0.62, e.h * 0.62, 0, 0, Math.PI * 2); ctx.stroke();
+                    ctx.fillStyle = `rgba(180,235,255,${0.12 * prog})`;
+                    ctx.beginPath(); ctx.ellipse(e.x, e.y, e.w * 0.58, e.h * 0.58, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0; ctx.restore();
                 }
                 if (e.bullets) {
                     ctx.fillStyle = '#f44';
@@ -2459,7 +2458,7 @@
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
-            bulletRateLevel = 0;
+            bulletRateLevel = 0; wingmanLevel = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
@@ -2482,6 +2481,7 @@
             hq9Level = (currentAccount && currentAccount.equipment && currentAccount.equipment.hq9Level) || 0;
             hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             bulletRateLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.bulletRateLevel) || 0;
+            wingmanLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.wingmanLevel) || 0;
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn();
         }
@@ -2812,6 +2812,7 @@
         // 商城面板按钮
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
         document.getElementById('shopFreezeBuyBtn').addEventListener('click', purchaseFreeze);
+        document.getElementById('shopWingmanBuyBtn').addEventListener('click', purchaseWingman);
         document.getElementById('shopBulletRateBuyBtn').addEventListener('click', purchaseBulletRate);
         document.getElementById('shopEmfBuyBtn').addEventListener('click', purchaseEMF);
         document.getElementById('shopHq9BuyBtn').addEventListener('click', purchaseHQ9);
