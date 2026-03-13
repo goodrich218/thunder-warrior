@@ -719,7 +719,7 @@
                     <div class="equip-icon">🎯</div>
                     <div class="equip-info">
                         <div class="equip-name">跟踪弹</div>
-                        <div class="equip-desc">自动锁定追踪敌机，购买后可在升级时选择跟踪导弹</div>
+                        <div class="equip-desc">自动锁定追踪敌机，共5级，满级3颗×500%威力</div>
                     </div>
                     <div class="equip-status no" id="charMissileStatus">未拥有</div>
                 </div>
@@ -794,12 +794,12 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">🎯</div>
                     <div>
-                        <div class="shop-item-name">跟踪弹</div>
-                        <div class="shop-item-desc">自动锁定并追踪敌机<br>购买后升级时可解锁跟踪导弹技能</div>
+                        <div class="shop-item-name">跟踪弹 <span id="shopMissileLevelBadge" style="font-size:10px;color:rgba(255,215,0,0.8);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">自动锁定追踪敌机，共5级<br>L1=1颗×200% · L2=1颗×300% · L3=2颗×300%<br>L4=3颗×400% · L5=3颗×500%</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost">50,000 积分</span>
+                    <span class="shop-item-cost" id="shopMissileCost">50,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopMissileBuyBtn">购买</button>
                 </div>
             </div>
@@ -1022,7 +1022,9 @@
 
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 1000, currentHp = 1000, selectedPlane = 0;
-        let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
+        let bulletCount = 1, ricochetCount = 0, missileCount = 0, missileTier = 0, leechLevel = 0, freezeLevel = 0;
+        const MISSILE_COUNT  = [0, 1, 1, 2, 3, 3];   // 每档发射数量
+        const MISSILE_DAMAGE = [0, 2.0, 3.0, 3.0, 4.0, 5.0]; // 每档基础伤害倍数
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0;
         const LEECH_HEAL = [0, 2, 4, 6, 8, 20];
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
@@ -1065,6 +1067,11 @@
                     // 迁移旧账户：补充新字段
                     if (data.skillPoints === undefined) data.skillPoints = 10;
                     if (!data.equipment) data.equipment = {};
+                    // 迁移旧版 trackingMissile 布尔值 → missileTier
+                    if (data.equipment.missileTier === undefined) {
+                        data.equipment.missileTier = data.equipment.trackingMissile ? 1 : 0;
+                        delete data.equipment.trackingMissile;
+                    }
                     if (data.equipment.leechLevel === undefined) data.equipment.leechLevel = 0;
                     if (data.equipment.armorLevel === undefined) data.equipment.armorLevel = 0;
                     if (data.equipment.weaponBayLevel === undefined) data.equipment.weaponBayLevel = 0;
@@ -1073,7 +1080,7 @@
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0 } };
+            return { totalPoints: 0, skillPoints: 10, equipment: { missileTier: 0, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0 } };
         }
 
         function saveAccount() {
@@ -1097,7 +1104,11 @@
                 s.textContent = owned ? '✓ 已拥有' : '未拥有';
                 s.className = 'equip-status ' + (owned ? 'yes' : 'no');
             }
-            setEquipDisplay('charMissileEquip', 'charMissileStatus', eq.trackingMissile);
+            const mTier = eq.missileTier || 0;
+            document.getElementById('charMissileEquip').className = 'equip-item ' + (mTier > 0 ? 'owned' : 'not-owned');
+            const mS = document.getElementById('charMissileStatus');
+            mS.textContent = mTier > 0 ? `Lv.${mTier} / 5` : '未拥有';
+            mS.className = 'equip-status ' + (mTier > 0 ? 'yes' : 'no');
             setEquipDisplay('charFreezeEquip', 'charFreezeStatus', eq.freezeBullet);
             // EMF：按等级显示
             const emfLv = eq.emfLevel || 0;
@@ -1158,7 +1169,30 @@
                     btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
                 }
             }
-            refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
+            // 跟踪弹：5级，每级50000
+            (function() {
+                const lv = eq.missileTier || 0;
+                const price = 50000;
+                const card = document.getElementById('shopMissileCard');
+                const btn  = document.getElementById('shopMissileBuyBtn');
+                const badge = document.getElementById('shopMissileLevelBadge');
+                const costEl = document.getElementById('shopMissileCost');
+                if (lv >= 5) {
+                    badge.textContent = 'Lv.5 · 已满级'; card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned'; costEl.textContent = '—';
+                } else {
+                    badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
+                }
+            })();
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
             // 星链：分5级，每级15000
             (function() {
@@ -1285,10 +1319,12 @@
         }
 
         function purchaseMissile() {
-            if (!currentAccount || currentAccount.equipment.trackingMissile) return;
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.missileTier || 0;
+            if (lv >= 5) return;
             if ((currentAccount.totalPoints || 0) < 50000) return;
             currentAccount.totalPoints -= 50000;
-            currentAccount.equipment.trackingMissile = true;
+            currentAccount.equipment.missileTier = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -1862,15 +1898,17 @@
 
         function playerShootMissile() {
             const wbMult = 1 + weaponBayLevel * 0.1;
-            for (let i = 0; i < missileCount; i++) {
-                const offset = (i - (missileCount - 1) / 2) * 20;
+            const count = MISSILE_COUNT[missileTier];
+            const dmg = MISSILE_DAMAGE[missileTier] * wbMult;
+            for (let i = 0; i < count; i++) {
+                const offset = (i - (count - 1) / 2) * 20;
                 player.bullets.push({
                     x: player.x + offset,
                     y: player.y - 20,
                     vx: 0,
                     vy: -4,
                     isMissile: true,
-                    damage: (1.5 + 0.5 * missileCount) * wbMult, // L1=2x L2=2.5x L3=3x L4=3.5x L5=4x
+                    damage: dmg,
                     isFreeze: freezeLevel > 0
                 });
             }
@@ -1890,7 +1928,7 @@
             document.getElementById('spLevelNext').textContent = level;
             renderPips('multishotPips', bulletCount, 5);
             renderPips('ricochetPips', ricochetCount, 3);
-            renderPips('missilePips', missileCount, 5);
+            renderPips('missilePips', 0, 5);
             renderPips('freezePips', freezeLevel, 5);
             document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
             document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
@@ -1914,7 +1952,7 @@
                 }
             }
             const eq = (currentAccount && currentAccount.equipment) || {};
-            applyEquipLock('missileOption', missileCount >= 5, eq.trackingMissile, '需在商城购买跟踪弹装备');
+            document.getElementById('missileOption').style.display = 'none';
             applyEquipLock('freezeOption',  freezeLevel  >= 5, eq.freezeBullet,    '需在商城购买冰冻弹装备');
             document.getElementById('skillPanel').style.display = 'block';
         }
@@ -1940,8 +1978,6 @@
                 bulletCount++;
             } else if (s === 'ricochet') {
                 if (ricochetCount < 3) ricochetCount++;
-            } else if (s === 'missile' && missileCount < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile) {
-                missileCount++;
             } else if (s === 'freeze' && freezeLevel < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.freezeBullet) {
                 freezeLevel++;
             } else if (s === 'heal') {
@@ -2105,7 +2141,7 @@
                 player.lastShot = Date.now();
             }
             // 射击 - 跟踪弹（间隔更慢，400ms）
-            if (missileCount > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 800)) {
+            if (missileTier > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 1600)) {
                 playerShootMissile();
                 player.lastMissileShot = Date.now();
             }
@@ -2769,7 +2805,7 @@
 
         function restart() {
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
-            bulletCount = 1; ricochetCount = 0; missileCount = 0; freezeLevel = 0;
+            bulletCount = 1; ricochetCount = 0; missileCount = 0; missileTier = 0; freezeLevel = 0;
             leechLevel = 0; armorLevel = 0; weaponBayLevel = 0; dodgeLevel = 0; shieldLevel = 0;
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
@@ -2797,6 +2833,8 @@
             hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             bulletRateLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.bulletRateLevel) || 0;
             wingmanLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.wingmanLevel) || 0;
+            missileTier = (currentAccount && currentAccount.equipment && currentAccount.equipment.missileTier) || 0;
+            missileCount = MISSILE_COUNT[missileTier];
             leechLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.leechLevel) || 0;
             armorLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.armorLevel) || 0;
             weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
