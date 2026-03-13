@@ -625,6 +625,9 @@
             to   { box-shadow: 0 0 42px rgba(120,255,80,0.9), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(180,255,100,1); }
         }
         .pl17-btn-icon { font-size: 24px; line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 0 6px rgba(60,220,60,0.8)); }
+        .pl17-btn-pips { display: flex; gap: 2px; justify-content: center; margin-bottom: 4px; }
+        .pl17-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.2s, box-shadow 0.2s; }
+        .pl17-pip.on { background: #4CAF50; box-shadow: 0 0 5px #4CAF50; }
         .pl17-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(100,255,100,0.85); margin-bottom: 4px; height: 10px; overflow: hidden; }
         #pl17Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #pl17BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a6b1a, #4CAF50); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(60,200,60,0.6); }
@@ -660,6 +663,7 @@
         <!-- 霹雳-17 按钮 -->
         <div id="pl17Btn">
             <div class="pl17-btn-icon">✈️</div>
+            <div class="pl17-btn-pips" id="pl17Pips"></div>
             <div class="pl17-btn-status" id="pl17StatusText"></div>
             <div id="pl17Bar"><div id="pl17BarFill"></div></div>
         </div>
@@ -1916,6 +1920,14 @@
             if (!visible) return;
             const now = Date.now();
             const onCooldown = now < pl17CooldownUntil;
+            const pipsEl = document.getElementById('pl17Pips');
+            if (pipsEl && pipsEl.children.length === 0) {
+                const pip = document.createElement('div');
+                pip.className = 'pl17-pip' + (onCooldown ? '' : ' on');
+                pipsEl.appendChild(pip);
+            } else if (pipsEl && pipsEl.children.length > 0) {
+                pipsEl.children[0].className = 'pl17-pip' + (onCooldown ? '' : ' on');
+            }
             const statusEl = document.getElementById('pl17StatusText');
             if (statusEl) statusEl.textContent = onCooldown ? `${Math.ceil((pl17CooldownUntil - now) / 1000)}s` : '';
             const fillEl = document.getElementById('pl17BarFill');
@@ -2832,7 +2844,7 @@
                 ctx.shadowBlur = 30;
                 ctx.shadowColor = 'rgba(120,255,80,0.8)';
                 // 大尺寸战机影子（80×100）
-                drawPlane(ctx, WIDTH/2 - 55, pl17JetY - 65, 110, 135, 2);
+                drawPlane(ctx, WIDTH/2 - 70, pl17JetY - 85, 140, 175, 2);
                 ctx.globalAlpha = 1; ctx.shadowBlur = 0;
                 ctx.restore();
             }
