@@ -811,7 +811,7 @@
                 <div class="skill-card" onclick="selectSkill('missile')" id="missileOption" style="--accent:#FFD740">
                     <span class="sc-icon">🎯</span>
                     <div class="sc-name">跟踪导弹</div>
-                    <div class="sc-desc">自动锁定追踪敌机 +1 枚</div>
+                    <div class="sc-desc">追踪导弹 +1 枚，威力逐级提升<br><span style="font-size:9px;opacity:0.6">Lv1×2 · Lv2×2.5 · Lv3×3 · Lv4×3.5 · Lv5×4</span></div>
                     <div class="sc-pips" id="missilePips"></div>
                 </div>
                 <div class="skill-card" onclick="selectSkill('freeze')" id="freezeOption" style="--accent:#40C4FF">
@@ -1495,7 +1495,7 @@
                     vx: 0, 
                     vy: -4, 
                     isMissile: true,
-                    damage: 2,
+                    damage: 1.5 + 0.5 * missileCount, // L1=2x L2=2.5x L3=3x L4=3.5x L5=4x
                     isFreeze: freezeLevel > 0
                 });
             }
@@ -1515,7 +1515,7 @@
             document.getElementById('spLevelNext').textContent = level;
             renderPips('multishotPips', bulletCount, 5);
             renderPips('ricochetPips', ricochetCount, 3);
-            renderPips('missilePips', missileCount, 3);
+            renderPips('missilePips', missileCount, 5);
             renderPips('freezePips', freezeLevel, 5);
             document.getElementById('leechBarFill').style.width = (leechLevel / 20 * 100) + '%';
             document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
@@ -1540,7 +1540,7 @@
                 }
             }
             const eq = (currentAccount && currentAccount.equipment) || {};
-            applyEquipLock('missileOption', missileCount >= 3, eq.trackingMissile, '需在商城购买跟踪弹装备');
+            applyEquipLock('missileOption', missileCount >= 5, eq.trackingMissile, '需在商城购买跟踪弹装备');
             applyEquipLock('freezeOption',  freezeLevel  >= 5, eq.freezeBullet,    '需在商城购买冰冻弹装备');
             document.getElementById('skillPanel').style.display = 'block';
         }
@@ -1566,7 +1566,7 @@
                 bulletCount++;
             } else if (s === 'ricochet') {
                 if (ricochetCount < 3) ricochetCount++;
-            } else if (s === 'missile' && missileCount < 3 && currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile) {
+            } else if (s === 'missile' && missileCount < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile) {
                 missileCount++;
             } else if (s === 'leech' && leechLevel < 20) {
                 leechLevel++;
@@ -2084,18 +2084,45 @@
                         ctx.restore();
                     }
                 } else if (b.isFreeze) {
-                    // 冰冻子弹 - 蓝白冰晶
-                    ctx.shadowColor = '#88DDFF';
-                    ctx.shadowBlur = 8;
-                    ctx.fillStyle = '#B8EEFF';
-                    ctx.fillRect(b.x - 2, b.y - 7, 4, 14);
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(b.x - 1, b.y - 5, 2, 4);
-                    ctx.shadowBlur = 0;
+                    // 冰冻子弹 - 六芒冰晶
+                    ctx.save();
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#88DDFF';
+                    // 拖尾
+                    const ft = ctx.createLinearGradient(b.x, b.y + 2, b.x, b.y + 10);
+                    ft.addColorStop(0, 'rgba(136,221,255,0.35)'); ft.addColorStop(1, 'rgba(136,221,255,0)');
+                    ctx.fillStyle = ft;
+                    ctx.beginPath(); ctx.ellipse(b.x, b.y + 6, 2, 6, 0, 0, Math.PI * 2); ctx.fill();
+                    // 菱形冰晶主体
+                    ctx.fillStyle = 'rgba(190,238,255,0.92)';
+                    ctx.beginPath();
+                    ctx.moveTo(b.x, b.y - 7); ctx.lineTo(b.x + 3, b.y - 1);
+                    ctx.lineTo(b.x + 2, b.y + 4); ctx.lineTo(b.x - 2, b.y + 4);
+                    ctx.lineTo(b.x - 3, b.y - 1); ctx.closePath(); ctx.fill();
+                    // 高光芯
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.beginPath(); ctx.ellipse(b.x - 0.5, b.y - 2, 1, 2.5, -0.3, 0, Math.PI * 2); ctx.fill();
+                    // 横向冰刺
+                    ctx.strokeStyle = 'rgba(160,230,255,0.7)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke();
+                    ctx.shadowBlur = 0; ctx.restore();
                 } else {
-                    // 普通子弹
-                    ctx.fillStyle = '#0ff';
-                    ctx.fillRect(b.x - 1.5, b.y - 6, 3, 12);
+                    // 普通子弹 - 等离子能量弹
+                    ctx.save();
+                    // 拖尾光晕
+                    const pt = ctx.createLinearGradient(b.x, b.y + 2, b.x, b.y + 11);
+                    pt.addColorStop(0, 'rgba(0,255,220,0.3)'); pt.addColorStop(1, 'rgba(0,200,255,0)');
+                    ctx.fillStyle = pt;
+                    ctx.beginPath(); ctx.ellipse(b.x, b.y + 6, 2, 7, 0, 0, Math.PI * 2); ctx.fill();
+                    // 外层光晕
+                    ctx.shadowBlur = 9; ctx.shadowColor = '#00FFE0';
+                    // 椭圆弹体
+                    const pg = ctx.createRadialGradient(b.x, b.y - 1, 0, b.x, b.y, 4.5);
+                    pg.addColorStop(0, '#FFFFFF');
+                    pg.addColorStop(0.35, '#00FFEE');
+                    pg.addColorStop(1, 'rgba(0,180,255,0.1)');
+                    ctx.fillStyle = pg;
+                    ctx.beginPath(); ctx.ellipse(b.x, b.y, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0; ctx.restore();
                 }
             });
 
