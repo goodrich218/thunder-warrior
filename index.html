@@ -720,7 +720,7 @@
                 <div class="equip-item not-owned" id="charWingmanEquip">
                     <div class="equip-icon">🛩️</div>
                     <div class="equip-info">
-                        <div class="equip-name">友军飞机</div>
+                        <div class="equip-name">星链</div>
                         <div class="equip-desc">在你右侧跟随并协同射击，满5级威力与自机相同</div>
                     </div>
                     <div class="equip-status no" id="charWingmanStatus">未拥有</div>
@@ -781,7 +781,7 @@
                 <div class="shop-item-top">
                     <div class="shop-item-icon">🛩️</div>
                     <div>
-                        <div class="shop-item-name">友军飞机 <span id="shopWingmanLevelBadge" style="font-size:10px;color:rgba(0,200,255,0.8);font-weight:normal"></span></div>
+                        <div class="shop-item-name">星链 <span id="shopWingmanLevelBadge" style="font-size:10px;color:rgba(0,200,255,0.8);font-weight:normal"></span></div>
                         <div class="shop-item-desc">右侧僚机协同射击，共5级<br>Lv1=50%威力，每级+10%，满级=100%</div>
                     </div>
                 </div>
@@ -909,7 +909,7 @@
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
         let bulletRateLevel = 0; // 弹速等级 0-5，L0=450ms L5=200ms
         // 射速公式：450 - bulletRateLevel * 50 (ms间隔)
-        let wingmanLevel = 0; // 友军飞机等级 0-5
+        let wingmanLevel = 0; // 星链等级 0-5
         let hq9Level = 0, hq9CooldownUntil = 0, hq9LaunchedAt = 0;
         const HQ9_COOLDOWN = 25000; // 冷却时间25秒
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
@@ -981,7 +981,7 @@
             const hq9S = document.getElementById('charHq9Status');
             hq9S.textContent = hq9Lv > 0 ? `Lv.${hq9Lv} / 5` : '未拥有';
             hq9S.className = 'equip-status ' + (hq9Lv > 0 ? 'yes' : 'no');
-            // 友军飞机：按等级显示
+            // 星链：按等级显示
             const wmLv = eq.wingmanLevel || 0;
             document.getElementById('charWingmanEquip').className = 'equip-item ' + (wmLv > 0 ? 'owned' : 'not-owned');
             const wmS = document.getElementById('charWingmanStatus');
@@ -1022,7 +1022,7 @@
             }
             refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
-            // 友军飞机：分5级，每级15000
+            // 星链：分5级，每级15000
             (function() {
                 const lv = eq.wingmanLevel || 0;
                 const price = 15000;
@@ -1864,13 +1864,17 @@
                 playerShootMissile();
                 player.lastMissileShot = Date.now();
             }
-            // 射击 - 卫星（与玩家同步射速）
+            // 射击 - 星链卫星（与玩家同步射速）
             if (wingmanLevel > 0 && (!player.lastWingmanShot || Date.now() - player.lastWingmanShot > 450 - bulletRateLevel * 50)) {
                 const orbitAngle = Date.now() / 700;
-                const wx = player.x + Math.cos(orbitAngle) * 36;
-                const wy = player.y + Math.sin(orbitAngle) * 22;
                 const dmgMult = wingmanLevel === 5 ? 1.0 : 0.4 + wingmanLevel * 0.1;
-                player.bullets.push({ x: wx, y: wy - 10, vx: 0, vy: -3, isWingman: true, damage: dmgMult, isFreeze: freezeLevel > 0 });
+                const satCount = wingmanLevel >= 5 ? 2 : 1;
+                for (let si = 0; si < satCount; si++) {
+                    const angle = orbitAngle + si * Math.PI;
+                    const wx = player.x + Math.cos(angle) * 36;
+                    const wy = player.y + Math.sin(angle) * 22;
+                    player.bullets.push({ x: wx, y: wy - 8, vx: 0, vy: -3, isWingman: true, damage: dmgMult, isFreeze: freezeLevel > 0 });
+                }
                 player.lastWingmanShot = Date.now();
             }
 
@@ -2025,67 +2029,74 @@
             // 绘制玩家飞机
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
 
-            // 绘制轨道卫星
+            // 绘制星链轨道卫星
             if (wingmanLevel > 0) {
                 const t = Date.now();
                 const orbitAngle = t / 700;
-                const wx = player.x + Math.cos(orbitAngle) * 36;
-                const wy = player.y + Math.sin(orbitAngle) * 22;
+                const satCount = wingmanLevel >= 5 ? 2 : 1;
+                const pulse = 0.6 + 0.4 * Math.sin(t / 180);
 
                 ctx.save();
 
                 // 虚线轨道环
-                ctx.globalAlpha = 0.18;
+                ctx.globalAlpha = 0.15;
                 ctx.strokeStyle = '#00E5FF';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([4, 5]);
+                ctx.lineWidth = 0.8;
+                ctx.setLineDash([3, 5]);
                 ctx.beginPath();
                 ctx.ellipse(player.x, player.y, 36, 22, 0, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // 太阳能板（左）
-                ctx.globalAlpha = 0.9;
-                ctx.save();
-                ctx.translate(wx, wy);
-                ctx.rotate(orbitAngle + 0.5);
-                const panelGrad = ctx.createLinearGradient(-16, -4, 16, 4);
-                panelGrad.addColorStop(0, '#1a3a6e');
-                panelGrad.addColorStop(0.5, '#2255aa');
-                panelGrad.addColorStop(1, '#1a3a6e');
-                ctx.fillStyle = panelGrad;
-                ctx.fillRect(-16, -3, 10, 6);
-                ctx.fillRect(6, -3, 10, 6);
-                // 面板网格线
-                ctx.strokeStyle = 'rgba(100,180,255,0.5)';
-                ctx.lineWidth = 0.5;
-                for (let px = -16; px <= -6; px += 3.3) {
-                    ctx.beginPath(); ctx.moveTo(px, -3); ctx.lineTo(px, 3); ctx.stroke();
+                function drawSatellite(angle) {
+                    const sx = player.x + Math.cos(angle) * 36;
+                    const sy = player.y + Math.sin(angle) * 22;
+                    ctx.save();
+                    ctx.globalAlpha = 0.9;
+                    ctx.translate(sx, sy);
+                    ctx.rotate(angle + 0.5);
+                    // 太阳能板
+                    const pg = ctx.createLinearGradient(-11, -2, 11, 2);
+                    pg.addColorStop(0, '#1a3a6e');
+                    pg.addColorStop(0.5, '#2255aa');
+                    pg.addColorStop(1, '#1a3a6e');
+                    ctx.fillStyle = pg;
+                    ctx.fillRect(-11, -2, 7, 4);
+                    ctx.fillRect(4, -2, 7, 4);
+                    // 面板网格线
+                    ctx.strokeStyle = 'rgba(100,180,255,0.45)';
+                    ctx.lineWidth = 0.4;
+                    for (let px = -11; px <= -4; px += 2.3) {
+                        ctx.beginPath(); ctx.moveTo(px, -2); ctx.lineTo(px, 2); ctx.stroke();
+                    }
+                    for (let px = 4; px <= 11; px += 2.3) {
+                        ctx.beginPath(); ctx.moveTo(px, -2); ctx.lineTo(px, 2); ctx.stroke();
+                    }
+                    // 主体
+                    const bg = ctx.createLinearGradient(-3.5, -3.5, 3.5, 3.5);
+                    bg.addColorStop(0, '#aaccee');
+                    bg.addColorStop(1, '#446688');
+                    ctx.fillStyle = bg;
+                    ctx.beginPath();
+                    ctx.roundRect(-3.5, -3.5, 7, 7, 1.5);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(180,230,255,0.6)';
+                    ctx.lineWidth = 0.6;
+                    ctx.stroke();
+                    // 发射口脉冲
+                    ctx.shadowBlur = 6 * pulse;
+                    ctx.shadowColor = '#00FFEE';
+                    ctx.fillStyle = `rgba(0,255,220,${0.85 * pulse})`;
+                    ctx.beginPath();
+                    ctx.arc(0, -4.5, 1.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
                 }
-                for (let px = 6; px <= 16; px += 3.3) {
-                    ctx.beginPath(); ctx.moveTo(px, -3); ctx.lineTo(px, 3); ctx.stroke();
+
+                for (let si = 0; si < satCount; si++) {
+                    drawSatellite(orbitAngle + si * Math.PI);
                 }
-                // 主体（小矩形）
-                const bodyGrad = ctx.createLinearGradient(-5, -5, 5, 5);
-                bodyGrad.addColorStop(0, '#aaccee');
-                bodyGrad.addColorStop(1, '#446688');
-                ctx.fillStyle = bodyGrad;
-                ctx.beginPath();
-                ctx.roundRect(-5, -5, 10, 10, 2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(180,230,255,0.7)';
-                ctx.lineWidth = 0.8;
-                ctx.stroke();
-                // 发射口脉冲光
-                const pulse = 0.6 + 0.4 * Math.sin(t / 180);
-                ctx.shadowBlur = 8 * pulse;
-                ctx.shadowColor = '#00FFEE';
-                ctx.fillStyle = `rgba(0,255,220,${0.85 * pulse})`;
-                ctx.beginPath();
-                ctx.arc(0, -6, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.restore();
 
                 ctx.globalAlpha = 1;
                 ctx.restore();
