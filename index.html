@@ -138,6 +138,8 @@
         .pause-dmg-val { font-size: 12px; font-weight: bold; color: #fff; min-width: 45px; text-align: right; }
         .pause-resume-btn { width: 100%; margin-top: 18px; padding: 11px; background: linear-gradient(90deg, rgba(0,40,100,0.9), rgba(0,80,160,0.7), rgba(0,40,100,0.9)); border: 1px solid rgba(0,200,255,0.4); color: #e0f8ff; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .pause-resume-btn:hover { box-shadow: 0 0 20px rgba(0,200,255,0.3); border-color: rgba(0,200,255,0.8); }
+        .pause-quit-btn { width: 100%; margin-top: 8px; padding: 9px; background: transparent; border: 1px solid rgba(255,80,80,0.25); color: rgba(255,120,120,0.6); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .pause-quit-btn:hover { background: rgba(255,50,50,0.08); border-color: rgba(255,80,80,0.6); color: rgba(255,150,150,0.9); }
         /* ── 技能升级面板 ── */
         #skillPanel {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -781,6 +783,7 @@
                     </div>
                 </div>
                 <button class="pause-resume-btn" id="pauseResumeBtn">▶ 继续战斗</button>
+                <button class="pause-quit-btn" id="pauseQuitBtn">⬡ 返回主菜单</button>
             </div>
         </div>
         <!-- 电磁干扰技能按钮 -->
@@ -4157,6 +4160,23 @@
             if (gameState === 'playing' && !paused) showPausePanel();
         });
         document.getElementById('pauseResumeBtn').addEventListener('click', resumeGame);
+        document.getElementById('pauseQuitBtn').addEventListener('click', () => {
+            // 累计本局积分，清场，回主菜单
+            if (currentAccount) {
+                currentAccount.totalPoints = (currentAccount.totalPoints || 0) + score;
+                saveAccount();
+            }
+            paused = false;
+            gameState = 'gameover';
+            document.getElementById('pausePanel').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('emfBtn').style.display = 'none';
+            document.getElementById('hq9Btn').style.display = 'none';
+            document.getElementById('pl17Btn').style.display = 'none';
+            document.getElementById('missionHUD').style.display = 'none';
+            currentMission = null;
+            showCharacterPanel();
+        });
 
         // 控制方案按钮 → 选完后进入飞机选择页
         document.querySelectorAll('.ctrl-btn-lg').forEach(b => {
