@@ -1924,7 +1924,7 @@
                     badge.remove();
                 }
             });
-            document.getElementById('campaignPanel').style.display = 'flex';
+            document.getElementById('campaignPanel').style.display = 'block';
         }
 
         function startMission(missionId) {
@@ -4281,18 +4281,22 @@
         document.getElementById('mcReturnBtn').addEventListener('click', () => {
             document.getElementById('missionCompletePanel').style.display = 'none';
             document.getElementById('missionHUD').style.display = 'none';
+            document.getElementById('controlPanel').style.display = 'none';
             // 累计积分
             if (currentAccount) {
                 currentAccount.totalPoints = (currentAccount.totalPoints || 0) + score;
                 saveAccount();
             }
+            // 清理游戏状态
+            enemies = []; particles = []; player.bullets = [];
             currentMission = null;
             missionKillCount = 0;
             missionSpecialKillCount = 0;
             missionB2Spawned = 0;
-            paused = false;
-            gameState = 'gameover'; // 结束当前局
-            showCharacterPanel();
+            missionCompleteFired = false;
+            paused = true;
+            gameState = 'select';
+            showCampaignPanel();
         });
 
         // 商城面板按钮
@@ -4396,15 +4400,15 @@
         let nextDroneInterval = 12000; // 首次12秒后出现
         function gameLoop(t) {
             if (!paused) {
-                if (gameState === 'playing' && t - lastSpawn > 800) {
+                if (gameState === 'playing' && t - lastSpawn > 800 && enemies.length < 60) {
                     spawnEnemy();
                     lastSpawn = t;
                 }
                 // 无人机编队：12~18秒一波，随积分缩短间隔；关卡4高频出击
-                if (gameState === 'playing' && t - lastDroneSwarm > nextDroneInterval) {
+                if (gameState === 'playing' && t - lastDroneSwarm > nextDroneInterval && enemies.length < 50) {
                     spawnDroneSwarm();
                     lastDroneSwarm = t;
-                    nextDroneInterval = currentMission === 4 ? 3500 : Math.max(8000, 16000 - score / 300);
+                    nextDroneInterval = currentMission === 4 ? 4500 : Math.max(8000, 16000 - score / 300);
                 }
                 update();
             }
