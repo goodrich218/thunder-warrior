@@ -1129,23 +1129,29 @@
         function playBulletSound() {
             try {
                 const ctx = getAudioCtx();
-                // 基础音调列表：每颗子弹一个频率，形成和弦感
-                const baseFreqs = [1200, 1000, 1400, 900, 1100];
                 const count = Math.min(bulletCount, 5);
-                const volPerLayer = 0.07 / count;
-                for (let i = 0; i < count; i++) {
+                // 每颗子弹音调差距拉大：1颗=单音激光，多颗=和弦+低音层叠加
+                // freqs[i] = [高音, 低音]  各颗子弹的高低音对
+                const layers = [
+                    [[1400, 0.09]],                                          // 1颗：单高音
+                    [[1400, 0.07], [700, 0.07]],                             // 2颗：+八度低音，明显区别
+                    [[1600, 0.06], [1100, 0.06], [600, 0.06]],               // 3颗：宽跨度三音
+                    [[1800, 0.05], [1300, 0.05], [800, 0.05], [400, 0.05]],  // 4颗：四音阶
+                    [[1800, 0.04], [1400, 0.04], [1000, 0.04], [600, 0.04], [300, 0.04]], // 5颗：满弦
+                ];
+                const set = layers[count - 1];
+                set.forEach(([freq, vol], i) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     osc.connect(gain); gain.connect(ctx.destination);
-                    osc.type = 'sine';
-                    const f = baseFreqs[i];
-                    osc.frequency.setValueAtTime(f, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(f * 0.5, ctx.currentTime + 0.06);
-                    gain.gain.setValueAtTime(volPerLayer, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-                    osc.start(ctx.currentTime + i * 0.003); // 微小错开更有层次感
-                    osc.stop(ctx.currentTime + 0.06 + i * 0.003);
-                }
+                    osc.type = freq < 500 ? 'triangle' : 'sine'; // 低音用三角波更厚实
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + 0.07);
+                    gain.gain.setValueAtTime(vol, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+                    osc.start(ctx.currentTime + i * 0.002);
+                    osc.stop(ctx.currentTime + 0.08);
+                });
             } catch(e) {}
         }
         function playMissileSound() {
@@ -1165,19 +1171,30 @@
         function playKillSound() {
             try {
                 const ctx = getAudioCtx();
-                // 低频爆炸噪声
-                const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+                const dur = 0.4;
+                // 噪声爆炸体
+                const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
                 const data = buf.getChannelData(0);
-                for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+                for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 1.5);
                 const src = ctx.createBufferSource();
-                const gain = ctx.createGain();
                 const filter = ctx.createBiquadFilter();
-                filter.type = 'lowpass'; filter.frequency.value = 400;
+                const gain = ctx.createGain();
+                filter.type = 'lowpass'; filter.frequency.value = 600;
                 src.buffer = buf;
                 src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-                gain.gain.setValueAtTime(0.35, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.55, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
                 src.start(ctx.currentTime);
+                // 短促冲击低音衬托
+                const osc = ctx.createOscillator();
+                const og = ctx.createGain();
+                osc.connect(og); og.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(180, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.18);
+                og.gain.setValueAtTime(0.3, ctx.currentTime);
+                og.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.18);
             } catch(e) {}
         }
         const LEECH_HEAL = [0, 2, 4, 6, 8, 20];
