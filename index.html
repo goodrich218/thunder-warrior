@@ -624,7 +624,7 @@
             from { box-shadow: 0 0 18px rgba(40,200,40,0.4), 0 4px 24px rgba(0,0,0,0.6); }
             to   { box-shadow: 0 0 42px rgba(120,255,80,0.9), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(180,255,100,1); }
         }
-        .pl17-btn-icon { font-size: 22px; line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 0 6px rgba(60,220,60,0.8)); }
+        .pl17-btn-icon { font-size: 24px; line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 0 6px rgba(60,220,60,0.8)); }
         .pl17-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(100,255,100,0.85); margin-bottom: 4px; height: 10px; overflow: hidden; }
         #pl17Bar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #pl17BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a6b1a, #4CAF50); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(60,200,60,0.6); }
@@ -1887,7 +1887,7 @@
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                     const u = new SpeechSynthesisUtterance('K   O');
-                    u.rate = 0.25;
+                    u.rate = 0.12;
                     u.pitch = 0.5;
                     u.volume = 1.0;
                     window.speechSynthesis.speak(u);
@@ -2832,7 +2832,7 @@
                 ctx.shadowBlur = 30;
                 ctx.shadowColor = 'rgba(120,255,80,0.8)';
                 // 大尺寸战机影子（80×100）
-                drawPlane(ctx, WIDTH/2 - 40, pl17JetY - 50, 80, 100, 2);
+                drawPlane(ctx, WIDTH/2 - 55, pl17JetY - 65, 110, 135, 2);
                 ctx.globalAlpha = 1; ctx.shadowBlur = 0;
                 ctx.restore();
             }
