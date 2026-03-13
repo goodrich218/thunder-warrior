@@ -1168,6 +1168,70 @@
                 osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
             } catch(e) {}
         }
+        function playHQ9Sound() {
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+
+                // ── 层1：点火爆鸣（噪声冲击，模拟发射管喷气）──
+                const igBuf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.08), ctx.sampleRate);
+                const igData = igBuf.getChannelData(0);
+                for (let i = 0; i < igData.length; i++) igData[i] = (Math.random() * 2 - 1) * (1 - i / igData.length);
+                const igSrc = ctx.createBufferSource();
+                const igFilt = ctx.createBiquadFilter();
+                const igGain = ctx.createGain();
+                igFilt.type = 'bandpass'; igFilt.frequency.value = 900; igFilt.Q.value = 0.8;
+                igSrc.buffer = igBuf;
+                igSrc.connect(igFilt); igFilt.connect(igGain); igGain.connect(ctx.destination);
+                igGain.gain.setValueAtTime(0.7, now);
+                igGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                igSrc.start(now);
+
+                // ── 层2：导弹推力音（低频锯齿波上扬，经典飞弹扫频）──
+                const thrustOsc = ctx.createOscillator();
+                const thrustFilt = ctx.createBiquadFilter();
+                const thrustGain = ctx.createGain();
+                thrustOsc.type = 'sawtooth';
+                thrustFilt.type = 'lowpass';
+                thrustFilt.frequency.setValueAtTime(300, now);
+                thrustFilt.frequency.exponentialRampToValueAtTime(2200, now + 0.55);
+                thrustFilt.Q.value = 3.5; // 共鸣峰，经典飞弹"嗖"感
+                thrustOsc.frequency.setValueAtTime(60, now);
+                thrustOsc.frequency.exponentialRampToValueAtTime(380, now + 0.55);
+                thrustGain.gain.setValueAtTime(0.001, now);
+                thrustGain.gain.linearRampToValueAtTime(0.22, now + 0.04); // 快速起音
+                thrustGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                thrustOsc.connect(thrustFilt); thrustFilt.connect(thrustGain); thrustGain.connect(ctx.destination);
+                thrustOsc.start(now); thrustOsc.stop(now + 0.62);
+
+                // ── 层3：高频"嗤"尾音（模拟多枚交错飞出）──
+                [0.02, 0.05, 0.09].forEach((delay, idx) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    const f = ctx.createBiquadFilter();
+                    f.type = 'bandpass'; f.frequency.value = 1800 + idx * 300; f.Q.value = 4;
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(500 + idx * 80, now + delay);
+                    o.frequency.exponentialRampToValueAtTime(1800 + idx * 200, now + delay + 0.18);
+                    g.gain.setValueAtTime(0.09, now + delay);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.22);
+                    o.connect(f); f.connect(g); g.connect(ctx.destination);
+                    o.start(now + delay); o.stop(now + delay + 0.24);
+                });
+
+                // ── 层4：低频轰鸣底层（多弹齐射的重量感）──
+                const boomOsc = ctx.createOscillator();
+                const boomGain = ctx.createGain();
+                boomOsc.type = 'sine';
+                boomOsc.frequency.setValueAtTime(95, now);
+                boomOsc.frequency.exponentialRampToValueAtTime(35, now + 0.3);
+                boomGain.gain.setValueAtTime(0.28, now);
+                boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                boomOsc.connect(boomGain); boomGain.connect(ctx.destination);
+                boomOsc.start(now); boomOsc.stop(now + 0.32);
+
+            } catch(e) {}
+        }
         function playKillSound() {
             try {
                 const ctx = getAudioCtx();
@@ -2264,6 +2328,7 @@
             }
             hq9CooldownUntil = Date.now() + HQ9_COOLDOWN;
             hq9LaunchedAt = Date.now();
+            playHQ9Sound();
             // 发射粒子特效
             for (let i = 0; i < 3; i++) createExplosion(player.x + (i-1)*20, player.y - 10, '#FF6B35', 8);
             updateHQ9Btn();
