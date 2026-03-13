@@ -453,9 +453,9 @@
         /* ── 电磁干扰技能按钮 ── */
         #emfBtn {
             position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-            width: 128px; background: rgba(4, 6, 20, 0.92);
+            width: 64px; background: rgba(4, 6, 20, 0.92);
             border: 1px solid rgba(110, 60, 255, 0.4); border-radius: 12px;
-            padding: 10px 14px 9px; cursor: pointer; display: none;
+            padding: 8px 10px 7px; cursor: pointer; display: none;
             flex-direction: column; align-items: center;
             pointer-events: auto; z-index: 10; text-align: center;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -480,13 +480,13 @@
             from { box-shadow: 0 0 18px rgba(130, 60, 255, 0.4), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(160, 90, 255, 0.75); }
             to   { box-shadow: 0 0 38px rgba(180, 90, 255, 0.75), 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(210, 140, 255, 1); }
         }
-        .emf-btn-icon { font-size: 22px; line-height: 1; margin-bottom: 3px; filter: drop-shadow(0 0 6px rgba(160,80,255,0.8)); }
-        .emf-btn-name { font-size: 11px; letter-spacing: 2px; color: rgba(180, 110, 255, 0.95); font-weight: bold; margin-bottom: 1px; }
-        .emf-btn-sub  { font-size: 7.5px; letter-spacing: 3px; color: rgba(255,255,255,0.22); text-transform: uppercase; margin-bottom: 5px; }
-        .emf-btn-pips { display: flex; gap: 3px; justify-content: center; margin-bottom: 5px; }
+        .emf-btn-icon { font-size: 24px; line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 0 6px rgba(160,80,255,0.8)); }
+        .emf-btn-name { display: none; }
+        .emf-btn-sub  { display: none; }
+        .emf-btn-pips { display: flex; gap: 2px; justify-content: center; margin-bottom: 4px; }
         .emf-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.2s, box-shadow 0.2s; }
         .emf-pip.on { background: #8B3FEF; box-shadow: 0 0 5px #8B3FEF; }
-        .emf-btn-status { font-size: 9px; letter-spacing: 1.5px; color: rgba(0, 255, 200, 0.8); margin-bottom: 6px; min-height: 11px; }
+        .emf-btn-status { font-size: 8px; letter-spacing: 0.5px; color: rgba(200,140,255,0.85); margin-bottom: 4px; min-height: 10px; }
         #emfBar { width: 100%; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         #emfBarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #5B2FC0, #A855F7); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(140,60,255,0.6); }
     </style>
@@ -714,11 +714,11 @@
                     <div class="shop-item-icon">⚡</div>
                     <div>
                         <div class="shop-item-name">电磁干扰装置 <span id="shopEmfLevelBadge" style="font-size:10px;color:rgba(160,100,255,0.8);font-weight:normal"></span></div>
-                        <div class="shop-item-desc">使用后暂停所有敌机3秒<br>每升1级延长1秒（最长7秒·共5级）</div>
+                        <div class="shop-item-desc">使用后暂停所有敌机3秒<br>每升1级延长1秒（最长7秒·共5级·每级40000积分）</div>
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost" id="shopEmfCost">15,000 积分</span>
+                    <span class="shop-item-cost" id="shopEmfCost">40,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopEmfBuyBtn">购买</button>
                 </div>
             </div>
@@ -894,7 +894,7 @@
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
             // EMF：分5级，每级15000，逐级购买
             const emfLv = eq.emfLevel || 0;
-            const emfPrice = 15000;
+            const emfPrice = 40000;
             const emfCard = document.getElementById('shopEmfCard');
             const emfBtn = document.getElementById('shopEmfBuyBtn');
             const emfBadge = document.getElementById('shopEmfLevelBadge');
@@ -941,8 +941,8 @@
             if (!currentAccount) return;
             const lv = currentAccount.equipment.emfLevel || 0;
             if (lv >= 5) return;
-            if ((currentAccount.totalPoints || 0) < 15000) return;
-            currentAccount.totalPoints -= 15000;
+            if ((currentAccount.totalPoints || 0) < 40000) return;
+            currentAccount.totalPoints -= 40000;
             currentAccount.equipment.emfLevel = lv + 1;
             saveAccount();
             updateShopPanel();
@@ -1503,15 +1503,15 @@
             if (statusEl) {
                 if (isActive) {
                     const rem = Math.ceil((emfActiveUntil - now) / 1000);
-                    statusEl.textContent = `激活中 ${rem}s`;
-                    statusEl.style.color = 'rgba(200,140,255,0.95)';
+                    statusEl.textContent = `${rem}s`;
+                    statusEl.style.display = '';
                 } else if (onCooldown) {
                     const rem = Math.ceil((emfCooldownUntil - now) / 1000);
-                    statusEl.textContent = `冷却 ${rem}s`;
-                    statusEl.style.color = 'rgba(140,140,160,0.7)';
+                    statusEl.textContent = `${rem}s`;
+                    statusEl.style.display = '';
                 } else {
-                    statusEl.textContent = '就绪';
-                    statusEl.style.color = 'rgba(0,255,200,0.8)';
+                    statusEl.textContent = '';
+                    statusEl.style.display = 'none';
                 }
             }
             // progress bar
