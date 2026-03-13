@@ -138,7 +138,7 @@
         .pause-dmg-val { font-size: 12px; font-weight: bold; color: #fff; min-width: 45px; text-align: right; }
         .pause-resume-btn { width: 100%; margin-top: 18px; padding: 11px; background: linear-gradient(90deg, rgba(0,40,100,0.9), rgba(0,80,160,0.7), rgba(0,40,100,0.9)); border: 1px solid rgba(0,200,255,0.4); color: #e0f8ff; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .pause-resume-btn:hover { box-shadow: 0 0 20px rgba(0,200,255,0.3); border-color: rgba(0,200,255,0.8); }
-        .pause-quit-btn { width: 100%; margin-top: 8px; padding: 9px; background: transparent; border: 1px solid rgba(255,80,80,0.25); color: rgba(255,120,120,0.6); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .pause-quit-btn { width: 100%; margin-top: 8px; padding: 11px; background: transparent; border: 1px solid rgba(255,80,80,0.25); color: rgba(255,120,120,0.6); font-size: 13px; letter-spacing: 4px; text-transform: uppercase; font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .pause-quit-btn:hover { background: rgba(255,50,50,0.08); border-color: rgba(255,80,80,0.6); color: rgba(255,150,150,0.9); }
         /* ── 技能升级面板 ── */
         #skillPanel {
@@ -522,7 +522,7 @@
         .skill-locked-hint { font-size: 9px; color: rgba(255,200,0,0.6); margin-top: 4px; letter-spacing: 0.5px; }
         /* ── 电磁干扰技能按钮 ── */
         #emfBtn {
-            position: absolute; bottom: 14px; left: calc(50% - 26px);
+            position: absolute; bottom: 14px; left: calc(50% - 46px);
             width: 52px; background: rgba(4, 6, 20, 0.92);
             border: 1px solid rgba(110, 60, 255, 0.4); border-radius: 10px;
             padding: 5px 7px 5px; cursor: pointer; display: none;
@@ -561,7 +561,7 @@
         #emfBarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #5B2FC0, #A855F7); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(140,60,255,0.6); }
         /* ── HQ-9 红旗防空系统按钮 ── */
         #hq9Btn {
-            position: absolute; bottom: 14px; left: calc(50% + 32px);
+            position: absolute; bottom: 14px; left: calc(50% + 12px);
             width: 52px; background: rgba(20, 4, 4, 0.92);
             border: 1px solid rgba(255, 60, 30, 0.4); border-radius: 10px;
             padding: 5px 7px 5px; cursor: pointer; display: none;
@@ -598,7 +598,7 @@
         #hq9BarFill { height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, #C0392B, #FF6B35); transition: width 0.12s linear, background 0.3s; box-shadow: 0 0 6px rgba(255,60,20,0.6); }
         /* ── 霹雳-17 按钮 ── */
         #pl17Btn {
-            position: absolute; bottom: 14px; left: calc(50% - 84px);
+            position: absolute; bottom: 14px; left: calc(50% - 104px);
             width: 52px; background: rgba(4, 16, 4, 0.92);
             border: 1px solid rgba(60, 220, 60, 0.4); border-radius: 10px;
             padding: 5px 7px 5px; cursor: pointer; display: none;
@@ -692,7 +692,7 @@
         .mc-btn { width: 100%; padding: 13px; font-family: inherit; background: linear-gradient(90deg, rgba(255,120,0,0.3), rgba(255,200,0,0.2), rgba(255,120,0,0.3)); border: 1px solid rgba(255,200,0,0.5); color: #FFD740; font-size: 14px; letter-spacing: 4px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .mc-btn:hover { box-shadow: 0 0 20px rgba(255,200,0,0.25); border-color: rgba(255,200,0,0.8); }
         /* ── 任务进度 HUD ── */
-        #missionHUD { position: absolute; bottom: 14px; left: 10px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,200,0,0.35); border-radius: 10px; padding: 5px 10px 5px; color: #fff; display: none; pointer-events: none; width: 130px; }
+        #missionHUD { position: absolute; bottom: 14px; right: 10px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,200,0,0.35); border-radius: 10px; padding: 5px 10px 5px; color: #fff; display: none; pointer-events: none; width: 130px; }
         .mhud-label { font-size: 8px; letter-spacing: 3px; color: rgba(255,200,0,0.55); text-transform: uppercase; margin-bottom: 4px; }
         .mhud-name { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 5px; letter-spacing: 0.5px; }
         .mhud-progress { font-size: 18px; font-weight: bold; color: #FFD740; line-height: 1; margin-bottom: 5px; }
@@ -783,7 +783,7 @@
                     </div>
                 </div>
                 <button class="pause-resume-btn" id="pauseResumeBtn">▶ 继续战斗</button>
-                <button class="pause-quit-btn" id="pauseQuitBtn">⬡ 返回主菜单</button>
+                <button class="pause-quit-btn" id="pauseQuitBtn">⬡ 返回菜单</button>
             </div>
         </div>
         <!-- 电磁干扰技能按钮 -->
@@ -1258,6 +1258,56 @@
                     <div class="mission-reward-val">+1 技能点</div>
                 </div>
             </div>
+            <div class="mission-card" id="missionCard2" onclick="startMission(2)">
+                <div class="mission-num">Mission 03 · 第三关</div>
+                <div class="mission-name">一路向北</div>
+                <div class="mission-story">敌军突破南线防御，持续北进。全速拦截，不让一架敌机越过防线，保卫北方领土安全。</div>
+                <div class="mission-objectives">
+                    <div class="mission-obj-tag">击落 200 架敌机</div>
+                </div>
+                <div class="mission-reward-row">
+                    <div class="mission-reward-label">奖励</div>
+                    <div class="mission-reward-val">+1 技能点</div>
+                </div>
+            </div>
+            <div class="mission-card" id="missionCard3" onclick="startMission(3)">
+                <div class="mission-num">Mission 04 · 第四关</div>
+                <div class="mission-name">盐城之战</div>
+                <div class="mission-story">敌方出动 B-2 隐身轰炸机群，企图突防盐城要地。需在混战中精准识别并歼灭全部 B-2 编队。</div>
+                <div class="mission-objectives">
+                    <div class="mission-obj-tag">击落 100 架敌机</div>
+                    <div class="mission-obj-tag">含 10 架 B-2 轰炸机</div>
+                </div>
+                <div class="mission-reward-row">
+                    <div class="mission-reward-label">奖励</div>
+                    <div class="mission-reward-val">+1 技能点</div>
+                </div>
+            </div>
+            <div class="mission-card" id="missionCard4" onclick="startMission(4)">
+                <div class="mission-num">Mission 05 · 第五关</div>
+                <div class="mission-name">支援连云港</div>
+                <div class="mission-story">敌方饱和攻击，无人机海与常规战机混编突防连云港。面对数量优势，以一当十，坚守至最后一刻。</div>
+                <div class="mission-objectives">
+                    <div class="mission-obj-tag">击落 300 架敌机</div>
+                    <div class="mission-obj-tag">含 200 架无人机</div>
+                </div>
+                <div class="mission-reward-row">
+                    <div class="mission-reward-label">奖励</div>
+                    <div class="mission-reward-val">+1 技能点</div>
+                </div>
+            </div>
+            <div class="mission-card" id="missionCard5" onclick="startMission(5)">
+                <div class="mission-num">Mission 06 · 第六关</div>
+                <div class="mission-name">枣庄之战</div>
+                <div class="mission-story">美军第五代 F-22 猛禽战斗机群大规模压境枣庄。以更高超技术，在顶尖对抗中取得最终胜利。</div>
+                <div class="mission-objectives">
+                    <div class="mission-obj-tag">击落 150 架 F-22</div>
+                </div>
+                <div class="mission-reward-row">
+                    <div class="mission-reward-label">奖励</div>
+                    <div class="mission-reward-val">+1 技能点</div>
+                </div>
+            </div>
             <button class="campaign-back-btn" id="campaignBackBtn">返回</button>
         </div>
 
@@ -1293,6 +1343,11 @@
             <div class="mhud-name" id="mhudName"></div>
             <div class="mhud-progress"><span id="mhudKills">0</span> / <span id="mhudTarget">0</span></div>
             <div class="mhud-bar-wrap"><div class="mhud-bar-fill" id="mhudBar" style="width:0%"></div></div>
+            <div id="mhudSpecial" style="display:none;margin-top:5px;border-top:1px solid rgba(255,200,0,0.2);padding-top:4px">
+                <div class="mhud-label" id="mhudSpecialLabel"></div>
+                <div class="mhud-progress" style="font-size:13px"><span id="mhudSpecialKills">0</span> / <span id="mhudSpecialTarget">0</span></div>
+                <div class="mhud-bar-wrap"><div class="mhud-bar-fill" id="mhudSpecialBar" style="width:0%;background:linear-gradient(90deg,#e040fb,#ff80ab)"></div></div>
+            </div>
         </div>
     </div>
     <script>
@@ -1328,11 +1383,17 @@
         let paused = false;
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
-        let currentMission = null; // null = 自由模式, 0-1 = 关卡索引
+        let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
         let missionKillCount = 0;
+        let missionSpecialKillCount = 0; // B-2击落数(关卡3) / 无人机击落数(关卡4)
+        let missionB2Spawned = 0;        // 关卡3已强制生成的B-2数量
         const MISSIONS = [
             { id: 0, name: '小试牛刀', target: 100, reward: 1 },
             { id: 1, name: '守卫上海', target: 150, reward: 1 },
+            { id: 2, name: '一路向北', target: 200, reward: 1 },
+            { id: 3, name: '盐城之战', target: 100, reward: 1, special: 'b2',   specialTarget: 10,  specialLabel: 'B-2 击落' },
+            { id: 4, name: '支援连云港', target: 300, reward: 1, special: 'drone', specialTarget: 200, specialLabel: '无人机击落' },
+            { id: 5, name: '枣庄之战',  target: 150, reward: 1, special: 'f22' },
         ];
 
         // ── 音效系统（Web Audio API）──
@@ -1827,6 +1888,8 @@
             if (missionId > 0 && !completed.includes(missionId - 1)) return;
             currentMission = missionId;
             missionKillCount = 0;
+            missionSpecialKillCount = 0;
+            missionB2Spawned = 0;
             document.getElementById('campaignPanel').style.display = 'none';
             const controlPanel = document.getElementById('controlPanel');
             if (controlPanel) controlPanel.style.display = 'flex';
@@ -1840,33 +1903,49 @@
             document.getElementById('mhudTarget').textContent = m.target;
             const pct = Math.min(100, (missionKillCount / m.target) * 100);
             document.getElementById('mhudBar').style.width = pct + '%';
+            // 特殊子目标
+            const specialDiv = document.getElementById('mhudSpecial');
+            if (m.specialTarget) {
+                specialDiv.style.display = 'block';
+                document.getElementById('mhudSpecialLabel').textContent = m.specialLabel;
+                document.getElementById('mhudSpecialKills').textContent = missionSpecialKillCount;
+                document.getElementById('mhudSpecialTarget').textContent = m.specialTarget;
+                const spct = Math.min(100, (missionSpecialKillCount / m.specialTarget) * 100);
+                document.getElementById('mhudSpecialBar').style.width = spct + '%';
+            } else {
+                specialDiv.style.display = 'none';
+            }
         }
 
         function checkMissionComplete() {
             if (currentMission === null) return;
             const m = MISSIONS[currentMission];
             updateMissionHUD();
-            if (missionKillCount >= m.target) {
-                paused = true;
-                document.getElementById('pauseBtn').style.display = 'none';
-                const already = currentAccount.completedMissions.includes(currentMission);
-                if (!already) {
-                    currentAccount.completedMissions.push(currentMission);
-                    currentAccount.skillPoints += m.reward;
-                    saveAccount();
-                }
-                document.getElementById('mcMissionName').textContent = m.name;
-                document.getElementById('mcKills').textContent = missionKillCount;
-                document.getElementById('mcScore').textContent = score.toLocaleString();
-                const rewardBox = document.getElementById('mcRewardBox');
-                if (!already) {
-                    rewardBox.style.display = 'block';
-                    document.getElementById('mcRewardContent').textContent = '+' + m.reward + ' 技能点';
-                } else {
-                    rewardBox.style.display = 'none';
-                }
-                document.getElementById('missionCompletePanel').style.display = 'flex';
+            // 主目标未达成
+            if (missionKillCount < m.target) return;
+            // 特殊子目标检查
+            if (m.special === 'b2'    && missionSpecialKillCount < m.specialTarget) return;
+            if (m.special === 'drone' && missionSpecialKillCount < m.specialTarget) return;
+            // 全部条件达成 → 胜利
+            paused = true;
+            document.getElementById('pauseBtn').style.display = 'none';
+            const already = currentAccount.completedMissions.includes(currentMission);
+            if (!already) {
+                currentAccount.completedMissions.push(currentMission);
+                currentAccount.skillPoints += m.reward;
+                saveAccount();
             }
+            document.getElementById('mcMissionName').textContent = m.name;
+            document.getElementById('mcKills').textContent = missionKillCount;
+            document.getElementById('mcScore').textContent = score.toLocaleString();
+            const rewardBox = document.getElementById('mcRewardBox');
+            if (!already) {
+                rewardBox.style.display = 'block';
+                document.getElementById('mcRewardContent').textContent = '+' + m.reward + ' 技能点';
+            } else {
+                rewardBox.style.display = 'none';
+            }
+            document.getElementById('missionCompletePanel').style.display = 'flex';
         }
 
         function showShopPanel() {
@@ -2696,15 +2775,38 @@
             ctx.restore();
         }
 
-        function spawnEnemy() {
+        function spawnEnemyOfType(typeIdx) {
             const types = [
-                {t: 0, w: 24, h: 24, hp: 1, s: 1.5, sc: 50, name: 'F-16'},
-                {t: 1, w: 30, h: 30, hp: 2, s: 1.25, sc: 100, name: 'F-15'},
-                {t: 2, w: 36, h: 36, hp: 5, s: 0.75, sc: 250, name: 'F/A-18'},
-                {t: 3, w: 42, h: 42, hp: 15, s: 0.4, sc: 500, name: 'F-22'},
-                {t: 4, w: 39, h: 39, hp: 20, s: 0.35, sc: 750, name: 'F-35'},
-                {t: 5, w: 44, h: 44, hp: 25, s: 0.3, sc: 875, name: 'F/A-18E'},
-                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 1200, name: 'B-2'}
+                {t: 0, w: 24, h: 24, hp: 1,   s: 1.5,  sc: 50},
+                {t: 1, w: 30, h: 30, hp: 2,   s: 1.25, sc: 100},
+                {t: 2, w: 36, h: 36, hp: 5,   s: 0.75, sc: 250},
+                {t: 3, w: 42, h: 42, hp: 15,  s: 0.4,  sc: 500},
+                {t: 4, w: 39, h: 39, hp: 20,  s: 0.35, sc: 750},
+                {t: 5, w: 44, h: 44, hp: 25,  s: 0.3,  sc: 875},
+                {t: 6, w: 60, h: 38, hp: 100, s: 0.2,  sc: 1200},
+            ];
+            const e = types[typeIdx];
+            enemies.push({x: Math.random() * (WIDTH - e.w) + e.w/2, y: -e.h, w: e.w, h: e.h, type: e.t, hp: e.hp, currentHp: e.hp, speed: e.s, score: e.sc, bullets: []});
+        }
+        function spawnEnemy() {
+            // ── 关卡特殊生成逻辑 ──
+            // 关卡5 枣庄之战：全部 F-22
+            if (currentMission === 5) { spawnEnemyOfType(3); return; }
+            // 关卡3 盐城之战：每 10 击杀触发一架 B-2（共10架）
+            if (currentMission === 3 && missionB2Spawned < 10 && missionKillCount >= missionB2Spawned * 10) {
+                missionB2Spawned++;
+                spawnEnemyOfType(6);
+                return;
+            }
+            // ── 普通随机生成 ──
+            const types = [
+                {t: 0, w: 24, h: 24, hp: 1, s: 1.5, sc: 50},
+                {t: 1, w: 30, h: 30, hp: 2, s: 1.25, sc: 100},
+                {t: 2, w: 36, h: 36, hp: 5, s: 0.75, sc: 250},
+                {t: 3, w: 42, h: 42, hp: 15, s: 0.4, sc: 500},
+                {t: 4, w: 39, h: 39, hp: 20, s: 0.35, sc: 750},
+                {t: 5, w: 44, h: 44, hp: 25, s: 0.3, sc: 875},
+                {t: 6, w: 60, h: 38, hp: 100, s: 0.2, sc: 1200}
             ];
             let weights = [40, 25, 15, 10, 5, 3, 2];
             if (score > 2000) weights = [30, 25, 20, 12, 6, 4, 3];
@@ -3046,7 +3148,7 @@
                 if (!pl17DamageDealt && pl17JetY < HEIGHT * 0.55) {
                     pl17DamageDealt = true;
                     const pl17Mult = 2.5 + 0.5 * pl17Level; // L1=3, L2=3.5, L3=4, L4=4.5, L5=5
-                    let pl17Kills = 0;
+                    let pl17Kills = 0, pl17SpecialKills = 0;
                     enemies.forEach(e => {
                         const dmg = e.hp * pl17Mult;
                         e.currentHp -= dmg;
@@ -3055,13 +3157,19 @@
                             score += e.score;
                             levelXP += e.score;
                             pl17Kills++;
+                            if (currentMission === 3 && e.type === 6) pl17SpecialKills++;
+                            if (currentMission === 4 && e.type === 7) pl17SpecialKills++;
                             if (leechLevel > 0) currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
                             createExplosion(e.x, e.y, '#AAFF44', 25);
                             playKillSound();
                         }
                     });
                     enemies = enemies.filter(e => e.currentHp > 0);
-                    if (currentMission !== null && pl17Kills > 0) { missionKillCount += pl17Kills; checkMissionComplete(); }
+                    if (currentMission !== null && pl17Kills > 0) {
+                        missionKillCount += pl17Kills;
+                        missionSpecialKillCount += pl17SpecialKills;
+                        checkMissionComplete();
+                    }
                     checkUpgrade();
                     updateUI();
                 }
@@ -3173,7 +3281,12 @@
                         if (e.currentHp <= 0) {
                             score += e.score;
                             levelXP += e.score; // XP独立于得分，升级后归零
-                            if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
+                            if (currentMission !== null) {
+                                missionKillCount++;
+                                if (currentMission === 3 && e.type === 6) missionSpecialKillCount++;
+                                if (currentMission === 4 && e.type === 7) missionSpecialKillCount++;
+                                checkMissionComplete();
+                            }
                             // 吸血效果
                             if (leechLevel > 0) {
                                 currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
@@ -3781,6 +3894,8 @@
             pl17CooldownUntil = 0; pl17LaunchedAt = 0; pl17Active = false; pl17JetY = 0; pl17DamageDealt = false;
             dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
             missionKillCount = 0;
+            missionSpecialKillCount = 0;
+            missionB2Spawned = 0;
             paused = false;
             document.getElementById('pauseBtn').style.display = 'flex';
             // 任务进度 HUD
@@ -4133,6 +4248,8 @@
             }
             currentMission = null;
             missionKillCount = 0;
+            missionSpecialKillCount = 0;
+            missionB2Spawned = 0;
             paused = false;
             gameState = 'gameover'; // 结束当前局
             showCharacterPanel();
@@ -4201,11 +4318,11 @@
                     spawnEnemy();
                     lastSpawn = t;
                 }
-                // 无人机编队：12~18秒一波，随积分缩短间隔
+                // 无人机编队：12~18秒一波，随积分缩短间隔；关卡4高频出击
                 if (gameState === 'playing' && t - lastDroneSwarm > nextDroneInterval) {
                     spawnDroneSwarm();
                     lastDroneSwarm = t;
-                    nextDroneInterval = Math.max(8000, 16000 - score / 300);
+                    nextDroneInterval = currentMission === 4 ? 3500 : Math.max(8000, 16000 - score / 300);
                 }
                 update();
             }
