@@ -1864,11 +1864,13 @@
                 playerShootMissile();
                 player.lastMissileShot = Date.now();
             }
-            // 射击 - 友军飞机（与玩家同步射速）
+            // 射击 - 卫星（与玩家同步射速）
             if (wingmanLevel > 0 && (!player.lastWingmanShot || Date.now() - player.lastWingmanShot > 450 - bulletRateLevel * 50)) {
-                const wx = Math.min(WIDTH - 20, player.x + 55);
+                const orbitAngle = Date.now() / 700;
+                const wx = player.x + Math.cos(orbitAngle) * 36;
+                const wy = player.y + Math.sin(orbitAngle) * 22;
                 const dmgMult = wingmanLevel === 5 ? 1.0 : 0.4 + wingmanLevel * 0.1;
-                player.bullets.push({ x: wx, y: player.y - 16, vx: 0, vy: -3, isWingman: true, damage: dmgMult, isFreeze: freezeLevel > 0 });
+                player.bullets.push({ x: wx, y: wy - 10, vx: 0, vy: -3, isWingman: true, damage: dmgMult, isFreeze: freezeLevel > 0 });
                 player.lastWingmanShot = Date.now();
             }
 
@@ -2023,19 +2025,70 @@
             // 绘制玩家飞机
             drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
 
-            // 绘制友军飞机
+            // 绘制轨道卫星
             if (wingmanLevel > 0) {
-                const wx = Math.min(WIDTH - 20, player.x + 55);
-                const wy = player.y;
-                // 小号飞机（60%缩放）
-                drawPlane(ctx, wx - 10, wy - 12, 20, 25, selectedPlane);
-                // 青色辉光标识友军
+                const t = Date.now();
+                const orbitAngle = t / 700;
+                const wx = player.x + Math.cos(orbitAngle) * 36;
+                const wy = player.y + Math.sin(orbitAngle) * 22;
+
                 ctx.save();
-                ctx.globalAlpha = 0.35 + 0.15 * Math.sin(Date.now() / 300);
-                ctx.shadowBlur = 10; ctx.shadowColor = '#00E5FF';
-                ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 1.2;
-                ctx.beginPath(); ctx.ellipse(wx, wy, 14, 16, 0, 0, Math.PI * 2); ctx.stroke();
-                ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.restore();
+
+                // 虚线轨道环
+                ctx.globalAlpha = 0.18;
+                ctx.strokeStyle = '#00E5FF';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 5]);
+                ctx.beginPath();
+                ctx.ellipse(player.x, player.y, 36, 22, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 太阳能板（左）
+                ctx.globalAlpha = 0.9;
+                ctx.save();
+                ctx.translate(wx, wy);
+                ctx.rotate(orbitAngle + 0.5);
+                const panelGrad = ctx.createLinearGradient(-16, -4, 16, 4);
+                panelGrad.addColorStop(0, '#1a3a6e');
+                panelGrad.addColorStop(0.5, '#2255aa');
+                panelGrad.addColorStop(1, '#1a3a6e');
+                ctx.fillStyle = panelGrad;
+                ctx.fillRect(-16, -3, 10, 6);
+                ctx.fillRect(6, -3, 10, 6);
+                // 面板网格线
+                ctx.strokeStyle = 'rgba(100,180,255,0.5)';
+                ctx.lineWidth = 0.5;
+                for (let px = -16; px <= -6; px += 3.3) {
+                    ctx.beginPath(); ctx.moveTo(px, -3); ctx.lineTo(px, 3); ctx.stroke();
+                }
+                for (let px = 6; px <= 16; px += 3.3) {
+                    ctx.beginPath(); ctx.moveTo(px, -3); ctx.lineTo(px, 3); ctx.stroke();
+                }
+                // 主体（小矩形）
+                const bodyGrad = ctx.createLinearGradient(-5, -5, 5, 5);
+                bodyGrad.addColorStop(0, '#aaccee');
+                bodyGrad.addColorStop(1, '#446688');
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.roundRect(-5, -5, 10, 10, 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(180,230,255,0.7)';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+                // 发射口脉冲光
+                const pulse = 0.6 + 0.4 * Math.sin(t / 180);
+                ctx.shadowBlur = 8 * pulse;
+                ctx.shadowColor = '#00FFEE';
+                ctx.fillStyle = `rgba(0,255,220,${0.85 * pulse})`;
+                ctx.beginPath();
+                ctx.arc(0, -6, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+
+                ctx.globalAlpha = 1;
+                ctx.restore();
             }
 
             // ── 虚拟摇杆（仅摇杆模式 + 触控设备显示）──
