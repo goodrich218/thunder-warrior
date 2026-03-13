@@ -717,6 +717,14 @@
                     </div>
                     <div class="equip-status no" id="charHq9Status">未拥有</div>
                 </div>
+                <div class="equip-item not-owned" id="charBulletRateEquip">
+                    <div class="equip-icon">🔥</div>
+                    <div class="equip-info">
+                        <div class="equip-name">弹速强化</div>
+                        <div class="equip-desc">提升子弹射速，满5级达到最高射速</div>
+                    </div>
+                    <div class="equip-status no" id="charBulletRateStatus">未拥有</div>
+                </div>
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
@@ -759,6 +767,19 @@
                 <div class="shop-item-footer">
                     <span class="shop-item-cost">20,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopFreezeBuyBtn">购买</button>
+                </div>
+            </div>
+            <div class="shop-item-card" id="shopBulletRateCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">🔥</div>
+                    <div>
+                        <div class="shop-item-name">弹速强化 <span id="shopBulletRateLevelBadge" style="font-size:10px;color:rgba(255,160,60,0.85);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">提升子弹射速，共5级<br>初始450ms间隔，满级降至200ms</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost" id="shopBulletRateCost">10,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopBulletRateBuyBtn">购买</button>
                 </div>
             </div>
             <div class="shop-item-card" id="shopHq9Card">
@@ -865,6 +886,8 @@
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
+        let bulletRateLevel = 0; // 弹速等级 0-5，L0=450ms L5=200ms
+        // 射速公式：450 - bulletRateLevel * 50 (ms间隔)
         let hq9Level = 0, hq9CooldownUntil = 0, hq9LaunchedAt = 0;
         const HQ9_COOLDOWN = 25000; // 冷却时间25秒
         let droneWarningUntil = 0; // timestamp until which the drone swarm warning banner is shown
@@ -898,7 +921,7 @@
                 const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
                 if (data) return data;
             } catch(e) {}
-            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0 } };
+            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0 } };
         }
 
         function saveAccount() {
@@ -936,6 +959,12 @@
             const hq9S = document.getElementById('charHq9Status');
             hq9S.textContent = hq9Lv > 0 ? `Lv.${hq9Lv} / 5` : '未拥有';
             hq9S.className = 'equip-status ' + (hq9Lv > 0 ? 'yes' : 'no');
+            // 弹速：按等级显示
+            const brLv = eq.bulletRateLevel || 0;
+            document.getElementById('charBulletRateEquip').className = 'equip-item ' + (brLv > 0 ? 'owned' : 'not-owned');
+            const brS = document.getElementById('charBulletRateStatus');
+            brS.textContent = brLv > 0 ? `Lv.${brLv} / 5` : '未拥有';
+            brS.className = 'equip-status ' + (brLv > 0 ? 'yes' : 'no');
             document.getElementById('characterPanel').style.display = 'flex';
         }
 
@@ -965,6 +994,30 @@
             }
             refreshItem('shopMissileCard', 'shopMissileBuyBtn', eq.trackingMissile, 50000);
             refreshItem('shopFreezeCard', 'shopFreezeBuyBtn', eq.freezeBullet, 20000);
+            // 弹速强化：分5级，每级10000
+            (function() {
+                const lv = eq.bulletRateLevel || 0;
+                const price = 10000;
+                const card = document.getElementById('shopBulletRateCard');
+                const btn  = document.getElementById('shopBulletRateBuyBtn');
+                const badge = document.getElementById('shopBulletRateLevelBadge');
+                const costEl = document.getElementById('shopBulletRateCost');
+                if (lv >= 5) {
+                    badge.textContent = 'Lv.5 · 已满级'; card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned'; costEl.textContent = '—';
+                } else {
+                    badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
+                }
+            })();
             // HQ-9：分5级，每级50000，逐级购买
             (function() {
                 const lv = eq.hq9Level || 0;
@@ -1041,6 +1094,17 @@
             if ((currentAccount.totalPoints || 0) < 40000) return;
             currentAccount.totalPoints -= 40000;
             currentAccount.equipment.emfLevel = lv + 1;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function purchaseBulletRate() {
+            if (!currentAccount) return;
+            const lv = currentAccount.equipment.bulletRateLevel || 0;
+            if (lv >= 5) return;
+            if ((currentAccount.totalPoints || 0) < 10000) return;
+            currentAccount.totalPoints -= 10000;
+            currentAccount.equipment.bulletRateLevel = lv + 1;
             saveAccount();
             updateShopPanel();
         }
@@ -1438,7 +1502,7 @@
         }
 
         function spawnDroneSwarm() {
-            const COUNT = 12;
+            const COUNT = 6;
             const diveTarget = HEIGHT * (0.55 + Math.random() * 0.18); // 俯冲深度
             const spacing = WIDTH / (COUNT + 1);
             const now = Date.now();
@@ -1744,7 +1808,7 @@
             player.y = Math.max(20, Math.min(HEIGHT - 20, player.y));
 
             // 射击 - 普通子弹
-            if (!player.lastShot || Date.now() - player.lastShot > 200) {
+            if (!player.lastShot || Date.now() - player.lastShot > 450 - bulletRateLevel * 50) {
                 playerShoot();
                 player.lastShot = Date.now();
             }
@@ -2395,6 +2459,7 @@
             bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
+            bulletRateLevel = 0;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
@@ -2416,6 +2481,7 @@
             emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = (currentAccount && currentAccount.equipment && currentAccount.equipment.hq9Level) || 0;
             hq9CooldownUntil = 0; hq9LaunchedAt = 0;
+            bulletRateLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.bulletRateLevel) || 0;
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn();
         }
@@ -2746,6 +2812,7 @@
         // 商城面板按钮
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
         document.getElementById('shopFreezeBuyBtn').addEventListener('click', purchaseFreeze);
+        document.getElementById('shopBulletRateBuyBtn').addEventListener('click', purchaseBulletRate);
         document.getElementById('shopEmfBuyBtn').addEventListener('click', purchaseEMF);
         document.getElementById('shopHq9BuyBtn').addEventListener('click', purchaseHQ9);
         document.getElementById('emfBtn').addEventListener('click', activateEMF);
