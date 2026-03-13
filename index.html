@@ -446,6 +446,36 @@
         .shop-buy-btn.cant-afford { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.25); cursor: not-allowed; }
         .shop-back-btn { position: relative; z-index: 1; margin-top: 6px; padding: 10px 26px; background: transparent; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-family: inherit; border-radius: 5px; transition: all 0.2s; }
         .shop-back-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
+        /* ── 武器库面板 ── */
+        #arsenalPanel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            color: #fff; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow-y: auto; padding: 20px 0;
+            background: linear-gradient(160deg, #08060e 0%, #060c0a 60%, #030810 100%);
+        }
+        #arsenalPanel::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,100,0.008) 3px, rgba(0,255,100,0.008) 6px);
+        }
+        .arsenal-header { text-align: center; position: relative; z-index: 1; margin-bottom: 14px; }
+        .arsenal-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(0,255,150,0.45); margin-bottom: 8px; }
+        .arsenal-title { font-size: 22px; font-weight: 900; letter-spacing: 4px; color: #fff; margin: 0 0 4px; }
+        .arsenal-line { width: 50px; height: 1px; background: linear-gradient(90deg, transparent, #00E676, transparent); margin: 8px auto 0; }
+        .arsenal-sp-bar { position: relative; z-index: 1; width: 280px; background: rgba(0,255,100,0.05); border: 1px solid rgba(0,255,100,0.25); border-radius: 8px; padding: 12px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .arsenal-sp-label { font-size: 10px; letter-spacing: 3px; color: rgba(0,255,150,0.5); text-transform: uppercase; }
+        .arsenal-sp-value { font-size: 20px; font-weight: bold; color: #00E676; }
+        .arsenal-part { position: relative; z-index: 1; width: 280px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+        .arsenal-part-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .arsenal-part-icon { font-size: 28px; }
+        .arsenal-part-name { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
+        .arsenal-part-desc { font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+        .arsenal-part-footer { display: flex; justify-content: space-between; align-items: center; }
+        .arsenal-part-stat { font-size: 13px; color: #00E676; font-weight: bold; }
+        .arsenal-upgrade-btn { padding: 7px 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-family: inherit; border-radius: 5px; cursor: pointer; transition: all 0.2s; border: 1px solid; }
+        .arsenal-upgrade-btn.can-upgrade { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.4); color: #00E676; }
+        .arsenal-upgrade-btn.can-upgrade:hover { background: rgba(0,230,118,0.2); box-shadow: 0 0 14px rgba(0,230,118,0.25); border-color: #00E676; }
+        .arsenal-upgrade-btn.no-sp { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.25); cursor: not-allowed; }
         /* ── 跟踪导弹锁定状态 ── */
         .skill-card.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; filter: grayscale(0.5); }
         .skill-card.locked .sc-name::after { content: ' 🔒'; font-size: 11px; }
@@ -733,10 +763,19 @@
                     </div>
                     <div class="equip-status no" id="charBulletRateStatus">未拥有</div>
                 </div>
+                <div class="equip-item not-owned" id="charLeechEquip">
+                    <div class="equip-icon">🩸</div>
+                    <div class="equip-info">
+                        <div class="equip-name">吸血模块</div>
+                        <div class="equip-desc">击毁敌机后回复生命，共5级</div>
+                    </div>
+                    <div class="equip-status no" id="charLeechStatus">未拥有</div>
+                </div>
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
                 <button class="char-btn-secondary" id="charShopBtn">积分兑换</button>
+                <button class="char-btn-secondary" id="charArsenalBtn" style="border-color:rgba(0,230,118,0.4);color:#00E676;background:rgba(0,230,118,0.06)">武器库</button>
             </div>
         </div>
 
@@ -829,7 +868,60 @@
                     <button class="shop-buy-btn cant-afford" id="shopEmfBuyBtn">购买</button>
                 </div>
             </div>
+            <div class="shop-item-card" id="shopLeechCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">🩸</div>
+                    <div>
+                        <div class="shop-item-name">吸血模块 <span id="shopLeechLevelBadge" style="font-size:10px;color:rgba(255,80,100,0.8);font-weight:normal"></span></div>
+                        <div class="shop-item-desc">击毁敌机回复生命，共5级<br>Lv1=+2 · Lv2=+4 · Lv3=+6 · Lv4=+8 · Lv5=+20</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost" id="shopLeechCost">20,000 积分</span>
+                    <button class="shop-buy-btn cant-afford" id="shopLeechBuyBtn" onclick="purchaseLeech()">购买</button>
+                </div>
+            </div>
             <button class="shop-back-btn" id="shopBackBtn">← 返回角色</button>
+        </div>
+
+        <!-- ── 武器库 ── -->
+        <div id="arsenalPanel" style="display:none">
+            <div class="arsenal-header">
+                <div class="arsenal-badge">Arsenal · 武器库</div>
+                <div class="arsenal-title">战机武器库</div>
+                <div class="arsenal-line"></div>
+            </div>
+            <div class="arsenal-sp-bar">
+                <span class="arsenal-sp-label">⚙ 技能点</span>
+                <span class="arsenal-sp-value" id="arsenalSP">10</span>
+            </div>
+            <div class="arsenal-part" id="arsenalArmorCard">
+                <div class="arsenal-part-top">
+                    <div class="arsenal-part-icon">🛡️</div>
+                    <div>
+                        <div class="arsenal-part-name">机身装甲 <span id="arsenalArmorBadge" style="font-size:10px;color:rgba(100,200,255,0.8);font-weight:normal"></span></div>
+                        <div class="arsenal-part-desc">强化机身结构，每级减少10点受击伤害<br>消耗1技能点升1级，无上限</div>
+                    </div>
+                </div>
+                <div class="arsenal-part-footer">
+                    <span class="arsenal-part-stat" id="arsenalArmorStat">防御 +0</span>
+                    <button class="arsenal-upgrade-btn no-sp" id="arsenalArmorBtn" onclick="upgradeArmor()">升级 (1点)</button>
+                </div>
+            </div>
+            <div class="arsenal-part" id="arsenalWeaponCard">
+                <div class="arsenal-part-top">
+                    <div class="arsenal-part-icon">🔧</div>
+                    <div>
+                        <div class="arsenal-part-name">武器仓 <span id="arsenalWeaponBadge" style="font-size:10px;color:rgba(255,180,60,0.8);font-weight:normal"></span></div>
+                        <div class="arsenal-part-desc">扩充弹药舱容量，每级提升10%攻击力<br>消耗1技能点升1级，无上限</div>
+                    </div>
+                </div>
+                <div class="arsenal-part-footer">
+                    <span class="arsenal-part-stat" id="arsenalWeaponStat" style="color:#FFD740">攻击 +0%</span>
+                    <button class="arsenal-upgrade-btn no-sp" id="arsenalWeaponBtn" onclick="upgradeWeaponBay()">升级 (1点)</button>
+                </div>
+            </div>
+            <button class="shop-back-btn" id="arsenalBackBtn">← 返回角色</button>
         </div>
 
         <div id="skillPanel">
@@ -905,6 +997,8 @@
         let gameState = 'select';
         let score = 0, level = 1, maxHp = 1000, currentHp = 1000, selectedPlane = 0;
         let bulletCount = 1, ricochetCount = 0, missileCount = 0, leechLevel = 0, freezeLevel = 0;
+        let armorLevel = 0, weaponBayLevel = 0;
+        const LEECH_HEAL = [0, 2, 4, 6, 8, 20];
         let emfLevel = 0, emfActiveUntil = 0, emfCooldownUntil = 0;
         const EMF_COOLDOWN = 20000; // 冷却时间20秒
         let bulletRateLevel = 0; // 弹速等级 0-5，L0=450ms L5=200ms
@@ -941,9 +1035,17 @@
         function loadAccount(name) {
             try {
                 const data = JSON.parse(localStorage.getItem('thunderWarriorAccount_' + name) || 'null');
-                if (data) return data;
+                if (data) {
+                    // 迁移旧账户：补充新字段
+                    if (data.skillPoints === undefined) data.skillPoints = 10;
+                    if (!data.equipment) data.equipment = {};
+                    if (data.equipment.leechLevel === undefined) data.equipment.leechLevel = 0;
+                    if (data.equipment.armorLevel === undefined) data.equipment.armorLevel = 0;
+                    if (data.equipment.weaponBayLevel === undefined) data.equipment.weaponBayLevel = 0;
+                    return data;
+                }
             } catch(e) {}
-            return { totalPoints: 0, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0 } };
+            return { totalPoints: 0, skillPoints: 10, equipment: { trackingMissile: false, freezeBullet: false, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0 } };
         }
 
         function saveAccount() {
@@ -993,11 +1095,19 @@
             const brS = document.getElementById('charBulletRateStatus');
             brS.textContent = brLv > 0 ? `Lv.${brLv} / 5` : '未拥有';
             brS.className = 'equip-status ' + (brLv > 0 ? 'yes' : 'no');
+            // 吸血：按等级显示
+            const leechLv = eq.leechLevel || 0;
+            document.getElementById('charLeechEquip').className = 'equip-item ' + (leechLv > 0 ? 'owned' : 'not-owned');
+            const leechS = document.getElementById('charLeechStatus');
+            leechS.textContent = leechLv > 0 ? `Lv.${leechLv} / 5` : '未拥有';
+            leechS.className = 'equip-status ' + (leechLv > 0 ? 'yes' : 'no');
+            document.getElementById('arsenalPanel').style.display = 'none';
             document.getElementById('characterPanel').style.display = 'flex';
         }
 
         function showShopPanel() {
             document.getElementById('characterPanel').style.display = 'none';
+            document.getElementById('arsenalPanel').style.display = 'none';
             updateShopPanel();
             document.getElementById('shopPanel').style.display = 'flex';
         }
@@ -1119,6 +1229,31 @@
                     emfBtn.textContent = '积分不足'; emfBtn.className = 'shop-buy-btn cant-afford';
                 }
             }
+            // 吸血：5级，价格20k/30k/50k/50k/50k
+            (function() {
+                const LEECH_PRICES = [20000, 30000, 50000, 50000, 50000];
+                const lv = eq.leechLevel || 0;
+                const card = document.getElementById('shopLeechCard');
+                const btn  = document.getElementById('shopLeechBuyBtn');
+                const badge = document.getElementById('shopLeechLevelBadge');
+                const costEl = document.getElementById('shopLeechCost');
+                if (lv >= 5) {
+                    badge.textContent = 'Lv.5 · 已满级'; card.className = 'shop-item-card already-owned';
+                    btn.textContent = '已满级'; btn.className = 'shop-buy-btn owned'; costEl.textContent = '—';
+                } else {
+                    const price = LEECH_PRICES[lv];
+                    badge.textContent = lv > 0 ? `已达 Lv.${lv}` : '未拥有';
+                    costEl.textContent = `${price.toLocaleString()} 积分`;
+                    if (pts >= price) {
+                        card.className = 'shop-item-card can-afford';
+                        btn.textContent = lv === 0 ? '购买' : `升至 Lv.${lv + 1}`;
+                        btn.className = 'shop-buy-btn can-buy';
+                    } else {
+                        card.className = lv > 0 ? 'shop-item-card can-afford' : 'shop-item-card';
+                        btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
+                    }
+                }
+            })();
         }
 
         function purchaseMissile() {
@@ -1181,6 +1316,59 @@
             currentAccount.equipment.hq9Level = lv + 1;
             saveAccount();
             updateShopPanel();
+        }
+
+        function purchaseLeech() {
+            if (!currentAccount) return;
+            const LEECH_PRICES = [20000, 30000, 50000, 50000, 50000];
+            const lv = currentAccount.equipment.leechLevel || 0;
+            if (lv >= 5) return;
+            const price = LEECH_PRICES[lv];
+            if ((currentAccount.totalPoints || 0) < price) return;
+            currentAccount.totalPoints -= price;
+            currentAccount.equipment.leechLevel = lv + 1;
+            saveAccount();
+            updateShopPanel();
+        }
+
+        function showArsenalPanel() {
+            document.getElementById('characterPanel').style.display = 'none';
+            document.getElementById('shopPanel').style.display = 'none';
+            updateArsenalPanel();
+            document.getElementById('arsenalPanel').style.display = 'flex';
+        }
+
+        function updateArsenalPanel() {
+            const sp = currentAccount.skillPoints || 0;
+            const eq = currentAccount.equipment || {};
+            const armorLv = eq.armorLevel || 0;
+            const weaponLv = eq.weaponBayLevel || 0;
+            document.getElementById('arsenalSP').textContent = sp;
+            document.getElementById('arsenalArmorBadge').textContent = armorLv > 0 ? `Lv.${armorLv}` : '未升级';
+            document.getElementById('arsenalArmorStat').textContent = `防御 +${armorLv * 10}`;
+            document.getElementById('arsenalWeaponBadge').textContent = weaponLv > 0 ? `Lv.${weaponLv}` : '未升级';
+            document.getElementById('arsenalWeaponStat').textContent = `攻击 +${weaponLv * 10}%`;
+            const canUpgrade = sp >= 1;
+            document.getElementById('arsenalArmorBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade ? 'can-upgrade' : 'no-sp');
+            document.getElementById('arsenalWeaponBtn').className = 'arsenal-upgrade-btn ' + (canUpgrade ? 'can-upgrade' : 'no-sp');
+        }
+
+        function upgradeArmor() {
+            if (!currentAccount) return;
+            if ((currentAccount.skillPoints || 0) < 1) return;
+            currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
+            currentAccount.equipment.armorLevel = (currentAccount.equipment.armorLevel || 0) + 1;
+            saveAccount();
+            updateArsenalPanel();
+        }
+
+        function upgradeWeaponBay() {
+            if (!currentAccount) return;
+            if ((currentAccount.skillPoints || 0) < 1) return;
+            currentAccount.skillPoints = (currentAccount.skillPoints || 0) - 1;
+            currentAccount.equipment.weaponBayLevel = (currentAccount.equipment.weaponBayLevel || 0) + 1;
+            saveAccount();
+            updateArsenalPanel();
         }
 
         function getLevelXPNeeded() {
@@ -1607,22 +1795,24 @@
 
         function playerShoot() {
             const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
+            const wbMult = 1 + weaponBayLevel * 0.1;
             for (let i = 0; i < bulletCount; i++) {
                 const a = (startAngle + i * spread) * Math.PI / 180;
-                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false, isFreeze: freezeLevel > 0});
+                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false, damage: wbMult, isFreeze: freezeLevel > 0});
             }
         }
 
         function playerShootMissile() {
+            const wbMult = 1 + weaponBayLevel * 0.1;
             for (let i = 0; i < missileCount; i++) {
                 const offset = (i - (missileCount - 1) / 2) * 20;
                 player.bullets.push({
-                    x: player.x + offset, 
-                    y: player.y - 20, 
-                    vx: 0, 
-                    vy: -4, 
+                    x: player.x + offset,
+                    y: player.y - 20,
+                    vx: 0,
+                    vy: -4,
                     isMissile: true,
-                    damage: 1.5 + 0.5 * missileCount, // L1=2x L2=2.5x L3=3x L4=3.5x L5=4x
+                    damage: (1.5 + 0.5 * missileCount) * wbMult, // L1=2x L2=2.5x L3=3x L4=3.5x L5=4x
                     isFreeze: freezeLevel > 0
                 });
             }
@@ -1644,10 +1834,9 @@
             renderPips('ricochetPips', ricochetCount, 3);
             renderPips('missilePips', missileCount, 5);
             renderPips('freezePips', freezeLevel, 5);
-            document.getElementById('leechBarFill').style.width = (leechLevel / 20 * 100) + '%';
             document.getElementById('multishotOption').style.display = bulletCount  >= 5  ? 'none' : '';
             document.getElementById('ricochetOption').style.display  = ricochetCount >= 3  ? 'none' : '';
-            document.getElementById('leechOption').style.display     = leechLevel    >= 20 ? 'none' : '';
+            document.getElementById('leechOption').style.display     = 'none';
 
             // 需要装备才能解锁的技能：统一处理锁定逻辑
             function applyEquipLock(elId, maxed, hasEquip, hint) {
@@ -1695,8 +1884,6 @@
                 if (ricochetCount < 3) ricochetCount++;
             } else if (s === 'missile' && missileCount < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.trackingMissile) {
                 missileCount++;
-            } else if (s === 'leech' && leechLevel < 20) {
-                leechLevel++;
             } else if (s === 'freeze' && freezeLevel < 5 && currentAccount && currentAccount.equipment && currentAccount.equipment.freezeBullet) {
                 freezeLevel++;
             } else if (s === 'heal') {
@@ -1968,7 +2155,7 @@
                             levelXP += e.score; // XP独立于得分，升级后归零
                             // 吸血效果
                             if (leechLevel > 0) {
-                                currentHp = Math.min(maxHp, currentHp + leechLevel);
+                                currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
                                 updateUI();
                             }
                             createExplosion(e.x, e.y, '#FF6B6B', 20);
@@ -1986,7 +2173,7 @@
                 if (e.bullets) {
                     e.bullets = e.bullets.filter(b => {
                         if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
-                            currentHp -= 100;
+                            currentHp -= Math.max(1, 100 - armorLevel * 10);
                             createExplosion(player.x, player.y, '#FFD700', 5);
                             updateUI();
                             if (currentHp <= 0) gameOver();
@@ -2000,7 +2187,7 @@
             // 敌机撞玩家
             enemies.forEach(e => {
                 if (Math.abs(e.x - player.x) < (e.w + 32)/2 && Math.abs(e.y - player.y) < (e.h + 40)/2) {
-                    currentHp -= 500;
+                    currentHp -= Math.max(1, 500 - armorLevel * 10);
                     e.currentHp = 0;
                     createExplosion(e.x, e.y, '#FF4444', 15);
                     updateUI();
@@ -2519,7 +2706,8 @@
 
         function restart() {
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
-            bulletCount = 1; ricochetCount = 0; missileCount = 0; leechLevel = 0; freezeLevel = 0;
+            bulletCount = 1; ricochetCount = 0; missileCount = 0; freezeLevel = 0;
+            leechLevel = 0; armorLevel = 0; weaponBayLevel = 0;
             emfLevel = 0; emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = 0; hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             bulletRateLevel = 0; wingmanLevel = 0;
@@ -2546,6 +2734,9 @@
             hq9CooldownUntil = 0; hq9LaunchedAt = 0;
             bulletRateLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.bulletRateLevel) || 0;
             wingmanLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.wingmanLevel) || 0;
+            leechLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.leechLevel) || 0;
+            armorLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.armorLevel) || 0;
+            weaponBayLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.weaponBayLevel) || 0;
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn();
         }
@@ -2872,6 +3063,7 @@
             if (controlPanel) controlPanel.style.display = 'flex';
         });
         document.getElementById('charShopBtn').addEventListener('click', showShopPanel);
+        document.getElementById('charArsenalBtn').addEventListener('click', showArsenalPanel);
 
         // 商城面板按钮
         document.getElementById('shopMissileBuyBtn').addEventListener('click', purchaseMissile);
@@ -2884,6 +3076,10 @@
         document.getElementById('hq9Btn').addEventListener('click', activateHQ9);
         document.getElementById('shopBackBtn').addEventListener('click', () => {
             document.getElementById('shopPanel').style.display = 'none';
+            showCharacterPanel();
+        });
+        document.getElementById('arsenalBackBtn').addEventListener('click', () => {
+            document.getElementById('arsenalPanel').style.display = 'none';
             showCharacterPanel();
         });
 
