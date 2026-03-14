@@ -1164,7 +1164,7 @@
                     <div class="arsenal-part-icon">🛡️</div>
                     <div>
                         <div class="arsenal-part-name">机身装甲 <span id="arsenalArmorBadge" style="font-size:10px;color:rgba(100,200,255,0.8);font-weight:normal"></span></div>
-                        <div class="arsenal-part-desc">强化机身结构，每级减少10点受击伤害<br>消耗1技能点升1级，无上限</div>
+                        <div class="arsenal-part-desc">强化机身结构，每级减少5点受击伤害<br>消耗1技能点升1级，无上限</div>
                     </div>
                 </div>
                 <div class="arsenal-part-footer">
@@ -2426,7 +2426,7 @@
             const knockbackLv = eq.knockbackLevel || 0;
             document.getElementById('arsenalSP').textContent = sp;
             document.getElementById('arsenalArmorBadge').textContent = armorLv > 0 ? `Lv.${armorLv}` : '未升级';
-            document.getElementById('arsenalArmorStat').textContent = `防御 +${armorLv * 10}`;
+            document.getElementById('arsenalArmorStat').textContent = `防御 +${armorLv * 5}`;
             document.getElementById('arsenalWeaponBadge').textContent = weaponLv > 0 ? `Lv.${weaponLv}` : '未升级';
             document.getElementById('arsenalWeaponStat').textContent = `攻击 +${weaponLv * 10}%`;
             const dodgeMaxed = dodgeLv >= 30;
@@ -3478,7 +3478,7 @@
                         if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
                             if (Math.random() * 100 >= dodgeLevel) {
                                 const shieldMult = 1 - shieldLevel * 0.02;
-                                currentHp -= Math.max(1, Math.round((100 - armorLevel * 10) * shieldMult));
+                                currentHp -= Math.max(1, Math.round((100 - armorLevel * 5) * shieldMult));
                                 createExplosion(player.x, player.y, '#FFD700', 5);
                                 updateUI();
                                 if (currentHp <= 0) gameOver();
@@ -3495,7 +3495,7 @@
                 if (Math.abs(e.x - player.x) < (e.w + 32)/2 && Math.abs(e.y - player.y) < (e.h + 40)/2) {
                     if (Math.random() * 100 < dodgeLevel) { e.currentHp = 0; createExplosion(e.x, e.y, '#FF4444', 15); return; }
                     const shieldMult = 1 - shieldLevel * 0.02;
-                    currentHp -= Math.max(1, Math.round((500 - armorLevel * 10) * shieldMult));
+                    currentHp -= Math.max(1, Math.round((500 - armorLevel * 5) * shieldMult));
                     e.currentHp = 0;
                     createExplosion(e.x, e.y, '#FF4444', 15);
                     updateUI();
