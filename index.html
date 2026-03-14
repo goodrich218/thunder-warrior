@@ -447,6 +447,9 @@
         .char-stat-value { color: #FFD740; font-weight: bold; font-size: 15px; }
         .char-equip-section { position: relative; z-index: 1; width: 280px; margin-bottom: 18px; }
         .char-equip-title { font-size: 8px; letter-spacing: 5px; text-transform: uppercase; color: rgba(0,229,255,0.4); margin-bottom: 10px; text-align: center; }
+        .char-equip-toggle { width: 100%; background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.2); border-radius: 6px; color: rgba(0,229,255,0.6); font-size: 11px; letter-spacing: 3px; padding: 8px 0; cursor: pointer; font-family: inherit; transition: all 0.2s; margin-bottom: 10px; }
+        .char-equip-toggle:hover { background: rgba(0,229,255,0.1); border-color: rgba(0,229,255,0.4); color: rgba(0,229,255,0.9); }
+        #charEquipList { display: none; }
         .equip-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin-bottom: 8px; }
         .equip-item.owned { border-color: rgba(255,215,0,0.35); background: rgba(255,215,0,0.05); }
         .equip-item.not-owned { opacity: 0.45; }
@@ -956,7 +959,8 @@
                 </div>
             </div>
             <div class="char-equip-section">
-                <div class="char-equip-title">拥有装备</div>
+                <button class="char-equip-toggle" id="charEquipToggle" onclick="toggleEquipList()">拥有装备 ▼</button>
+                <div id="charEquipList">
                 <div class="equip-item not-owned" id="charMissileEquip">
                     <div class="equip-icon">🎯</div>
                     <div class="equip-info">
@@ -1021,6 +1025,7 @@
                     </div>
                     <div class="equip-status no" id="charPl17Status">未拥有</div>
                 </div>
+                </div><!-- #charEquipList -->
             </div>
             <div class="char-btns">
                 <button class="char-btn-primary" id="charPlayBtn">开始游戏</button>
@@ -1935,6 +1940,14 @@
         function saveAccount() {
             if (!currentAccount || !playerName) return;
             localStorage.setItem('thunderWarriorAccount_' + playerName, JSON.stringify(currentAccount));
+        }
+
+        function toggleEquipList() {
+            const list = document.getElementById('charEquipList');
+            const btn = document.getElementById('charEquipToggle');
+            const open = list.style.display === 'block';
+            list.style.display = open ? 'none' : 'block';
+            btn.textContent = open ? '拥有装备 ▼' : '拥有装备 ▲';
         }
 
         function showCharacterPanel() {
