@@ -3409,7 +3409,9 @@
                             const dx = player.x - e.x;
                             const dy = player.y - (e.y + e.h/2);
                             const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                            e.bullets.push({x: e.x, y: e.y + e.h/2, vx: (dx/dist) * 2.5, vy: (dy/dist) * 2.5});
+                            // B-2 轰炸机子弹伤害为 200，普通为 100
+                            const bulletDamage = e.type === 6 ? 200 : 100;
+                            e.bullets.push({x: e.x, y: e.y + e.h/2, vx: (dx/dist) * 2.5, vy: (dy/dist) * 2.5, damage: bulletDamage});
                         }
                     }
                 }
@@ -3478,7 +3480,8 @@
                         if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
                             if (Math.random() * 100 >= dodgeLevel) {
                                 const shieldMult = 1 - shieldLevel * 0.02;
-                                currentHp -= Math.max(1, Math.round((100 - armorLevel * 5) * shieldMult));
+                                const bulletDmg = b.damage || 100;
+                                currentHp -= Math.max(1, Math.round((bulletDmg - armorLevel * 5) * shieldMult));
                                 createExplosion(player.x, player.y, '#FFD700', 5);
                                 updateUI();
                                 if (currentHp <= 0) gameOver();
@@ -3869,7 +3872,8 @@
                     ctx.shadowBlur = 0; ctx.restore();
                 }
                 if (e.bullets) {
-                    ctx.fillStyle = '#f44';
+                    // B-2 子弹为紫色，其他为红色
+                    ctx.fillStyle = e.type === 6 ? '#a0f' : '#f44';
                     e.bullets.forEach(b => {
                         ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill();
                     });
