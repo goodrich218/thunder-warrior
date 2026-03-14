@@ -1050,7 +1050,7 @@
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost" id="shopMissileCost">50,000 积分</span>
+                    <span class="shop-item-cost" id="shopMissileCost">100,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopMissileBuyBtn">购买</button>
                 </div>
             </div>
@@ -1102,7 +1102,7 @@
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost" id="shopHq9Cost">50,000 积分</span>
+                    <span class="shop-item-cost" id="shopHq9Cost">200,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopHq9BuyBtn">购买</button>
                 </div>
             </div>
@@ -1141,7 +1141,7 @@
                     </div>
                 </div>
                 <div class="shop-item-footer">
-                    <span class="shop-item-cost" id="shopPl17Cost">80,000 积分</span>
+                    <span class="shop-item-cost" id="shopPl17Cost">500,000 积分</span>
                     <button class="shop-buy-btn cant-afford" id="shopPl17BuyBtn" onclick="purchasePL17()">购买</button>
                 </div>
             </div>
@@ -2121,10 +2121,10 @@
                     btn.textContent = '积分不足'; btn.className = 'shop-buy-btn cant-afford';
                 }
             }
-            // 跟踪弹：5级，每级50000
+            // 跟踪弹：5级，每级100000
             (function() {
                 const lv = eq.missileTier || 0;
-                const price = 50000;
+                const price = 100000;
                 const card = document.getElementById('shopMissileCard');
                 const btn  = document.getElementById('shopMissileBuyBtn');
                 const badge = document.getElementById('shopMissileLevelBadge');
@@ -2217,10 +2217,10 @@
                     }
                 }
             })();
-            // HQ-9：分5级，每级50000，逐级购买
+            // HQ-9：分5级，每级200000，逐级购买
             (function() {
                 const lv = eq.hq9Level || 0;
-                const price = 50000;
+                const price = 200000;
                 const card = document.getElementById('shopHq9Card');
                 const btn  = document.getElementById('shopHq9BuyBtn');
                 const badge = document.getElementById('shopHq9LevelBadge');
@@ -2291,10 +2291,10 @@
                     }
                 }
             })();
-            // 霹雳-17：共5级，每级80000
+            // 霹雳-17：共5级，每级500000
             (function() {
                 const lv = eq.pl17Level || 0;
-                const price = 80000;
+                const price = 500000;
                 const card = document.getElementById('shopPl17Card');
                 const btn  = document.getElementById('shopPl17BuyBtn');
                 const badge = document.getElementById('shopPl17LevelBadge');
@@ -2323,8 +2323,8 @@
             if (!currentAccount) return;
             const lv = currentAccount.equipment.missileTier || 0;
             if (lv >= 5) return;
-            if ((currentAccount.totalPoints || 0) < 50000) return;
-            currentAccount.totalPoints -= 50000;
+            if ((currentAccount.totalPoints || 0) < 100000) return;
+            currentAccount.totalPoints -= 100000;
             currentAccount.equipment.missileTier = lv + 1;
             saveAccount();
             updateShopPanel();
@@ -2378,8 +2378,8 @@
             if (!currentAccount) return;
             const lv = currentAccount.equipment.hq9Level || 0;
             if (lv >= 5) return;
-            if ((currentAccount.totalPoints || 0) < 50000) return;
-            currentAccount.totalPoints -= 50000;
+            if ((currentAccount.totalPoints || 0) < 200000) return;
+            currentAccount.totalPoints -= 200000;
             currentAccount.equipment.hq9Level = lv + 1;
             saveAccount();
             updateShopPanel();
@@ -2402,8 +2402,8 @@
             if (!currentAccount) return;
             const lv = currentAccount.equipment.pl17Level || 0;
             if (lv >= 5) return;
-            if ((currentAccount.totalPoints || 0) < 80000) return;
-            currentAccount.totalPoints -= 80000;
+            if ((currentAccount.totalPoints || 0) < 500000) return;
+            currentAccount.totalPoints -= 500000;
             currentAccount.equipment.pl17Level = lv + 1;
             saveAccount();
             updateShopPanel();
