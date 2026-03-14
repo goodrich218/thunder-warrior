@@ -954,8 +954,12 @@
                     <span class="char-stat-value" id="charTotalPoints">0</span>
                 </div>
                 <div class="char-stat-row">
+                    <span class="char-stat-label">⚡ 雷霆钻石</span>
+                    <span class="char-stat-value" id="charDiamonds" style="color:#00E5FF">0</span>
+                </div>
+                <div class="char-stat-row">
                     <span class="char-stat-label">历史最高</span>
-                    <span class="char-stat-value" id="charBestScore" style="color:#00E5FF">0</span>
+                    <span class="char-stat-value" id="charBestScore" style="color:rgba(255,255,255,0.4)">0</span>
                 </div>
             </div>
             <div class="char-equip-section">
@@ -1045,6 +1049,23 @@
             <div class="shop-points-bar">
                 <span class="shop-points-label">当前积分</span>
                 <span class="shop-points-value" id="shopPoints">0</span>
+            </div>
+            <div class="shop-points-bar" style="border-color:rgba(0,229,255,0.3);background:rgba(0,229,255,0.05)">
+                <span class="shop-points-label" style="color:rgba(0,229,255,0.7)">⚡ 雷霆钻石</span>
+                <span class="shop-points-value" id="shopDiamonds" style="color:#00E5FF">0</span>
+            </div>
+            <div class="shop-item-card" id="shopDiamondCard">
+                <div class="shop-item-top">
+                    <div class="shop-item-icon">⚡</div>
+                    <div>
+                        <div class="shop-item-name">雷霆钻石</div>
+                        <div class="shop-item-desc">游戏特殊货币，用于解锁专属内容<br>1000 积分兑换 1 颗钻石，可重复购买</div>
+                    </div>
+                </div>
+                <div class="shop-item-footer">
+                    <span class="shop-item-cost">1,000 积分 / 颗</span>
+                    <button class="shop-buy-btn cant-afford" id="shopDiamondBuyBtn" onclick="purchaseDiamond()">兑换</button>
+                </div>
             </div>
             <div class="shop-item-card" id="shopMissileCard">
                 <div class="shop-item-top">
@@ -1934,7 +1955,7 @@
                     return data;
                 }
             } catch(e) {}
-            return { totalPoints: 0, skillPoints: 10, completedMissions: [], equipment: { missileTier: 0, freezeLevel: 0, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
+            return { totalPoints: 0, skillPoints: 10, diamonds: 0, completedMissions: [], equipment: { missileTier: 0, freezeLevel: 0, emfLevel: 0, hq9Level: 0, bulletRateLevel: 0, wingmanLevel: 0, leechLevel: 0, armorLevel: 0, weaponBayLevel: 0, dodgeLevel: 0, shieldLevel: 0, pl17Level: 0 } };
         }
 
         function saveAccount() {
@@ -1960,6 +1981,7 @@
             document.getElementById('campaignPanel').style.display = 'none';
             document.getElementById('charNameDisplay').textContent = playerName || '战机飞行员';
             document.getElementById('charTotalPoints').textContent = (currentAccount.totalPoints || 0).toLocaleString();
+            document.getElementById('charDiamonds').textContent = (currentAccount.diamonds || 0).toLocaleString();
             document.getElementById('charBestScore').textContent = bestScore.toLocaleString();
             const eq = currentAccount.equipment || {};
             function setEquipDisplay(id, statusId, owned) {
@@ -2119,6 +2141,15 @@
         function updateShopPanel() {
             const pts = currentAccount.totalPoints || 0;
             document.getElementById('shopPoints').textContent = pts.toLocaleString();
+            document.getElementById('shopDiamonds').textContent = (currentAccount.diamonds || 0).toLocaleString();
+            const diamondBtn = document.getElementById('shopDiamondBuyBtn');
+            if (pts >= 1000) {
+                document.getElementById('shopDiamondCard').className = 'shop-item-card can-afford';
+                diamondBtn.textContent = '兑换'; diamondBtn.className = 'shop-buy-btn can-buy';
+            } else {
+                document.getElementById('shopDiamondCard').className = 'shop-item-card';
+                diamondBtn.textContent = '积分不足'; diamondBtn.className = 'shop-buy-btn cant-afford';
+            }
             const eq = currentAccount.equipment || {};
             function refreshItem(cardId, btnId, owned, price) {
                 const card = document.getElementById(cardId);
@@ -2330,6 +2361,17 @@
                     }
                 }
             })();
+        }
+
+        function purchaseDiamond() {
+            if (!currentAccount) return;
+            if ((currentAccount.totalPoints || 0) < 1000) return;
+            currentAccount.totalPoints -= 1000;
+            currentAccount.diamonds = (currentAccount.diamonds || 0) + 1;
+            saveAccount();
+            updateShopPanel();
+            showCharacterPanel();
+            showShopPanel();
         }
 
         function purchaseMissile() {
