@@ -4046,6 +4046,14 @@
         function selectPlane(i) {
             selectedPlane = i;
             document.getElementById('selectPanel').style.display = 'none';
+            // 重置核心游戏状态，防止上一局数据残留
+            score = 0; level = 1; maxHp = 1000; currentHp = 1000;
+            bulletCount = 1; ricochetCount = 0; levelXP = 0;
+            dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
+            enemies = []; particles = []; player.bullets = [];
+            player.x = WIDTH / 2; player.y = HEIGHT - 100;
+            droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
+            joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
             emfLevel = (currentAccount && currentAccount.equipment && currentAccount.equipment.emfLevel) || 0;
             emfActiveUntil = 0; emfCooldownUntil = 0;
             hq9Level = (currentAccount && currentAccount.equipment && currentAccount.equipment.hq9Level) || 0;
