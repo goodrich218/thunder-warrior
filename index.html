@@ -979,7 +979,7 @@
                     </div>
                     <div class="plane-ability">
                         <div class="plane-ability-tag">专属 · 超声波转化</div>
-                        <div class="plane-ability-desc">每10秒发射超声波，随机将一架敌机转为友军（HP 500）为你作战</div>
+                        <div class="plane-ability-desc">每15秒发射超声波，随机将一架敌机转为友军（HP 500）为你作战</div>
                     </div>
                 </div>
                 <div class="plane-btn" data-plane="5">
@@ -3613,7 +3613,7 @@
             // 未来-1（4号）：每10秒超声波转化一架敌机为友军
             if (selectedPlane === 4) {
                 const now4 = Date.now();
-                if (conversionNextAt === 0) conversionNextAt = now4 + 10000;
+                if (conversionNextAt === 0) conversionNextAt = now4 + 15000;
                 if (now4 >= conversionNextAt) {
                     // 发射超声波（视觉）
                     sonicWaves.push({ x: player.x, y: player.y, r: 0, maxR: Math.max(WIDTH, HEIGHT) * 0.8, born: now4 });
@@ -3625,7 +3625,7 @@
                         t.currentHp = 500; t.hp = 500;
                         t.lastAllyShot = 0;
                     }
-                    conversionNextAt = now4 + 10000;
+                    conversionNextAt = now4 + 15000;
                 }
                 // 友军 AI：向最近的非友军敌机射击
                 const foes = enemies.filter(e => !e.isAlly);
