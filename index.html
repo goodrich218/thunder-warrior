@@ -1544,6 +1544,7 @@
         const MISSILE_DAMAGE = [0, 2.0, 3.0, 3.0, 4.0, 5.0]; // 每档基础伤害倍数
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0, knockbackLevel = 0;
         let paused = false;
+        let bgScrollY = 0; // 地面背景滚动偏移（canvas像素）
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -3565,16 +3566,167 @@
             updateParticles();
         }
 
-        function draw() {
-            ctx.fillStyle = '#0a0a0a';
+        // ══════════════════════════════════════════════════════
+        // 地面俯视背景系统
+        // ══════════════════════════════════════════════════════
+        function bgRand(s) {
+            const x = Math.sin(s * 127.1 + 311.7) * 43758.5453;
+            return x - Math.floor(x);
+        }
+
+        // 建筑颜色表（墙体 / 屋顶）
+        const BWALL = ['#1e3d5c','#1a3d1a','#3a1a1a','#2e2a1a','#1a2a3d','#2a1a3d','#3a3a1a','#282828'];
+        const BROOF = ['#2e6ab0','#2e8a2e','#aa2222','#8a7a3a','#2266aa','#882299','#aaaa22','#484848'];
+
+        function drawBldgChunk(chunkId, baseY, chunkH, zones, SX, SY) {
+            zones.forEach((zone, zi) => {
+                const zx = zone.x1 * SX;
+                const zw = (zone.x2 - zone.x1) * SX;
+                let seed = chunkId * 1000 + zi * 100;
+                const numBldgs = 2 + Math.floor(bgRand(seed++) * 3);
+                const blockH = chunkH / numBldgs;
+
+                for (let bi = 0; bi < numBldgs; bi++) {
+                    seed += bi * 17;
+                    const bw = (0.45 + bgRand(seed++) * 0.5) * zw;
+                    const bh = (0.38 + bgRand(seed++) * 0.52) * blockH * 0.88;
+                    const bx = zx + bgRand(seed++) * (zw - bw);
+                    const by = baseY + bi * blockH + bgRand(seed++) * (blockH - bh) * 0.4;
+                    const ci = Math.floor(bgRand(seed++) * BWALL.length);
+                    if (bw < 8 * SX || bh < 8 * SY) continue;
+
+                    // 投影
+                    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+                    ctx.fillRect(bx + 4*SX, by + 4*SY, bw, bh);
+                    // 墙体
+                    ctx.fillStyle = BWALL[ci];
+                    ctx.fillRect(bx, by, bw, bh);
+                    // 屋顶色带
+                    ctx.fillStyle = BROOF[ci];
+                    ctx.fillRect(bx, by, bw, Math.min(9*SY, bh * 0.14));
+                    // 左侧高光
+                    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                    ctx.fillRect(bx, by, 4*SX, bh);
+                    // 窗户格
+                    const wW = 7*SX, wH = 6*SY, wGX = 10*SX, wGY = 10*SY;
+                    for (let wy = by + 13*SY; wy < by + bh - wH - 4*SY; wy += wH + wGY) {
+                        for (let wx = bx + 5*SX; wx < bx + bw - wW - 4*SX; wx += wW + wGX) {
+                            ctx.fillStyle = bgRand(seed++) > 0.42
+                                ? 'rgba(255,220,130,0.5)'
+                                : 'rgba(80,120,160,0.18)';
+                            ctx.fillRect(wx, wy, wW, wH);
+                        }
+                    }
+                }
+
+                // 绿化（树冠俯视）
+                for (let pi = 0; pi < 3; pi++) {
+                    if (bgRand(seed++) > 0.55) {
+                        const tx = zx + bgRand(seed++) * zw;
+                        const ty = baseY + bgRand(seed++) * chunkH;
+                        const tr = (8 + bgRand(seed++) * 12) * SX;
+                        ctx.fillStyle = 'rgba(22,60,15,0.9)';
+                        ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = 'rgba(35,90,20,0.75)';
+                        ctx.beginPath(); ctx.arc(tx - 2*SX, ty - 2*SY, tr*0.65, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = 'rgba(50,120,30,0.4)';
+                        ctx.beginPath(); ctx.arc(tx + 1*SX, ty - 3*SY, tr*0.35, 0, Math.PI*2); ctx.fill();
+                    } else { seed += 3; }
+                }
+            });
+        }
+
+        function drawBackground() {
+            const SY = HEIGHT / 1000;
+            const SX = WIDTH / 600;
+
+            // 地面底色
+            ctx.fillStyle = '#222220';
             ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            
-            // 星空背景
-            ctx.fillStyle = '#fff';
-            for (let i = 0; i < 50; i++) {
-                const x = (i * 127 + Date.now() / 50) % WIDTH;
-                const y = (i * 97 + Date.now() / 100) % HEIGHT;
-                ctx.fillRect(x, y, 1, 1);
+
+            // 道路定义（设计坐标系 600px 宽）
+            const roads = [
+                { lx: 85,  w: 82 },  // 左侧道路
+                { lx: 400, w: 82 },  // 右侧道路
+            ];
+
+            // 路肩 / 人行道
+            ctx.fillStyle = '#3e3e38';
+            for (const rd of roads) {
+                ctx.fillRect((rd.lx - 14)*SX, 0, 14*SX, HEIGHT);
+                ctx.fillRect((rd.lx + rd.w)*SX, 0, 14*SX, HEIGHT);
+            }
+
+            // 路面
+            for (const rd of roads) {
+                const lx = rd.lx * SX, rw = rd.w * SX;
+                ctx.fillStyle = '#404040';
+                ctx.fillRect(lx, 0, rw, HEIGHT);
+
+                // 路肩白线
+                ctx.fillStyle = 'rgba(255,255,200,0.3)';
+                ctx.fillRect(lx + 2*SX, 0, 2.5*SX, HEIGHT);
+                ctx.fillRect(lx + rw - 4.5*SX, 0, 2.5*SX, HEIGHT);
+
+                // 中心虚线（黄）—— 从上往下流动
+                const period = 44*SY, dashLen = 27*SY;
+                const off = bgScrollY % period;
+                ctx.fillStyle = 'rgba(255,210,0,0.72)';
+                for (let y = off - period; y < HEIGHT; y += period) {
+                    ctx.fillRect(lx + rw/2 - 2*SX, y, 4*SX, dashLen);
+                }
+            }
+
+            // 路口（横向交叉口）—— 从上往下流动
+            const iperiod = 310 * SY, iH = 52 * SY;
+            const iOff = bgScrollY % iperiod;
+            for (let y = iOff - iperiod; y < HEIGHT; y += iperiod) {
+                // 路口地面
+                ctx.fillStyle = '#474740';
+                ctx.fillRect(0, y, WIDTH, iH);
+                // 斑马线（所有道路区域）
+                for (const rd of roads) {
+                    const lx = (rd.lx - 14) * SX;
+                    const rw = (rd.w + 28) * SX;
+                    const sW = 10*SX, sGap = 8*SX;
+                    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                    for (let xi = lx; xi < lx + rw - sW; xi += sW + sGap) {
+                        ctx.fillRect(xi, y + 5*SY, sW, iH - 10*SY);
+                    }
+                }
+                // 路口隔离墩（黄黑条纹）
+                for (const rd of roads) {
+                    const bx = rd.lx * SX + rd.w * SX / 2 - 4*SX;
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.fillRect(bx, y + 4*SY, 8*SX, iH - 8*SY);
+                    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                    for (let ys = y + 4*SY; ys < y + iH - 8*SY; ys += 8*SY) {
+                        ctx.fillRect(bx, ys, 8*SX, 4*SY);
+                    }
+                }
+            }
+
+            // 建筑区块
+            const chunkH = 300 * SY;
+            const zones = [
+                { x1: 0,   x2: 71  },  // 道路1左侧
+                { x1: 181, x2: 386 },  // 两路之间
+                { x1: 496, x2: 600 },  // 道路2右侧
+            ];
+            // screen_y = c * chunkH + bgScrollY → bgScrollY增大时区块向下移动
+            const firstChunk = Math.floor(-bgScrollY / chunkH) - 1;
+            const lastChunk  = firstChunk + Math.ceil(HEIGHT / chunkH) + 2;
+            for (let c = firstChunk; c <= lastChunk; c++) {
+                drawBldgChunk(c, c * chunkH + bgScrollY, chunkH, zones, SX, SY);
+            }
+        }
+        // ══════════════════════════════════════════════════════
+
+        function draw() {
+            drawBackground();
+            // 游戏进行中才滚动
+            if (gameState === 'playing' || gameState === 'upgrade') {
+                bgScrollY += 1.6;
             }
 
             if (gameState !== 'playing' && gameState !== 'upgrade') return;
