@@ -2643,122 +2643,211 @@
         function drawPlane(ctx, x, y, w, h, type) {
             ctx.save(); ctx.translate(x, y);
             const scale = w / 32; ctx.scale(scale, scale);
-            const bw = 32, bh = 40;
-            const cx = bw / 2;
-
-            // 配色方案：type 0 = 歼-35钢铁灰隐身涂装
-            const schemes = [
-                { body: '#5A6470', bodyDark: '#404A55', wing: '#4A5460', wingTip: '#38424C',
-                  ridge: '#7A8A96', intake: '#2A3540', cockpit: '#0A1828', glow: 'rgba(255,140,0,0.85)' },
-                { body: '#8B1A1A', bodyDark: '#6B0A0A', wing: '#6B1010', wingTip: '#4A0808',
-                  ridge: '#B03030', intake: '#3A0808', cockpit: '#00CED1', glow: 'rgba(255,80,0,0.9)' },
-                { body: '#2A4A2A', bodyDark: '#1A3A1A', wing: '#1F3F1F', wingTip: '#162E16',
-                  ridge: '#4A7A4A', intake: '#142A14', cockpit: '#FFD700', glow: 'rgba(0,255,150,0.85)' },
-                { body: '#1A1A2A', bodyDark: '#0A0A1A', wing: '#14142A', wingTip: '#0A0A1A',
-                  ridge: '#3A3A6A', intake: '#080814', cockpit: '#4169E1', glow: 'rgba(100,180,255,0.9)' },
-            ];
-            const s = schemes[Math.min(type, 3)];
+            const cx = 16;
+            const pulse = 0.65 + 0.35 * Math.sin(Date.now() / 110);
 
             function poly(pts, color) {
                 ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.moveTo(pts[0][0], pts[0][1]);
+                ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
                 for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
                 ctx.closePath(); ctx.fill();
             }
+            function gpoly(pts, grad) {
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+                for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+                ctx.closePath(); ctx.fill();
+            }
+            function pline(x1,y1,x2,y2,c,lw) {
+                ctx.strokeStyle=c||'rgba(0,0,0,0.28)'; ctx.lineWidth=lw||0.4;
+                ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+            }
+            function jet(ex, ey, rx, ry, c1, c2) {
+                const g = ctx.createRadialGradient(ex, ey, 0, ex, ey+ry*0.4, ry);
+                g.addColorStop(0,   `rgba(255,255,230,${pulse})`);
+                g.addColorStop(0.25,`${c1}${(pulse*0.95).toFixed(2)})`);
+                g.addColorStop(0.6, `${c2}${(pulse*0.65).toFixed(2)})`);
+                g.addColorStop(1,   'rgba(255,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.ellipse(ex, ey, rx, ry, 0, 0, Math.PI*2); ctx.fill();
+            }
+            function cockpit(cy, c1, c2, glow) {
+                ctx.shadowBlur=14; ctx.shadowColor=glow;
+                ctx.fillStyle=c1; ctx.beginPath(); ctx.ellipse(cx,cy,2.6,4.8,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle=c2; ctx.beginPath(); ctx.ellipse(cx,cy-0.8,1.6,3.2,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='rgba(220,245,255,0.45)'; ctx.beginPath(); ctx.ellipse(cx-0.8,cy-1.8,0.85,2.1,-0.2,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur=0;
+            }
+            function navLight(lx, ly, rx, ry, lc, rc) {
+                ctx.shadowBlur=7;
+                ctx.shadowColor=lc; ctx.fillStyle=`rgba(${lc.slice(4,-1)},${pulse})`; ctx.beginPath(); ctx.arc(lx,ly,1.6,0,Math.PI*2); ctx.fill();
+                ctx.shadowColor=rc; ctx.fillStyle=`rgba(${rc.slice(4,-1)},${pulse})`; ctx.beginPath(); ctx.arc(rx,ry,1.6,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur=0;
+            }
 
-            // ── 主三角翼（歼-35大后掠角三角翼）──
-            // 左翼：大后掠，翼尖略截
-            poly([
-                [cx - 3, 10],   // 翼根前缘
-                [1,  27],        // 翼尖前缘
-                [3,  31],        // 翼尖后缘
-                [cx - 4, 31],   // 翼根后缘
-            ], s.wing);
-            // 右翼
-            poly([
-                [cx + 3, 10],
-                [bw - 1, 27],
-                [bw - 3, 31],
-                [cx + 4, 31],
-            ], s.wing);
+            if (type === 0) {
+                // 歼-35 隐身战斗机 · 钢铁灰
+                // 三角翼
+                const wg = ctx.createLinearGradient(0,10,32,34);
+                wg.addColorStop(0,'#6A7A88'); wg.addColorStop(0.5,'#485868'); wg.addColorStop(1,'#344450');
+                gpoly([[cx-3,10],[0,31],[3,37],[cx-4,35]], wg);
+                gpoly([[cx+3,10],[32,31],[29,37],[cx+4,35]], wg);
+                poly([[0,31],[3,37],[5,33]],'#253040'); poly([[32,31],[29,37],[27,33]],'#253040');
+                // 全动尾翼
+                const tg = ctx.createLinearGradient(cx-12,38,cx,34);
+                tg.addColorStop(0,'#303C48'); tg.addColorStop(1,'#485868');
+                gpoly([[cx-4,35],[cx-12,42],[cx-7,42],[cx-3,37]], tg);
+                gpoly([[cx+4,35],[cx+12,42],[cx+7,42],[cx+3,37]], tg);
+                // 机身
+                const bg = ctx.createLinearGradient(cx-7,0,cx+7,0);
+                bg.addColorStop(0,'#576878'); bg.addColorStop(0.3,'#8A9EAE'); bg.addColorStop(0.5,'#9AAEBA');
+                bg.addColorStop(0.7,'#8A9EAE'); bg.addColorStop(1,'#576878');
+                gpoly([[cx,0],[cx+4,7],[cx+6,20],[cx+5,33],[cx+2,38],[cx-2,38],[cx-5,33],[cx-6,20],[cx-4,7]], bg);
+                // DSI进气道
+                poly([[cx-4,12],[cx-8,14],[cx-8,23],[cx-5,24],[cx-4,18]],'#1A2530');
+                poly([[cx+4,12],[cx+8,14],[cx+8,23],[cx+5,24],[cx+4,18]],'#1A2530');
+                // 棱线
+                const rg = ctx.createLinearGradient(cx,0,cx,38);
+                rg.addColorStop(0,'#B0C0CC'); rg.addColorStop(0.5,'#8898A8'); rg.addColorStop(1,'#576878');
+                gpoly([[cx,1],[cx+2.5,9],[cx+2,32],[cx,36],[cx-2,32],[cx-2.5,9]], rg);
+                // 面板线
+                pline(cx-6,18,cx-4,35); pline(cx+6,18,cx+4,35);
+                pline(cx-3,9,cx+3,9,'rgba(180,200,210,0.3)',0.5);
+                pline(cx-8,14,cx-4,12,'rgba(255,255,255,0.1)',0.5);
+                pline(cx+8,14,cx+4,12,'rgba(255,255,255,0.1)',0.5);
+                cockpit(9,'#061828','rgba(0,210,255,0.92)','#00EEFF');
+                // 双发尾焰
+                jet(cx-2.5,40, 3,7, 'rgba(255,170,40,', 'rgba(255,70,0,');
+                jet(cx+2.5,40, 3,7, 'rgba(255,170,40,', 'rgba(255,70,0,');
+                ctx.fillStyle='#101820'; ctx.beginPath(); ctx.ellipse(cx-2.5,38,2.3,2,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#101820'; ctx.beginPath(); ctx.ellipse(cx+2.5,38,2.3,2,0,0,Math.PI*2); ctx.fill();
+                navLight(1,32,31,32,'rgb(255,60,60)','rgb(60,255,60)');
 
-            // 翼尖深色
-            poly([[1, 27],[3, 31],[5, 29]], s.wingTip);
-            poly([[bw-1, 27],[bw-3, 31],[bw-5, 29]], s.wingTip);
+            } else if (type === 1) {
+                // 歼-20 鸭翼战斗机 · 烈焰红
+                // 主三角翼
+                const wg = ctx.createLinearGradient(0,14,32,37);
+                wg.addColorStop(0,'#901A1A'); wg.addColorStop(0.5,'#6A0E0E'); wg.addColorStop(1,'#480808');
+                gpoly([[cx-3,14],[0,36],[4,41],[cx-4,39]], wg);
+                gpoly([[cx+3,14],[32,36],[28,41],[cx+4,39]], wg);
+                poly([[0,36],[4,41],[6,37]],'#300404'); poly([[32,36],[28,41],[26,37]],'#300404');
+                // 前置鸭翼
+                const cg = ctx.createLinearGradient(cx-14,15,cx,8);
+                cg.addColorStop(0,'#5A0C0C'); cg.addColorStop(1,'#8A1818');
+                gpoly([[cx-4,7],[cx-15,16],[cx-10,18],[cx-3,10]], cg);
+                gpoly([[cx+4,7],[cx+15,16],[cx+10,18],[cx+3,10]], cg);
+                poly([[cx-4,7],[cx-15,16],[cx-14,12]],'#B02020');
+                poly([[cx+4,7],[cx+15,16],[cx+14,12]],'#B02020');
+                // 机身
+                const bg = ctx.createLinearGradient(cx-7,0,cx+7,0);
+                bg.addColorStop(0,'#6A1010'); bg.addColorStop(0.35,'#BE2A2A'); bg.addColorStop(0.5,'#D43434');
+                bg.addColorStop(0.65,'#BE2A2A'); bg.addColorStop(1,'#6A1010');
+                gpoly([[cx,0],[cx+5,9],[cx+7,23],[cx+5,37],[cx+2,41],[cx-2,41],[cx-5,37],[cx-7,23],[cx-5,9]], bg);
+                // DSI进气道
+                poly([[cx-5,14],[cx-9,16],[cx-9,25],[cx-6,26],[cx-5,21]],'#1E0404');
+                poly([[cx+5,14],[cx+9,16],[cx+9,25],[cx+6,26],[cx+5,21]],'#1E0404');
+                // 棱线
+                const rg = ctx.createLinearGradient(cx,0,cx,41);
+                rg.addColorStop(0,'#FF6060'); rg.addColorStop(0.4,'#CC2828'); rg.addColorStop(1,'#6A1010');
+                gpoly([[cx,1],[cx+2.5,9],[cx+2,35],[cx,39],[cx-2,35],[cx-2.5,9]], rg);
+                // 面板线
+                pline(cx,5,cx-5,23); pline(cx,5,cx+5,23);
+                pline(cx-7,23,cx-5,37); pline(cx+7,23,cx+5,37);
+                pline(cx-4,7,cx-15,16,'rgba(200,50,50,0.3)',0.5);
+                pline(cx+4,7,cx+15,16,'rgba(200,50,50,0.3)',0.5);
+                cockpit(9,'#0A0018','rgba(0,190,255,0.95)','#00CCFF');
+                // 双发
+                jet(cx-2.5,43, 3.2,8, 'rgba(255,130,20,', 'rgba(255,40,0,');
+                jet(cx+2.5,43, 3.2,8, 'rgba(255,130,20,', 'rgba(255,40,0,');
+                ctx.fillStyle='#120202'; ctx.beginPath(); ctx.ellipse(cx-2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#120202'; ctx.beginPath(); ctx.ellipse(cx+2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
+                navLight(0,37,32,37,'rgb(255,40,40)','rgb(255,40,40)');
 
-            // ── 后缘小平尾（全动尾翼）──
-            poly([
-                [cx - 4, 31],
-                [cx - 11, 39],
-                [cx - 6,  39],
-                [cx - 3,  33],
-            ], s.wing);
-            poly([
-                [cx + 4, 31],
-                [cx + 11, 39],
-                [cx + 6,  39],
-                [cx + 3,  33],
-            ], s.wing);
+            } else if (type === 2) {
+                // 歼-10C 枭龙 · 丛林迷彩绿
+                // 主三角翼（带LEX边条）
+                const wg = ctx.createLinearGradient(0,12,32,35);
+                wg.addColorStop(0,'#3E6030'); wg.addColorStop(0.5,'#2A4A1A'); wg.addColorStop(1,'#182E10');
+                gpoly([[cx-3,12],[0,33],[3,39],[cx-4,37]], wg);
+                gpoly([[cx+3,12],[32,33],[29,39],[cx+4,37]], wg);
+                poly([[0,33],[3,39],[5,35]],'#122010'); poly([[32,33],[29,39],[27,35]],'#122010');
+                // LEX边条翼
+                poly([[cx-4,8],[cx-14,19],[cx-10,20],[cx-4,12]],'#345828');
+                poly([[cx+4,8],[cx+14,19],[cx+10,20],[cx+4,12]],'#345828');
+                poly([[cx-4,8],[cx-14,19],[cx-13,15]],'#4A7A38');
+                poly([[cx+4,8],[cx+14,19],[cx+13,15]],'#4A7A38');
+                // 鸭翼
+                poly([[cx-4,5],[cx-11,11],[cx-8,12],[cx-3,7]],'#3E6A2A');
+                poly([[cx+4,5],[cx+11,11],[cx+8,12],[cx+3,7]],'#3E6A2A');
+                // 机身
+                const bg = ctx.createLinearGradient(cx-6,0,cx+6,0);
+                bg.addColorStop(0,'#2C4A1C'); bg.addColorStop(0.35,'#558040'); bg.addColorStop(0.5,'#66964E');
+                bg.addColorStop(0.65,'#558040'); bg.addColorStop(1,'#2C4A1C');
+                gpoly([[cx,0],[cx+4,8],[cx+6,21],[cx+5,35],[cx+2,40],[cx-2,40],[cx-5,35],[cx-6,21],[cx-4,8]], bg);
+                // 进气道
+                poly([[cx-4,12],[cx-8,13],[cx-8,23],[cx-5,24],[cx-4,18]],'#0C1A08');
+                poly([[cx+4,12],[cx+8,13],[cx+8,23],[cx+5,24],[cx+4,18]],'#0C1A08');
+                // 脊线
+                const rg = ctx.createLinearGradient(cx,0,cx,40);
+                rg.addColorStop(0,'#90C070'); rg.addColorStop(0.5,'#558040'); rg.addColorStop(1,'#2C4A1C');
+                gpoly([[cx,1],[cx+2,8],[cx+2,33],[cx,38],[cx-2,33],[cx-2,8]], rg);
+                // 迷彩斑块
+                ctx.globalAlpha=0.22;
+                poly([[cx-6,15],[cx-4,22],[cx-9,23]],'#1A2E10');
+                poly([[cx+4,19],[cx+9,15],[cx+8,23]],'#3A6A28');
+                poly([[cx-2,27],[cx-7,32],[cx-4,36]],'#1A2A10');
+                poly([[cx+2,29],[cx+7,34],[cx+4,37]],'#405C2A');
+                ctx.globalAlpha=1;
+                // 面板线
+                pline(cx-6,21,cx-5,35); pline(cx+6,21,cx+5,35);
+                pline(cx-4,8,cx-14,19,'rgba(80,140,60,0.35)',0.5);
+                cockpit(8.5,'#1A1400','rgba(255,210,0,0.95)','#FFD700');
+                // 单发绿焰
+                jet(cx, 42, 4, 10, 'rgba(80,255,100,', 'rgba(0,180,40,');
+                ctx.fillStyle='#081006'; ctx.beginPath(); ctx.ellipse(cx,40,3.2,2.5,0,0,Math.PI*2); ctx.fill();
+                navLight(1,34,31,34,'rgb(255,220,0)','rgb(255,220,0)');
 
-            // ── 机身主体（流线尖头，宽扁隐身截面）──
-            poly([
-                [cx,      1],    // 机鼻尖
-                [cx + 4,  8],    // 右前肩
-                [cx + 6,  20],   // 右腹鼓
-                [cx + 5,  33],   // 右尾收窄
-                [cx + 2,  38],   // 右喷口边
-                [cx - 2,  38],   // 左喷口边
-                [cx - 5,  33],   // 左尾收窄
-                [cx - 6,  20],   // 左腹鼓
-                [cx - 4,  8],    // 左前肩
-            ], s.body);
-
-            // ── DSI鼓包进气道（两侧）──
-            poly([
-                [cx - 4,  12],
-                [cx - 8,  13],
-                [cx - 8,  21],
-                [cx - 5,  22],
-                [cx - 4,  18],
-            ], s.intake);
-            poly([
-                [cx + 4,  12],
-                [cx + 8,  13],
-                [cx + 8,  21],
-                [cx + 5,  22],
-                [cx + 4,  18],
-            ], s.intake);
-
-            // ── 脊线高光（隐身棱线）──
-            poly([
-                [cx,      2],
-                [cx + 2,  9],
-                [cx + 2,  30],
-                [cx,      34],
-                [cx - 2,  30],
-                [cx - 2,  9],
-            ], s.ridge);
-
-            // ── 座舱盖 ──
-            ctx.fillStyle = s.cockpit;
-            ctx.beginPath();
-            ctx.ellipse(cx, 9.5, 2.5, 4.5, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // 座舱高光（反光）
-            ctx.fillStyle = 'rgba(200,230,255,0.35)';
-            ctx.beginPath();
-            ctx.ellipse(cx - 0.6, 7.8, 1.1, 2.2, -0.25, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ── 双发尾喷口 ──
-            ctx.fillStyle = '#1A1A1A';
-            ctx.beginPath(); ctx.ellipse(cx - 2.2, 37, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(cx + 2.2, 37, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
-            // 发动机内焰芯
-            ctx.fillStyle = s.glow;
-            ctx.beginPath(); ctx.ellipse(cx - 2.2, 37, 1.2, 1.2, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(cx + 2.2, 37, 1.2, 1.2, 0, 0, Math.PI * 2); ctx.fill();
+            } else {
+                // 歼-31 幽灵 · 深夜幽灵蓝
+                // 宽梯形翼
+                const wg = ctx.createLinearGradient(0,10,32,34);
+                wg.addColorStop(0,'#1C2838'); wg.addColorStop(0.5,'#101820'); wg.addColorStop(1,'#080E18');
+                gpoly([[cx-3,10],[0,29],[2,37],[cx-4,35]], wg);
+                gpoly([[cx+3,10],[32,29],[30,37],[cx+4,35]], wg);
+                // 内段翼（菱形截面）
+                poly([[cx-4,14],[cx-15,25],[cx-11,29],[cx-4,20]],'#141E30');
+                poly([[cx+4,14],[cx+15,25],[cx+11,29],[cx+4,20]],'#141E30');
+                // 双外倾垂尾
+                poly([[cx-5,23],[cx-11,39],[cx-6,37],[cx-3,27]],'#0E1828');
+                poly([[cx+5,23],[cx+11,39],[cx+6,37],[cx+3,27]],'#0E1828');
+                // 机身
+                const bg = ctx.createLinearGradient(cx-7,0,cx+7,0);
+                bg.addColorStop(0,'#1C2838'); bg.addColorStop(0.35,'#2E4060'); bg.addColorStop(0.5,'#384A70');
+                bg.addColorStop(0.65,'#2E4060'); bg.addColorStop(1,'#1C2838');
+                gpoly([[cx,0],[cx+5,8],[cx+7,21],[cx+5,35],[cx+2,41],[cx-2,41],[cx-5,35],[cx-7,21],[cx-5,8]], bg);
+                // 进气道
+                poly([[cx-5,12],[cx-9,14],[cx-9,25],[cx-6,26],[cx-5,21]],'#040810');
+                poly([[cx+5,12],[cx+9,14],[cx+9,25],[cx+6,25],[cx+5,21]],'#040810');
+                // 脊线（蓝光）
+                const rg = ctx.createLinearGradient(cx,0,cx,41);
+                rg.addColorStop(0,'#60A0FF'); rg.addColorStop(0.4,'#3060B0'); rg.addColorStop(1,'#1C2848');
+                gpoly([[cx,1],[cx+2.5,9],[cx+2,34],[cx,39],[cx-2,34],[cx-2.5,9]], rg);
+                // 蓝光棱线
+                ctx.strokeStyle='rgba(80,150,255,0.45)'; ctx.lineWidth=0.7;
+                ctx.beginPath(); ctx.moveTo(cx-7,21); ctx.lineTo(cx-4,35); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx+7,21); ctx.lineTo(cx+4,35); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx-3,10); ctx.lineTo(0,29); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx+3,10); ctx.lineTo(32,29); ctx.stroke();
+                // 面板线
+                pline(cx-4,14,cx-15,25,'rgba(60,120,220,0.3)',0.5);
+                pline(cx+4,14,cx+15,25,'rgba(60,120,220,0.3)',0.5);
+                cockpit(9,'#000818','rgba(65,110,240,0.96)','#5588FF');
+                // 双发蓝焰
+                jet(cx-2.5,43, 3.2,8, 'rgba(130,190,255,', 'rgba(60,100,220,');
+                jet(cx+2.5,43, 3.2,8, 'rgba(130,190,255,', 'rgba(60,100,220,');
+                ctx.fillStyle='#040812'; ctx.beginPath(); ctx.ellipse(cx-2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#040812'; ctx.beginPath(); ctx.ellipse(cx+2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
+                navLight(0,30,32,30,'rgb(80,140,255)','rgb(80,140,255)');
+            }
 
             ctx.restore();
         }
