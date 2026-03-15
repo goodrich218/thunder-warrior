@@ -3914,6 +3914,8 @@
             // 敌机撞玩家
             enemies.forEach(e => {
                 if (Math.abs(e.x - player.x) < (e.w + 32)/2 && Math.abs(e.y - player.y) < (e.h + 40)/2) {
+                    // 友军不造成碰撞伤害
+                    if (e.isAlly) { return; }
                     // 歼-31 隐身期间免疫碰撞
                     if (selectedPlane === 3 && Date.now() < stealthUntil) { return; }
                     if (Math.random() * 100 < dodgeLevel) { e.currentHp = 0; createExplosion(e.x, e.y, '#FF4444', 15); return; }
