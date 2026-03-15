@@ -3477,10 +3477,10 @@
             // 歼-31（3号）：每30秒自动隐身3秒
             if (selectedPlane === 3) {
                 const now = Date.now();
-                if (nextStealthAt === 0) nextStealthAt = now + 30000;
+                if (nextStealthAt === 0) nextStealthAt = now + 10000;
                 if (now >= nextStealthAt && now >= stealthUntil) {
                     stealthUntil = now + 3000;
-                    nextStealthAt = now + 33000; // 隐身结束后再计30秒
+                    nextStealthAt = now + 13000; // 隐身结束后再计10秒
                 }
             }
 
@@ -3876,14 +3876,35 @@
                 ctx.shadowBlur = 22; ctx.shadowColor = '#4488FF';
                 drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
                 ctx.restore();
-                // 隐身倒计时 HUD
-                const remSec = ((stealthUntil - Date.now()) / 1000).toFixed(1);
-                ctx.save();
-                ctx.font = `bold ${12 * (HEIGHT/1000)}px monospace`;
-                ctx.fillStyle = 'rgba(100,170,255,0.9)';
-                ctx.textAlign = 'center';
-                ctx.fillText(`隐身 ${remSec}s`, player.x, player.y - 28 * (HEIGHT/1000));
-                ctx.restore();
+                // 隐身倒计时 HUD —— 飞机上方悬浮提示条
+                {
+                    const remMs = stealthUntil - Date.now();
+                    const remSec = (remMs / 1000).toFixed(1);
+                    const pct = remMs / 3000;
+                    const S = HEIGHT / 1000;
+                    const bw = 70 * (WIDTH/600), bh = 6 * S;
+                    const bx = player.x - bw / 2, by = player.y - 42 * S;
+                    ctx.save();
+                    // 进度条背景
+                    ctx.fillStyle = 'rgba(0,20,60,0.7)';
+                    ctx.beginPath(); ctx.roundRect(bx - 2, by - 2, bw + 4, bh + 4, 4); ctx.fill();
+                    // 进度条填充（蓝→青渐变）
+                    const barGrad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+                    barGrad.addColorStop(0, '#4488FF'); barGrad.addColorStop(1, '#00EEFF');
+                    ctx.fillStyle = barGrad;
+                    ctx.beginPath(); ctx.roundRect(bx, by, bw * pct, bh, 3); ctx.fill();
+                    // 发光
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#00CCFF';
+                    ctx.strokeStyle = 'rgba(100,200,255,0.6)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.roundRect(bx - 1, by - 1, bw + 2, bh + 2, 4); ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    // 文字
+                    ctx.font = `bold ${11 * S}px monospace`;
+                    ctx.fillStyle = '#AAEEFF';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`◇ 隐身 ${remSec}s ◇`, player.x, by - 4 * S);
+                    ctx.restore();
+                }
             } else {
                 drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
             }
@@ -3923,7 +3944,7 @@
             // 歼-31（3号）隐身冷却进度条（未隐身时显示）
             if (selectedPlane === 3 && Date.now() >= stealthUntil && nextStealthAt > 0) {
                 const remaining = Math.max(0, nextStealthAt - Date.now());
-                const pct = 1 - remaining / 30000;
+                const pct = 1 - remaining / 10000;
                 const bw = 60 * (WIDTH/600), bh = 5 * (HEIGHT/1000);
                 const bx = player.x - bw/2, by = player.y + 28 * (HEIGHT/1000);
                 ctx.fillStyle = 'rgba(0,0,0,0.4)';
