@@ -280,6 +280,18 @@
         .stat-row span { font-size: 8px; color: rgba(255,255,255,0.4); width: 22px; letter-spacing: 0.5px; flex-shrink: 0; }
         .stat-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
         .stat-fill { height: 100%; border-radius: 2px; }
+        .plane-ability {
+            margin-top: 8px; padding: 5px 7px;
+            background: rgba(0,200,180,0.07); border: 1px solid rgba(0,220,180,0.18);
+            border-radius: 5px; text-align: left;
+        }
+        .plane-ability-tag {
+            font-size: 7px; letter-spacing: 1.5px; color: rgba(0,230,180,0.7);
+            text-transform: uppercase; margin-bottom: 3px;
+        }
+        .plane-ability-desc {
+            font-size: 9px; color: rgba(255,255,255,0.72); line-height: 1.45; letter-spacing: 0.3px;
+        }
         /* ── 控制方案选择 ── */
         .ctrl-section {
             margin-top: 14px; position: relative; z-index: 1;
@@ -896,14 +908,18 @@
             </div>
             <div class="plane-select">
                 <div class="plane-btn" data-plane="0">
-                    <div class="plane-card-badge">J-10C</div>
+                    <div class="plane-card-badge">J-35</div>
                     <canvas id="preview0" width="96" height="120"></canvas>
-                    <div class="plane-card-name">歼-10C 猛龙</div>
-                    <div class="plane-card-type">多用途战斗机</div>
+                    <div class="plane-card-name">歼-35 鹘鹰</div>
+                    <div class="plane-card-type">舰载隐身歼击机</div>
                     <div class="plane-stats">
-                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:60%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
-                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:82%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
-                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:50%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:75%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:72%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:55%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 连射</div>
+                        <div class="plane-ability-desc">每次开炮自动补发第二连发，持续火力压制</div>
                     </div>
                 </div>
                 <div class="plane-btn" data-plane="1">
@@ -916,27 +932,39 @@
                         <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:52%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
                         <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:78%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
                     </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 侧翼导弹</div>
+                        <div class="plane-ability-desc">每1.5秒两翼各射L形轨迹巡航弹，伤害×120%</div>
+                    </div>
                 </div>
                 <div class="plane-btn" data-plane="2">
-                    <div class="plane-card-badge">J-20</div>
+                    <div class="plane-card-badge">J-10C</div>
                     <canvas id="preview2" width="96" height="120"></canvas>
+                    <div class="plane-card-name">歼-10C 猛龙</div>
+                    <div class="plane-card-type">多用途战斗机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:62%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:88%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:70%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 防御挡板</div>
+                        <div class="plane-ability-desc">后退时前方展开双挡板，自动格挡来袭子弹</div>
+                    </div>
+                </div>
+                <div class="plane-btn" data-plane="3">
+                    <div class="plane-card-badge">J-20</div>
+                    <canvas id="preview3" width="96" height="120"></canvas>
                     <div class="plane-card-name">歼-20 威龙</div>
                     <div class="plane-card-type">隐身重型歼击机</div>
                     <div class="plane-stats">
                         <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:76%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
                         <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:70%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
-                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:64%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
-                    </div>
-                </div>
-                <div class="plane-btn" data-plane="3">
-                    <div class="plane-card-badge">J-35</div>
-                    <canvas id="preview3" width="96" height="120"></canvas>
-                    <div class="plane-card-name">歼-35 鹘鹰</div>
-                    <div class="plane-card-type">舰载隐身歼击机</div>
-                    <div class="plane-stats">
-                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:65%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
-                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:65%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
                         <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 隐身</div>
+                        <div class="plane-ability-desc">每10秒自动隐身3秒，期间免疫所有伤害</div>
                     </div>
                 </div>
             </div>
@@ -4231,37 +4259,54 @@
                         ctx.restore();
                     }
                 } else if (b.isSideMissile) {
-                    // 歼-20 侧翼小导弹 - 橙红细弹体 + 尾焰
+                    // 歼-16 侧翼巡航导弹 —— 白银粗短弹体+蓝整流罩+十字横翼，与红橙跟踪弹明显区分
                     const smAngle = Math.atan2(b.vy, b.vx) + Math.PI / 2;
-                    const smPulse = 0.7 + 0.3 * Math.sin(Date.now() / 90);
-                    // 拖尾
-                    for (let i = 1; i <= 5; i++) {
-                        const tx = b.x - b.vx * i * 1.4, ty = b.y - b.vy * i * 1.4;
-                        ctx.fillStyle = `rgba(255,120,20,${(1 - i/6) * 0.5})`;
-                        ctx.beginPath(); ctx.arc(tx, ty, 3 - i * 0.4, 0, Math.PI * 2); ctx.fill();
+                    const smPulse = 0.65 + 0.35 * Math.sin(Date.now() / 100);
+                    // 白色蒸汽拖尾
+                    for (let i = 1; i <= 6; i++) {
+                        const tx = b.x - b.vx * i * 1.6, ty = b.y - b.vy * i * 1.6;
+                        ctx.fillStyle = `rgba(200,220,255,${(1 - i/7) * 0.38})`;
+                        ctx.beginPath(); ctx.arc(tx, ty, 4 - i * 0.45, 0, Math.PI * 2); ctx.fill();
                     }
                     ctx.save();
                     ctx.translate(b.x, b.y); ctx.rotate(smAngle);
-                    // 尾焰
-                    const seg = ctx.createRadialGradient(0, 7, 0, 0, 7, 8 * smPulse);
-                    seg.addColorStop(0, `rgba(255,230,150,${smPulse})`);
-                    seg.addColorStop(0.5, `rgba(255,100,0,${smPulse * 0.7})`);
-                    seg.addColorStop(1, 'rgba(255,30,0,0)');
-                    ctx.fillStyle = seg; ctx.beginPath(); ctx.arc(0, 7, 8 * smPulse, 0, Math.PI * 2); ctx.fill();
-                    // 弹体
-                    ctx.shadowBlur = 8; ctx.shadowColor = '#FF6600';
-                    const smg = ctx.createLinearGradient(-2, 0, 2, 0);
-                    smg.addColorStop(0, '#AA1A00'); smg.addColorStop(0.5, '#FF4400'); smg.addColorStop(1, '#881000');
+                    // 蓝白尾焰（区别于红橙）
+                    const seg = ctx.createRadialGradient(0, 9, 0, 0, 9, 9 * smPulse);
+                    seg.addColorStop(0, `rgba(200,240,255,${smPulse})`);
+                    seg.addColorStop(0.4, `rgba(60,160,255,${smPulse * 0.8})`);
+                    seg.addColorStop(1, 'rgba(0,60,200,0)');
+                    ctx.fillStyle = seg; ctx.beginPath(); ctx.ellipse(0, 9, 3.5, 9 * smPulse, 0, 0, Math.PI * 2); ctx.fill();
+                    // 白银粗短弹体
+                    ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(120,200,255,0.7)';
+                    const smg = ctx.createLinearGradient(-4, 0, 4, 0);
+                    smg.addColorStop(0, '#8899AA'); smg.addColorStop(0.3, '#DDE8F0'); smg.addColorStop(0.5, '#ECF4FA');
+                    smg.addColorStop(0.7, '#DDE8F0'); smg.addColorStop(1, '#8899AA');
                     ctx.fillStyle = smg;
-                    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(2,-3); ctx.lineTo(2,5); ctx.lineTo(0,7); ctx.lineTo(-2,5); ctx.lineTo(-2,-3); ctx.closePath(); ctx.fill();
+                    // 弹体：更粗短（宽4，长12）
+                    ctx.beginPath();
+                    ctx.moveTo(0, -9);           // 弹头尖
+                    ctx.lineTo(3.5, -5);
+                    ctx.lineTo(3.5, 6);
+                    ctx.lineTo(2, 8);
+                    ctx.lineTo(-2, 8);
+                    ctx.lineTo(-3.5, 6);
+                    ctx.lineTo(-3.5, -5);
+                    ctx.closePath(); ctx.fill();
                     ctx.shadowBlur = 0;
-                    // 红色导引头
-                    ctx.fillStyle = `rgba(255,180,0,${0.8 + 0.2 * smPulse})`;
-                    ctx.beginPath(); ctx.arc(0, -7, 1.5, 0, Math.PI * 2); ctx.fill();
-                    // 小尾翼
-                    ctx.fillStyle = '#660800';
-                    ctx.beginPath(); ctx.moveTo(-2,2); ctx.lineTo(-5,6); ctx.lineTo(-2,6); ctx.closePath(); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(2,2); ctx.lineTo(5,6); ctx.lineTo(2,6); ctx.closePath(); ctx.fill();
+                    // 蓝色整流罩腰带（区别特征）
+                    ctx.fillStyle = 'rgba(40,140,255,0.9)';
+                    ctx.fillRect(-3.5, -2, 7, 3);
+                    // 十字横翼（X形，比跟踪弹的V形尾翼更宽）
+                    ctx.fillStyle = '#6688AA';
+                    ctx.beginPath(); ctx.moveTo(-3.5, 1); ctx.lineTo(-9, -2); ctx.lineTo(-9, 1); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(3.5, 1); ctx.lineTo(9, -2); ctx.lineTo(9, 1); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(-3.5, 4); ctx.lineTo(-7, 7); ctx.lineTo(-3.5, 7); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(3.5, 4); ctx.lineTo(7, 7); ctx.lineTo(3.5, 7); ctx.closePath(); ctx.fill();
+                    // 蓝色主动导引头
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#00AAFF';
+                    ctx.fillStyle = `rgba(0,180,255,${0.85 + 0.15 * smPulse})`;
+                    ctx.beginPath(); ctx.arc(0, -8, 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0;
                     ctx.restore();
                 } else if (b.isFreeze) {
                     // 冰冻子弹 - 六芒冰晶（无逐颗 save/restore，由外层统一管理）
