@@ -967,6 +967,36 @@
                         <div class="plane-ability-desc">每10秒自动隐身3秒，期间免疫所有伤害</div>
                     </div>
                 </div>
+                <div class="plane-btn" data-plane="4">
+                    <div class="plane-card-badge">FUTURE-1</div>
+                    <canvas id="preview4" width="96" height="120"></canvas>
+                    <div class="plane-card-name">未来-1 波动</div>
+                    <div class="plane-card-type">超声波转化战机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:50%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:80%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:68%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 超声波转化</div>
+                        <div class="plane-ability-desc">每10秒发射超声波，随机将一架敌机转为友军（HP 500）为你作战</div>
+                    </div>
+                </div>
+                <div class="plane-btn" data-plane="5">
+                    <div class="plane-card-badge">FUTURE-2</div>
+                    <canvas id="preview5" width="96" height="120"></canvas>
+                    <div class="plane-card-name">未来-2 镭射</div>
+                    <div class="plane-card-type">激光穿透战机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:85%;background:#ff9100;box-shadow:0 0 5px #ff9100"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:45%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 穿透激光</div>
+                        <div class="plane-ability-desc">子弹替换为激光束，同一直线上所有敌机同时受伤（普攻×30%）</div>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- ── 角色管理面板 ── -->
@@ -1577,6 +1607,9 @@
         // ── 机型专属能力状态 ──
         let stealthUntil = 0, nextStealthAt = 0;  // 歼-31 隐身（plane 3）
         // plane 2 挡板：通过 player.prevY 实时检测后退
+        let conversionNextAt = 0, sonicWaves = [];          // 未来-1 超声波转化
+        let allyBullets = [];                                // 友军子弹
+        let laserFlashes = [];                               // 未来-2 激光闪光
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -2838,7 +2871,7 @@
                 ctx.fillStyle='#081006'; ctx.beginPath(); ctx.ellipse(cx,40,3.2,2.5,0,0,Math.PI*2); ctx.fill();
                 navLight(1,34,31,34,'rgb(255,220,0)','rgb(255,220,0)');
 
-            } else {
+            } else if (type === 3) {
                 // 歼-31 幽灵 · 深夜幽灵蓝
                 // 宽梯形翼
                 const wg = ctx.createLinearGradient(0,10,32,34);
@@ -2879,6 +2912,80 @@
                 ctx.fillStyle='#040812'; ctx.beginPath(); ctx.ellipse(cx-2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
                 ctx.fillStyle='#040812'; ctx.beginPath(); ctx.ellipse(cx+2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
                 navLight(0,30,32,30,'rgb(80,140,255)','rgb(80,140,255)');
+            } else if (type === 4) {
+                // 未来-1 波动 · 蓝紫超声波转化机
+                // 宽阔梯形前掠翼（显得科幻）
+                const wg = ctx.createLinearGradient(0,8,32,30);
+                wg.addColorStop(0,'#3020A0'); wg.addColorStop(0.5,'#5030C8'); wg.addColorStop(1,'#2010A0');
+                gpoly([[cx-3,12],[cx-16,24],[cx-12,30],[cx-4,28]], wg); // 左翼（前掠）
+                gpoly([[cx+3,12],[cx+16,24],[cx+12,30],[cx+4,28]], wg); // 右翼
+                poly([[cx-16,24],[cx-12,30],[cx-10,26]],'#1808A0');
+                poly([[cx+16,24],[cx+12,30],[cx+10,26]],'#1808A0');
+                // 小鸭翼
+                poly([[cx-4,6],[cx-12,12],[cx-9,14],[cx-3,9]],'#4828CC');
+                poly([[cx+4,6],[cx+12,12],[cx+9,14],[cx+3,9]],'#4828CC');
+                // 机身（蓝紫渐变）
+                const bg4 = ctx.createLinearGradient(cx-6,0,cx+6,0);
+                bg4.addColorStop(0,'#2010A8'); bg4.addColorStop(0.35,'#6040DD'); bg4.addColorStop(0.5,'#7050EE');
+                bg4.addColorStop(0.65,'#6040DD'); bg4.addColorStop(1,'#2010A8');
+                gpoly([[cx,0],[cx+4,8],[cx+6,20],[cx+4,34],[cx+2,38],[cx-2,38],[cx-4,34],[cx-6,20],[cx-4,8]], bg4);
+                // 超声波发射器（鼻部圆盘形）
+                ctx.shadowBlur=14; ctx.shadowColor='#AA80FF';
+                const dish = ctx.createRadialGradient(cx,5,0,cx,5,7);
+                dish.addColorStop(0,'rgba(200,160,255,0.9)'); dish.addColorStop(0.6,'rgba(100,60,200,0.7)'); dish.addColorStop(1,'rgba(60,20,180,0)');
+                ctx.fillStyle=dish; ctx.beginPath(); ctx.arc(cx,5,7,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur=0;
+                // 脊线（紫光）
+                const rg4 = ctx.createLinearGradient(cx,0,cx,38);
+                rg4.addColorStop(0,'#CC99FF'); rg4.addColorStop(0.5,'#7040DD'); rg4.addColorStop(1,'#2010A8');
+                gpoly([[cx,1],[cx+2,8],[cx+2,32],[cx,36],[cx-2,32],[cx-2,8]], rg4);
+                // 超声波纹路（同心弧线）
+                ctx.strokeStyle='rgba(180,140,255,0.3)'; ctx.lineWidth=0.6;
+                for (let r=4;r<=10;r+=3) {
+                    ctx.beginPath(); ctx.arc(cx,4,r,Math.PI*0.2,Math.PI*0.8); ctx.stroke();
+                }
+                cockpit(10,'#100828','rgba(180,130,255,0.95)','#CC88FF');
+                jet(cx-2.5,40, 3,7, 'rgba(160,100,255,', 'rgba(80,40,200,');
+                jet(cx+2.5,40, 3,7, 'rgba(160,100,255,', 'rgba(80,40,200,');
+                ctx.fillStyle='#080412'; ctx.beginPath(); ctx.ellipse(cx-2.5,38,2.2,2,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#080412'; ctx.beginPath(); ctx.ellipse(cx+2.5,38,2.2,2,0,0,Math.PI*2); ctx.fill();
+                navLight(cx-16,25,cx+16,25,'rgb(200,140,255)','rgb(200,140,255)');
+
+            } else if (type === 5) {
+                // 未来-2 镭射 · 霓虹青绿激光战机
+                // 极细后掠三角翼（适合高速感）
+                const wg5 = ctx.createLinearGradient(0,14,32,36);
+                wg5.addColorStop(0,'#006060'); wg5.addColorStop(0.5,'#009090'); wg5.addColorStop(1,'#004848');
+                gpoly([[cx-2,16],[0,38],[4,40],[cx-3,34]], wg5);
+                gpoly([[cx+2,16],[32,38],[28,40],[cx+3,34]], wg5);
+                poly([[0,38],[4,40],[3,36]],'#002A2A'); poly([[32,38],[28,40],[29,36]],'#002A2A');
+                // 机身（霓虹青）
+                const bg5 = ctx.createLinearGradient(cx-5,0,cx+5,0);
+                bg5.addColorStop(0,'#004848'); bg5.addColorStop(0.3,'#00C8C0'); bg5.addColorStop(0.5,'#00E8E0');
+                bg5.addColorStop(0.7,'#00C8C0'); bg5.addColorStop(1,'#004848');
+                gpoly([[cx,0],[cx+3,7],[cx+5,18],[cx+4,34],[cx+2,39],[cx-2,39],[cx-4,34],[cx-5,18],[cx-3,7]], bg5);
+                // 激光炮管（鼻部）
+                ctx.shadowBlur=16; ctx.shadowColor='#00FFEE';
+                const barrel = ctx.createLinearGradient(cx-1.5,0,cx+1.5,0);
+                barrel.addColorStop(0,'#006060'); barrel.addColorStop(0.5,'#AAFFFF'); barrel.addColorStop(1,'#006060');
+                ctx.fillStyle=barrel; ctx.fillRect(cx-1.5,-4,3,12); // 炮管
+                ctx.fillStyle='rgba(0,255,230,0.9)'; ctx.beginPath(); ctx.arc(cx,-4,2.5,0,Math.PI*2); ctx.fill(); // 炮口
+                ctx.shadowBlur=0;
+                // 脊线
+                const rg5 = ctx.createLinearGradient(cx,0,cx,39);
+                rg5.addColorStop(0,'#AAFFEE'); rg5.addColorStop(0.4,'#00C8C0'); rg5.addColorStop(1,'#004848');
+                gpoly([[cx,0],[cx+2,8],[cx+2,32],[cx,37],[cx-2,32],[cx-2,8]], rg5);
+                // 棱线发光
+                ctx.strokeStyle='rgba(0,220,200,0.5)'; ctx.lineWidth=0.7;
+                ctx.beginPath(); ctx.moveTo(cx-2,16); ctx.lineTo(0,38); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx+2,16); ctx.lineTo(32,38); ctx.stroke();
+                // 侧面能量槽
+                ctx.strokeStyle='rgba(0,255,200,0.35)'; ctx.lineWidth=0.5;
+                for (let yi=10;yi<=32;yi+=5) { ctx.beginPath(); ctx.moveTo(cx-5,yi); ctx.lineTo(cx+5,yi); ctx.stroke(); }
+                cockpit(9,'#001818','rgba(0,230,210,0.96)','#00FFEE');
+                jet(cx,41, 4,9, 'rgba(0,240,200,', 'rgba(0,140,120,');
+                ctx.fillStyle='#001412'; ctx.beginPath(); ctx.ellipse(cx,39,3,2.2,0,0,Math.PI*2); ctx.fill();
+                navLight(1,39,31,39,'rgb(0,255,200)','rgb(0,255,200)');
             }
 
             ctx.restore();
@@ -3470,8 +3577,8 @@
             player.movingDown = player.y - player.prevY > 1.5;
             player.prevY = player.y;
 
-            // 射击 - 普通子弹
-            if (!player.lastShot || Date.now() - player.lastShot > 450 - bulletRateLevel * 50) {
+            // 射击 - 普通子弹（plane 5 使用激光，跳过此处）
+            if (selectedPlane !== 5 && (!player.lastShot || Date.now() - player.lastShot > 450 - bulletRateLevel * 50)) {
                 playerShoot();
                 player.lastShot = Date.now();
             }
@@ -3501,6 +3608,78 @@
                 player.bullets.push({x: player.x - 13, y: player.y - 8, vx: -4.5, vy: 0, isSideMissile: true, sidePhase: 1, turnX: player.x - 33, damage: dmg, isFreeze: freezeLevel > 0});
                 player.bullets.push({x: player.x + 13, y: player.y - 8, vx:  4.5, vy: 0, isSideMissile: true, sidePhase: 1, turnX: player.x + 33, damage: dmg, isFreeze: freezeLevel > 0});
                 player.lastSideMissile = Date.now();
+            }
+
+            // 未来-1（4号）：每10秒超声波转化一架敌机为友军
+            if (selectedPlane === 4) {
+                const now4 = Date.now();
+                if (conversionNextAt === 0) conversionNextAt = now4 + 10000;
+                if (now4 >= conversionNextAt) {
+                    // 发射超声波（视觉）
+                    sonicWaves.push({ x: player.x, y: player.y, r: 0, maxR: Math.max(WIDTH, HEIGHT) * 0.8, born: now4 });
+                    // 随机选一架非友军敌机转化
+                    const targets = enemies.filter(e => !e.isAlly);
+                    if (targets.length > 0) {
+                        const t = targets[Math.floor(Math.random() * targets.length)];
+                        t.isAlly = true;
+                        t.currentHp = 500; t.hp = 500;
+                        t.lastAllyShot = 0;
+                    }
+                    conversionNextAt = now4 + 10000;
+                }
+                // 友军 AI：向最近的非友军敌机射击
+                const foes = enemies.filter(e => !e.isAlly);
+                enemies.forEach(e => {
+                    if (!e.isAlly) return;
+                    if (!e.lastAllyShot || now4 - e.lastAllyShot > 900) {
+                        if (foes.length > 0) {
+                            let nearest = foes[0];
+                            let minD = (e.x-foes[0].x)**2 + (e.y-foes[0].y)**2;
+                            for (const f of foes) { const d=(e.x-f.x)**2+(e.y-f.y)**2; if(d<minD){minD=d;nearest=f;} }
+                            const dx=nearest.x-e.x, dy=nearest.y-e.y, dist=Math.sqrt(dx*dx+dy*dy)||1;
+                            allyBullets.push({ x:e.x, y:e.y, vx:(dx/dist)*4, vy:(dy/dist)*4, damage:1.5 });
+                        }
+                        e.lastAllyShot = now4;
+                    }
+                });
+            }
+            // 超声波动画更新
+            sonicWaves = sonicWaves.filter(w => { w.r += 8; return w.r < w.maxR; });
+            // 友军子弹移动 + 命中敌机
+            allyBullets = allyBullets.filter(b => {
+                b.x += b.vx; b.y += b.vy;
+                let hit = false;
+                enemies = enemies.filter(e => {
+                    if (e.isAlly) return true;
+                    if (Math.abs(b.x-e.x) < e.w/2 && Math.abs(b.y-e.y) < e.h/2) {
+                        e.currentHp -= b.damage; hit = true;
+                        if (e.currentHp <= 0) { score += e.score; createExplosion(e.x,e.y,'#AAFFAA',15); playKillSound(); checkUpgrade(); return false; }
+                    }
+                    return true;
+                });
+                return !hit && b.x > 0 && b.x < WIDTH && b.y > 0 && b.y < HEIGHT;
+            });
+
+            // 未来-2（5号）：激光束替代普通子弹
+            if (selectedPlane === 5) {
+                const now5 = Date.now();
+                if (!player.lastShot || now5 - player.lastShot > 450 - bulletRateLevel * 50) {
+                    const wbMult = 1 + weaponBayLevel * 0.1;
+                    const laserDmg = wbMult * 0.3;
+                    // 立即对同列所有敌机造成伤害
+                    enemies.forEach(e => {
+                        if (e.isAlly) return;
+                        if (Math.abs(e.x - player.x) < 14) {
+                            e.currentHp -= laserDmg;
+                            dmgMainGun += laserDmg * 100;
+                            if (e.currentHp <= 0) { score += e.score; levelXP += e.score; createExplosion(e.x,e.y,'#00FFEE',15); playKillSound(); checkUpgrade(); if(currentMission!==null){missionKillCount++;checkMissionComplete();} }
+                        }
+                    });
+                    enemies = enemies.filter(e => e.currentHp > 0);
+                    laserFlashes.push({ x: player.x, y: player.y, born: now5, duration: 140 });
+                    player.lastShot = now5;
+                    playBulletSound();
+                }
             }
 
             // 歼-31（3号）：每30秒自动隐身3秒
@@ -3645,6 +3824,7 @@
             player.bullets = player.bullets.filter(b => {
                 let hit = false;
                 enemies = enemies.filter(e => {
+                    if (e.isAlly) return true; // 友军不受玩家子弹伤害
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
                         const dmg = b.damage || 1;
                         e.currentHp -= dmg; hit = true;
@@ -3687,37 +3867,52 @@
                 return !hit;
             });
 
+            // 敌机子弹打友军
+            enemies.forEach(e => {
+                if (e.isAlly || !e.bullets) return;
+                e.bullets = e.bullets.filter(b => {
+                    let blocked = false;
+                    enemies.forEach(ally => {
+                        if (!ally.isAlly) return;
+                        if (Math.abs(b.x-ally.x)<ally.w/2 && Math.abs(b.y-ally.y)<ally.h/2) {
+                            ally.currentHp -= (b.damage||100)*0.5; blocked = true;
+                        }
+                    });
+                    return !blocked;
+                });
+            });
+            enemies = enemies.filter(e => !e.isAlly || e.currentHp > 0);
+
             // 敌机子弹打玩家
             enemies.forEach(e => {
-                if (e.bullets) {
-                    e.bullets = e.bullets.filter(b => {
-                        if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
-                            // 歼-31 隐身免疫
-                            if (selectedPlane === 3 && Date.now() < stealthUntil) {
-                                createExplosion(b.x, b.y, '#4488FF', 4);
-                                return false;
-                            }
-                            // 歼-10C 挡板：后退时拦截正面区域（上方±18px, y-15附近）的子弹
-                            if (selectedPlane === 2 && player.movingDown) {
-                                const sy = player.y - 14;
-                                if ((Math.abs(b.x - (player.x - 18)) < 11 || Math.abs(b.x - (player.x + 18)) < 11) && Math.abs(b.y - sy) < 10) {
-                                    createExplosion(b.x, b.y, '#88FFCC', 5);
-                                    return false;
-                                }
-                            }
-                            if (Math.random() * 100 >= dodgeLevel) {
-                                const shieldMult = 1 - shieldLevel * 0.02;
-                                const bulletDmg = b.damage || 100;
-                                currentHp -= Math.max(1, Math.round((bulletDmg - armorLevel * 5) * shieldMult));
-                                createExplosion(player.x, player.y, '#FFD700', 5);
-                                updateUI();
-                                if (currentHp <= 0) gameOver();
-                            }
+                if (e.isAlly || !e.bullets) return;
+                e.bullets = e.bullets.filter(b => {
+                    if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
+                        // 歼-31 隐身免疫
+                        if (selectedPlane === 3 && Date.now() < stealthUntil) {
+                            createExplosion(b.x, b.y, '#4488FF', 4);
                             return false;
                         }
-                        return true;
-                    });
-                }
+                        // 歼-10C 挡板：后退时拦截正面区域（上方±18px, y-15附近）的子弹
+                        if (selectedPlane === 2 && player.movingDown) {
+                            const sy = player.y - 14;
+                            if ((Math.abs(b.x - (player.x - 18)) < 11 || Math.abs(b.x - (player.x + 18)) < 11) && Math.abs(b.y - sy) < 10) {
+                                createExplosion(b.x, b.y, '#88FFCC', 5);
+                                return false;
+                            }
+                        }
+                        if (Math.random() * 100 >= dodgeLevel) {
+                            const shieldMult = 1 - shieldLevel * 0.02;
+                            const bulletDmg = b.damage || 100;
+                            currentHp -= Math.max(1, Math.round((bulletDmg - armorLevel * 5) * shieldMult));
+                            createExplosion(player.x, player.y, '#FFD700', 5);
+                            updateUI();
+                            if (currentHp <= 0) gameOver();
+                        }
+                        return false;
+                    }
+                    return true;
+                });
             });
 
             // 敌机撞玩家
@@ -4364,6 +4559,25 @@
 
             // 绘制敌机
             enemies.forEach(e => {
+                // 友军：绿色光晕覆盖
+                if (e.isAlly) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.7;
+                    // 绿色整体染色
+                    ctx.shadowBlur = 18; ctx.shadowColor = '#00FF88';
+                    drawEnemy(ctx, e.x - e.w/2, e.y - e.h/2, e.w, e.h, e.type);
+                    ctx.shadowBlur = 0;
+                    // 绿色半透明遮罩
+                    ctx.fillStyle = 'rgba(0,220,120,0.35)';
+                    ctx.beginPath(); ctx.ellipse(e.x, e.y, e.w*0.55, e.h*0.55, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.restore();
+                    // 友军血条
+                    const bw = e.w * 1.1, bh = 3;
+                    const bx = e.x - bw/2, by = e.y - e.h/2 - 7;
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx, by, bw, bh);
+                    ctx.fillStyle = '#00FF88'; ctx.fillRect(bx, by, bw * (e.currentHp/500), bh);
+                    return;
+                }
                 // 无人机折返时翻转朝向（机头朝上飞出）
                 if (e.type === 7 && e.phase === 'climb') {
                     ctx.save();
@@ -4405,6 +4619,55 @@
             });
 
             drawParticles();
+
+            // ── 未来-1 超声波扩散圆环 ──
+            sonicWaves.forEach(w => {
+                const age = Date.now() - w.born;
+                const alpha = Math.max(0, 1 - w.r / w.maxR);
+                ctx.save();
+                ctx.globalAlpha = alpha * 0.7;
+                ctx.strokeStyle = '#CC88FF';
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 12; ctx.shadowColor = '#AA60FF';
+                ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI*2); ctx.stroke();
+                // 第二圈（稍小）
+                if (w.r > 20) {
+                    ctx.globalAlpha = alpha * 0.4;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.arc(w.x, w.y, w.r * 0.7, 0, Math.PI*2); ctx.stroke();
+                }
+                ctx.shadowBlur = 0; ctx.restore();
+            });
+
+            // ── 未来-2 激光束闪光 ──
+            laserFlashes = laserFlashes.filter(lf => Date.now() - lf.born < lf.duration);
+            laserFlashes.forEach(lf => {
+                const age = Date.now() - lf.born;
+                const alpha = 1 - age / lf.duration;
+                const SX = WIDTH/600;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                // 外层光晕
+                ctx.shadowBlur = 20; ctx.shadowColor = '#00FFEE';
+                ctx.strokeStyle = `rgba(0,240,220,${alpha * 0.6})`;
+                ctx.lineWidth = 10 * SX;
+                ctx.beginPath(); ctx.moveTo(lf.x, lf.y); ctx.lineTo(lf.x, 0); ctx.stroke();
+                // 中心亮线
+                ctx.shadowBlur = 8;
+                ctx.strokeStyle = `rgba(180,255,250,${alpha})`;
+                ctx.lineWidth = 2.5 * SX;
+                ctx.beginPath(); ctx.moveTo(lf.x, lf.y); ctx.lineTo(lf.x, 0); ctx.stroke();
+                ctx.shadowBlur = 0; ctx.restore();
+            });
+
+            // ── 友军子弹（绿色能量弹）──
+            allyBullets.forEach(b => {
+                ctx.save();
+                ctx.shadowBlur = 8; ctx.shadowColor = '#00FF88';
+                ctx.fillStyle = '#88FFCC';
+                ctx.beginPath(); ctx.ellipse(b.x, b.y, 2.5, 5, Math.atan2(b.vy,b.vx)+Math.PI/2, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0; ctx.restore();
+            });
 
             // ── 电磁干扰激活视觉效果 ──
             if (Date.now() < emfActiveUntil) {
@@ -4549,7 +4812,7 @@
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
-            enemies = []; particles = []; player.bullets = [];
+            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = [];
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
@@ -4567,7 +4830,7 @@
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; levelXP = 0;
             dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
-            enemies = []; particles = []; player.bullets = [];
+            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = [];
             player.x = WIDTH / 2; player.y = HEIGHT - 100;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
@@ -4596,6 +4859,7 @@
             missionCompleteFired = false;
             paused = false;
             stealthUntil = 0; nextStealthAt = 0;
+            conversionNextAt = 0; sonicWaves = []; allyBullets = []; laserFlashes = [];
             player.prevY = null; player.movingDown = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
@@ -4603,14 +4867,17 @@
         }
 
         function drawPreviews() {
-            for (let i = 0; i < 4; i++) {
-                const c = document.getElementById('preview' + i).getContext('2d');
+            const schemes = [
+                'rgba(120,140,160,0.18)', 'rgba(180,30,30,0.18)',
+                'rgba(50,140,50,0.18)',   'rgba(50,80,180,0.18)',
+                'rgba(120,60,220,0.18)',  'rgba(0,180,160,0.18)',
+            ];
+            for (let i = 0; i < 6; i++) {
+                const el = document.getElementById('preview' + i);
+                if (!el) continue;
+                const c = el.getContext('2d');
                 c.clearRect(0, 0, 96, 120);
                 c.save();
-                const schemes = [
-                    'rgba(120,140,160,0.18)', 'rgba(180,30,30,0.18)',
-                    'rgba(50,140,50,0.18)',   'rgba(50,80,180,0.18)'
-                ];
                 const grd = c.createRadialGradient(48, 60, 5, 48, 60, 45);
                 grd.addColorStop(0, schemes[i]);
                 grd.addColorStop(1, 'transparent');
@@ -4940,7 +5207,7 @@
                 saveAccount();
             }
             // 清理游戏状态
-            enemies = []; particles = []; player.bullets = [];
+            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = [];
             currentMission = null;
             missionKillCount = 0;
             missionSpecialKillCount = 0;
