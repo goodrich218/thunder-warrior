@@ -3660,23 +3660,19 @@
                 return !hit && b.x > 0 && b.x < WIDTH && b.y > 0 && b.y < HEIGHT;
             });
 
-            // 未来-2（5号）：激光束替代普通子弹
+            // 未来-2（5号）：发射移动激光束
             if (selectedPlane === 5) {
                 const now5 = Date.now();
                 if (!player.lastShot || now5 - player.lastShot > 450 - bulletRateLevel * 50) {
                     const wbMult = 1 + weaponBayLevel * 0.1;
-                    const laserDmg = wbMult * 0.3;
-                    // 立即对同列所有敌机造成伤害
-                    enemies.forEach(e => {
-                        if (e.isAlly) return;
-                        if (Math.abs(e.x - player.x) < 14) {
-                            e.currentHp -= laserDmg;
-                            dmgMainGun += laserDmg * 100;
-                            if (e.currentHp <= 0) { score += e.score; levelXP += e.score; createExplosion(e.x,e.y,'#00FFEE',15); playKillSound(); checkUpgrade(); if(currentMission!==null){missionKillCount++;checkMissionComplete();} }
-                        }
+                    laserFlashes.push({
+                        x: player.x,
+                        y: player.y,          // 光束前端（顶部）
+                        len: HEIGHT / 4,       // 光束长度 = 屏幕高度 1/4
+                        speed: 9,
+                        dmg: wbMult * 0.4,    // 40% 攻击力
+                        hit: []               // 已命中的敌机引用（穿透用）
                     });
-                    enemies = enemies.filter(e => e.currentHp > 0);
-                    laserFlashes.push({ x: player.x, y: player.y, born: now5, duration: 140 });
                     player.lastShot = now5;
                     playBulletSound();
                 }
@@ -4639,26 +4635,49 @@
                 ctx.shadowBlur = 0; ctx.restore();
             });
 
-            // ── 未来-2 激光束闪光 ──
-            laserFlashes = laserFlashes.filter(lf => Date.now() - lf.born < lf.duration);
+            // ── 未来-2 激光束（移动 + 穿透伤害）──
             laserFlashes.forEach(lf => {
-                const age = Date.now() - lf.born;
-                const alpha = 1 - age / lf.duration;
-                const SX = WIDTH/600;
+                // 每帧向上移动
+                lf.y -= lf.speed;
+                const beamTop = lf.y;
+                const beamBot = lf.y + lf.len;
+                // 穿透判定：光束线段覆盖到的敌机
+                enemies.forEach(e => {
+                    if (e.isAlly || lf.hit.includes(e)) return;
+                    if (Math.abs(e.x - lf.x) < 14 && e.y >= beamTop && e.y <= beamBot) {
+                        lf.hit.push(e);
+                        e.currentHp -= lf.dmg;
+                        dmgMainGun += lf.dmg * 100;
+                        if (e.currentHp <= 0) {
+                            score += e.score; levelXP += e.score;
+                            createExplosion(e.x, e.y, '#00FFEE', 15);
+                            playKillSound(); checkUpgrade();
+                            if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
+                        }
+                    }
+                });
+                enemies = enemies.filter(e => e.currentHp > 0);
+                // 绘制光束线段（从后端到前端）
+                const SX = WIDTH / 600;
                 ctx.save();
-                ctx.globalAlpha = alpha;
                 // 外层光晕
-                ctx.shadowBlur = 20; ctx.shadowColor = '#00FFEE';
-                ctx.strokeStyle = `rgba(0,240,220,${alpha * 0.6})`;
-                ctx.lineWidth = 10 * SX;
-                ctx.beginPath(); ctx.moveTo(lf.x, lf.y); ctx.lineTo(lf.x, 0); ctx.stroke();
+                ctx.shadowBlur = 22; ctx.shadowColor = '#00FFEE';
+                ctx.strokeStyle = 'rgba(0,240,220,0.55)';
+                ctx.lineWidth = 9 * SX;
+                ctx.beginPath(); ctx.moveTo(lf.x, beamBot); ctx.lineTo(lf.x, beamTop); ctx.stroke();
                 // 中心亮线
-                ctx.shadowBlur = 8;
-                ctx.strokeStyle = `rgba(180,255,250,${alpha})`;
+                ctx.shadowBlur = 6;
+                ctx.strokeStyle = 'rgba(200,255,252,0.95)';
                 ctx.lineWidth = 2.5 * SX;
-                ctx.beginPath(); ctx.moveTo(lf.x, lf.y); ctx.lineTo(lf.x, 0); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(lf.x, beamBot); ctx.lineTo(lf.x, beamTop); ctx.stroke();
+                // 前端弹头亮点
+                ctx.shadowBlur = 14; ctx.shadowColor = '#ffffff';
+                ctx.fillStyle = '#e0ffff';
+                ctx.beginPath(); ctx.arc(lf.x, beamTop, 3.5 * SX, 0, Math.PI * 2); ctx.fill();
                 ctx.shadowBlur = 0; ctx.restore();
             });
+            // 光束飞出屏幕后移除
+            laserFlashes = laserFlashes.filter(lf => lf.y + lf.len > 0);
 
             // ── 友军子弹（绿色能量弹）──
             allyBullets.forEach(b => {
