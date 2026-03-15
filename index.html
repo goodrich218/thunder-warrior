@@ -1545,6 +1545,10 @@
         let armorLevel = 0, weaponBayLevel = 0, dodgeLevel = 0, shieldLevel = 0, knockbackLevel = 0;
         let paused = false;
         let bgScrollY = 0; // 地面背景滚动偏移（canvas像素）
+
+        // ── 机型专属能力状态 ──
+        let stealthUntil = 0, nextStealthAt = 0;  // 歼-31 隐身（plane 3）
+        // plane 2 挡板：通过 player.prevY 实时检测后退
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -3172,11 +3176,16 @@
         function playerShoot() {
             const spread = 15, startAngle = -spread * (bulletCount - 1) / 2;
             const wbMult = 1 + weaponBayLevel * 0.1;
-            for (let i = 0; i < bulletCount; i++) {
-                const a = (startAngle + i * spread) * Math.PI / 180;
-                player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false, damage: wbMult, isFreeze: freezeLevel > 0});
+            function fireBurst() {
+                for (let i = 0; i < bulletCount; i++) {
+                    const a = (startAngle + i * spread) * Math.PI / 180;
+                    player.bullets.push({x: player.x, y: player.y - 20, vx: Math.sin(a) * 3, vy: -Math.cos(a) * 3, ricochet: ricochetCount, bounces: 0, isMissile: false, damage: wbMult, isFreeze: freezeLevel > 0});
+                }
+                playBulletSound();
             }
-            playBulletSound();
+            fireBurst();
+            // 歼-35（0号）：连发 —— 80ms 后再射一次
+            if (selectedPlane === 0) setTimeout(() => { if (gameState === 'playing') fireBurst(); }, 80);
         }
 
         function playerShootMissile() {
@@ -3403,7 +3412,10 @@
 
         function update() {
             if (gameState !== 'playing') return;
-            
+
+            // 记录上一帧 Y，供 plane 2 挡板检测
+            player.prevY = player.prevY ?? player.y;
+
             // 移动控制：根据控制方案 + 输入方式
             if (controlMode === 'joystick' && joyActive) {
                 // 摇杆速度控制
@@ -3425,6 +3437,10 @@
             // 摇杆模式下未触摸时飞机保持原位
             player.x = Math.max(16, Math.min(WIDTH - 16, player.x));
             player.y = Math.max(20, Math.min(HEIGHT - 20, player.y));
+
+            // plane 2：后退检测（y 增大 = 向下 = 后退）
+            player.movingDown = player.y - player.prevY > 1.5;
+            player.prevY = player.y;
 
             // 射击 - 普通子弹
             if (!player.lastShot || Date.now() - player.lastShot > 450 - bulletRateLevel * 50) {
@@ -3448,6 +3464,24 @@
                     player.bullets.push({ x: wx, y: wy - 8, vx: 0, vy: -3, isWingman: true, damage: dmgMult, isFreeze: freezeLevel > 0 });
                 }
                 player.lastWingmanShot = Date.now();
+            }
+
+            // 歼-20（1号）：侧翼小导弹，每1.5s两翼各发一枚，120%伤害
+            if (selectedPlane === 1 && (!player.lastSideMissile || Date.now() - player.lastSideMissile > 1500)) {
+                const dmg = 1.2 * (1 + weaponBayLevel * 0.1);
+                player.bullets.push({x: player.x - 13, y: player.y - 8, vx: -0.8, vy: -4.5, isSideMissile: true, damage: dmg, isFreeze: freezeLevel > 0});
+                player.bullets.push({x: player.x + 13, y: player.y - 8, vx:  0.8, vy: -4.5, isSideMissile: true, damage: dmg, isFreeze: freezeLevel > 0});
+                player.lastSideMissile = Date.now();
+            }
+
+            // 歼-31（3号）：每30秒自动隐身3秒
+            if (selectedPlane === 3) {
+                const now = Date.now();
+                if (nextStealthAt === 0) nextStealthAt = now + 30000;
+                if (now >= nextStealthAt && now >= stealthUntil) {
+                    stealthUntil = now + 3000;
+                    nextStealthAt = now + 33000; // 隐身结束后再计30秒
+                }
             }
 
             // 霹雳-17 战机扫场动画推进
@@ -3623,6 +3657,19 @@
                 if (e.bullets) {
                     e.bullets = e.bullets.filter(b => {
                         if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
+                            // 歼-31 隐身免疫
+                            if (selectedPlane === 3 && Date.now() < stealthUntil) {
+                                createExplosion(b.x, b.y, '#4488FF', 4);
+                                return false;
+                            }
+                            // 歼-10C 挡板：后退时拦截正面区域（上方±18px, y-15附近）的子弹
+                            if (selectedPlane === 2 && player.movingDown) {
+                                const sy = player.y - 14;
+                                if ((Math.abs(b.x - (player.x - 18)) < 11 || Math.abs(b.x - (player.x + 18)) < 11) && Math.abs(b.y - sy) < 10) {
+                                    createExplosion(b.x, b.y, '#88FFCC', 5);
+                                    return false;
+                                }
+                            }
                             if (Math.random() * 100 >= dodgeLevel) {
                                 const shieldMult = 1 - shieldLevel * 0.02;
                                 const bulletDmg = b.damage || 100;
@@ -3641,6 +3688,8 @@
             // 敌机撞玩家
             enemies.forEach(e => {
                 if (Math.abs(e.x - player.x) < (e.w + 32)/2 && Math.abs(e.y - player.y) < (e.h + 40)/2) {
+                    // 歼-31 隐身期间免疫碰撞
+                    if (selectedPlane === 3 && Date.now() < stealthUntil) { return; }
                     if (Math.random() * 100 < dodgeLevel) { e.currentHp = 0; createExplosion(e.x, e.y, '#FF4444', 15); return; }
                     const shieldMult = 1 - shieldLevel * 0.02;
                     currentHp -= Math.max(1, Math.round((500 - armorLevel * 5) * shieldMult));
@@ -3820,8 +3869,74 @@
 
             if (gameState !== 'playing' && gameState !== 'upgrade') return;
 
-            // 绘制玩家飞机
-            drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+            // 绘制玩家飞机（歼-31 隐身时半透明+蓝光）
+            if (selectedPlane === 3 && Date.now() < stealthUntil) {
+                ctx.save();
+                ctx.globalAlpha = 0.22 + 0.1 * Math.sin(Date.now() / 70);
+                ctx.shadowBlur = 22; ctx.shadowColor = '#4488FF';
+                drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+                ctx.restore();
+                // 隐身倒计时 HUD
+                const remSec = ((stealthUntil - Date.now()) / 1000).toFixed(1);
+                ctx.save();
+                ctx.font = `bold ${12 * (HEIGHT/1000)}px monospace`;
+                ctx.fillStyle = 'rgba(100,170,255,0.9)';
+                ctx.textAlign = 'center';
+                ctx.fillText(`隐身 ${remSec}s`, player.x, player.y - 28 * (HEIGHT/1000));
+                ctx.restore();
+            } else {
+                drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
+            }
+
+            // 歼-10C（2号）后退时绘制前置挡板
+            if (selectedPlane === 2 && player.movingDown) {
+                const sy = player.y - 14 * (HEIGHT/1000);
+                const pulse2 = 0.7 + 0.3 * Math.sin(Date.now() / 90);
+                ctx.save();
+                ctx.shadowBlur = 12; ctx.shadowColor = '#00FFAA';
+                // 左挡板
+                const lx = player.x - 18 * (WIDTH/600);
+                ctx.fillStyle = `rgba(0,220,160,${0.55 * pulse2})`;
+                ctx.beginPath();
+                ctx.moveTo(lx - 10*(WIDTH/600), sy - 8*(HEIGHT/1000));
+                ctx.lineTo(lx + 10*(WIDTH/600), sy - 8*(HEIGHT/1000));
+                ctx.lineTo(lx + 8*(WIDTH/600),  sy + 8*(HEIGHT/1000));
+                ctx.lineTo(lx - 8*(WIDTH/600),  sy + 8*(HEIGHT/1000));
+                ctx.closePath(); ctx.fill();
+                // 右挡板
+                const rx = player.x + 18 * (WIDTH/600);
+                ctx.fillStyle = `rgba(0,220,160,${0.55 * pulse2})`;
+                ctx.beginPath();
+                ctx.moveTo(rx - 10*(WIDTH/600), sy - 8*(HEIGHT/1000));
+                ctx.lineTo(rx + 10*(WIDTH/600), sy - 8*(HEIGHT/1000));
+                ctx.lineTo(rx + 8*(WIDTH/600),  sy + 8*(HEIGHT/1000));
+                ctx.lineTo(rx - 8*(WIDTH/600),  sy + 8*(HEIGHT/1000));
+                ctx.closePath(); ctx.fill();
+                // 挡板边框
+                ctx.strokeStyle = `rgba(80,255,180,${0.8 * pulse2})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.roundRect(lx-10*(WIDTH/600), sy-8*(HEIGHT/1000), 20*(WIDTH/600), 16*(HEIGHT/1000), 3); ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(rx-10*(WIDTH/600), sy-8*(HEIGHT/1000), 20*(WIDTH/600), 16*(HEIGHT/1000), 3); ctx.stroke();
+                ctx.restore();
+            }
+
+            // 歼-31（3号）隐身冷却进度条（未隐身时显示）
+            if (selectedPlane === 3 && Date.now() >= stealthUntil && nextStealthAt > 0) {
+                const remaining = Math.max(0, nextStealthAt - Date.now());
+                const pct = 1 - remaining / 30000;
+                const bw = 60 * (WIDTH/600), bh = 5 * (HEIGHT/1000);
+                const bx = player.x - bw/2, by = player.y + 28 * (HEIGHT/1000);
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(bx, by, bw, bh);
+                ctx.fillStyle = pct >= 1 ? '#88FFFF' : '#2266AA';
+                ctx.fillRect(bx, by, bw * pct, bh);
+                if (pct >= 1) {
+                    ctx.font = `${10*(HEIGHT/1000)}px monospace`;
+                    ctx.fillStyle = 'rgba(136,255,255,0.9)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('隐身就绪', player.x, by + 14*(HEIGHT/1000));
+                }
+            }
 
             // 绘制霹雳-17 战机影子
             if (pl17Active) {
@@ -4087,6 +4202,39 @@
 
                         ctx.restore();
                     }
+                } else if (b.isSideMissile) {
+                    // 歼-20 侧翼小导弹 - 橙红细弹体 + 尾焰
+                    const smAngle = Math.atan2(b.vy, b.vx) + Math.PI / 2;
+                    const smPulse = 0.7 + 0.3 * Math.sin(Date.now() / 90);
+                    // 拖尾
+                    for (let i = 1; i <= 5; i++) {
+                        const tx = b.x - b.vx * i * 1.4, ty = b.y - b.vy * i * 1.4;
+                        ctx.fillStyle = `rgba(255,120,20,${(1 - i/6) * 0.5})`;
+                        ctx.beginPath(); ctx.arc(tx, ty, 3 - i * 0.4, 0, Math.PI * 2); ctx.fill();
+                    }
+                    ctx.save();
+                    ctx.translate(b.x, b.y); ctx.rotate(smAngle);
+                    // 尾焰
+                    const seg = ctx.createRadialGradient(0, 7, 0, 0, 7, 8 * smPulse);
+                    seg.addColorStop(0, `rgba(255,230,150,${smPulse})`);
+                    seg.addColorStop(0.5, `rgba(255,100,0,${smPulse * 0.7})`);
+                    seg.addColorStop(1, 'rgba(255,30,0,0)');
+                    ctx.fillStyle = seg; ctx.beginPath(); ctx.arc(0, 7, 8 * smPulse, 0, Math.PI * 2); ctx.fill();
+                    // 弹体
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#FF6600';
+                    const smg = ctx.createLinearGradient(-2, 0, 2, 0);
+                    smg.addColorStop(0, '#AA1A00'); smg.addColorStop(0.5, '#FF4400'); smg.addColorStop(1, '#881000');
+                    ctx.fillStyle = smg;
+                    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(2,-3); ctx.lineTo(2,5); ctx.lineTo(0,7); ctx.lineTo(-2,5); ctx.lineTo(-2,-3); ctx.closePath(); ctx.fill();
+                    ctx.shadowBlur = 0;
+                    // 红色导引头
+                    ctx.fillStyle = `rgba(255,180,0,${0.8 + 0.2 * smPulse})`;
+                    ctx.beginPath(); ctx.arc(0, -7, 1.5, 0, Math.PI * 2); ctx.fill();
+                    // 小尾翼
+                    ctx.fillStyle = '#660800';
+                    ctx.beginPath(); ctx.moveTo(-2,2); ctx.lineTo(-5,6); ctx.lineTo(-2,6); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(2,2); ctx.lineTo(5,6); ctx.lineTo(2,6); ctx.closePath(); ctx.fill();
+                    ctx.restore();
                 } else if (b.isFreeze) {
                     // 冰冻子弹 - 六芒冰晶（无逐颗 save/restore，由外层统一管理）
                     ctx.shadowBlur = 10; ctx.shadowColor = '#88DDFF';
@@ -4374,6 +4522,8 @@
             missionB2Spawned = 0;
             missionCompleteFired = false;
             paused = false;
+            stealthUntil = 0; nextStealthAt = 0;
+            player.prevY = null; player.movingDown = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn(); updatePL17Btn();
