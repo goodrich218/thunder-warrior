@@ -949,7 +949,7 @@
                     </div>
                     <div class="plane-ability">
                         <div class="plane-ability-tag">专属 · 防御挡板</div>
-                        <div class="plane-ability-desc">后退时前方展开双挡板，自动格挡来袭子弹</div>
+                        <div class="plane-ability-desc">前进时前方展开双挡板，自动格挡来袭子弹</div>
                     </div>
                 </div>
                 <div class="plane-btn" data-plane="3">
@@ -3573,8 +3573,8 @@
             player.x = Math.max(16, Math.min(WIDTH - 16, player.x));
             player.y = Math.max(20, Math.min(HEIGHT - 20, player.y));
 
-            // plane 2：后退检测（y 增大 = 向下 = 后退）
-            player.movingDown = player.y - player.prevY > 1.5;
+            // plane 2：前进检测（y 减小 = 向上 = 前进）
+            player.movingUp = player.prevY - player.y > 1.5;
             player.prevY = player.y;
 
             // 射击 - 普通子弹（plane 5 使用激光，跳过此处）
@@ -3889,8 +3889,8 @@
                             createExplosion(b.x, b.y, '#4488FF', 4);
                             return false;
                         }
-                        // 歼-10C 挡板：后退时拦截正面区域（上方±18px, y-15附近）的子弹
-                        if (selectedPlane === 2 && player.movingDown) {
+                        // 歼-10C 挡板：前进时拦截正面区域（上方±18px, y-15附近）的子弹
+                        if (selectedPlane === 2 && player.movingUp) {
                             const sy = player.y - 14;
                             if ((Math.abs(b.x - (player.x - 18)) < 11 || Math.abs(b.x - (player.x + 18)) < 11) && Math.abs(b.y - sy) < 10) {
                                 createExplosion(b.x, b.y, '#88FFCC', 5);
@@ -4137,8 +4137,8 @@
                 drawPlane(ctx, player.x - 16, player.y - 20, 32, 40, selectedPlane);
             }
 
-            // 歼-10C（2号）后退时绘制前置挡板
-            if (selectedPlane === 2 && player.movingDown) {
+            // 歼-10C（2号）前进时绘制前置挡板
+            if (selectedPlane === 2 && player.movingUp) {
                 const sy = player.y - 14 * (HEIGHT/1000);
                 const pulse2 = 0.7 + 0.3 * Math.sin(Date.now() / 90);
                 ctx.save();
