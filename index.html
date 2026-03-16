@@ -3991,7 +3991,7 @@
                     ringProjectiles.push({
                         x: player.x,
                         y: player.y - 20,
-                        vy: -1.5,        // 向前推进
+                        vy: -0.3,        // 向前推进
                         r: 20,           // 环形半径（直径40px，与敌机大小相近）
                         angle: 0,        // 旋转角度（逐帧递增，视觉旋转）
                         dmg: wbMult * 1.2,
@@ -5226,7 +5226,7 @@
                     ctx.save();
                     ctx.translate(0, -s * 1.6);
                     ctx.rotate(Date.now() * 0.015); // 旋转角度随时间变化
-                    const pr = s * 1.1; // 桨叶长度
+                    const pr = s * 0.55; // 桨叶长度
                     ctx.shadowBlur = 10; ctx.shadowColor = '#FFFFFF';
                     for (let b = 0; b < 3; b++) {
                         ctx.rotate(Math.PI * 2 / 3);
