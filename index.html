@@ -3868,9 +3868,9 @@
                 // 持续吸血（每秒100）
                 if (devourState && now7 - devourState.lastTick >= 1000) {
                     const t7 = devourState.target;
-                    const drain = Math.min(100, t7.currentHp);
+                    const drain = Math.floor(Math.min(100, t7.currentHp));
                     t7.currentHp -= drain;
-                    currentHp = Math.min(maxHp, currentHp + drain);
+                    currentHp = Math.min(maxHp, Math.floor(currentHp) + drain);
                     createExplosion(t7.x, t7.y, '#CC44FF', 6);
                     updateUI();
                     devourState.lastTick = now7;
