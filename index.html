@@ -997,6 +997,21 @@
                         <div class="plane-ability-desc">子弹替换为激光束，同一直线上所有敌机同时受伤（普攻×40%）</div>
                     </div>
                 </div>
+                <div class="plane-btn" data-plane="6">
+                    <div class="plane-card-badge">FUTURE-3</div>
+                    <canvas id="preview6" width="96" height="120"></canvas>
+                    <div class="plane-card-name">未来-3 环弦</div>
+                    <div class="plane-card-type">环绕弹战机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:72%;background:#ffd700;box-shadow:0 0 5px #ffd700"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:78%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:62%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 环绕弹</div>
+                        <div class="plane-ability-desc">每10秒发射8颗子弹组成的圆形弹环，缓慢向前推进，自动消除来袭子弹</div>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- ── 角色管理面板 ── -->
@@ -1610,6 +1625,7 @@
         let conversionNextAt = 0, sonicWaves = [];          // 未来-1 超声波转化
         let allyBullets = [];                                // 友军子弹
         let laserFlashes = [];                               // 未来-2 激光闪光
+        let ringProjectiles = [], ringNextAt = 0;            // 未来-3 环绕弹
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -2986,6 +3002,53 @@
                 jet(cx,41, 4,9, 'rgba(0,240,200,', 'rgba(0,140,120,');
                 ctx.fillStyle='#001412'; ctx.beginPath(); ctx.ellipse(cx,39,3,2.2,0,0,Math.PI*2); ctx.fill();
                 navLight(1,39,31,39,'rgb(0,255,200)','rgb(0,255,200)');
+
+            } else if (type === 6) {
+                // 未来-3 环弦 · 金色环形战机
+                const pulse6 = 0.6 + 0.4 * Math.sin(Date.now() / 120);
+                // 后掠主翼（金色）
+                const wg6 = ctx.createLinearGradient(0,12,32,32);
+                wg6.addColorStop(0,'#7A5500'); wg6.addColorStop(0.5,'#C8920A'); wg6.addColorStop(1,'#5A3A00');
+                gpoly([[cx-2,14],[0,34],[5,38],[cx-3,30]], wg6);
+                gpoly([[cx+2,14],[32,34],[27,38],[cx+3,30]], wg6);
+                poly([[0,34],[5,38],[4,32]],'#3A2000');
+                poly([[32,34],[27,38],[28,32]],'#3A2000');
+                // 小前翼（鸭翼）
+                poly([[cx-3,8],[cx-11,14],[cx-9,16],[cx-2,11]],'#C89820');
+                poly([[cx+3,8],[cx+11,14],[cx+9,16],[cx+2,11]],'#C89820');
+                // 机身（金色渐变）
+                const bg6 = ctx.createLinearGradient(cx-5,0,cx+5,0);
+                bg6.addColorStop(0,'#5A3A00'); bg6.addColorStop(0.3,'#E0A020'); bg6.addColorStop(0.5,'#FFD050');
+                bg6.addColorStop(0.7,'#E0A020'); bg6.addColorStop(1,'#5A3A00');
+                gpoly([[cx,0],[cx+3,8],[cx+5,20],[cx+4,34],[cx+2,39],[cx-2,39],[cx-4,34],[cx-5,20],[cx-3,8]], bg6);
+                // 机身脊线（金光）
+                const rg6 = ctx.createLinearGradient(cx,0,cx,39);
+                rg6.addColorStop(0,'#FFEE80'); rg6.addColorStop(0.4,'#E0A020'); rg6.addColorStop(1,'#5A3A00');
+                gpoly([[cx,0],[cx+2,8],[cx+2,32],[cx,37],[cx-2,32],[cx-2,8]], rg6);
+                // 环形发射器（鼻部双同心圆）
+                ctx.shadowBlur = 16; ctx.shadowColor = '#00CCFF';
+                ctx.strokeStyle = 'rgba(0,200,255,0.9)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(cx, 4, 5, 0, Math.PI*2); ctx.stroke();
+                ctx.strokeStyle = `rgba(0,200,255,${0.4 * pulse6})`; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.arc(cx, 4, 8, 0, Math.PI*2); ctx.stroke();
+                // 鼻锥能量核
+                ctx.shadowBlur = 10; ctx.shadowColor = '#FFD700';
+                ctx.fillStyle = '#FFE060'; ctx.beginPath(); ctx.arc(cx, 4, 2.5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(cx, 3.5, 1, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+                // 机身中部环形装饰（随pulse脉动）
+                ctx.strokeStyle = `rgba(0,200,255,${0.45 * pulse6})`; ctx.lineWidth = 0.9;
+                ctx.beginPath(); ctx.arc(cx, 20, 6, 0, Math.PI*2); ctx.stroke();
+                // 翼面棱线
+                ctx.strokeStyle = 'rgba(255,200,50,0.35)'; ctx.lineWidth = 0.5;
+                ctx.beginPath(); ctx.moveTo(cx-2,14); ctx.lineTo(0,34); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx+2,14); ctx.lineTo(32,34); ctx.stroke();
+                cockpit(9,'#201000','rgba(255,210,50,0.95)','#FFD700');
+                jet(cx-2.5,40, 3,8, 'rgba(255,180,0,', 'rgba(180,80,0,');
+                jet(cx+2.5,40, 3,8, 'rgba(255,180,0,', 'rgba(180,80,0,');
+                ctx.fillStyle='#150A00'; ctx.beginPath(); ctx.ellipse(cx-2.5,38,2.2,2,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#150A00'; ctx.beginPath(); ctx.ellipse(cx+2.5,38,2.2,2,0,0,Math.PI*2); ctx.fill();
+                navLight(cx-11,15,cx+11,15,'rgb(255,220,0)','rgb(0,200,255)');
             }
 
             ctx.restore();
@@ -3675,6 +3738,25 @@
                     });
                     player.lastShot = now5;
                     playBulletSound();
+                }
+            }
+
+            // 未来-3（6号）：每10秒发射环绕弹
+            if (selectedPlane === 6) {
+                const now6 = Date.now();
+                if (ringNextAt === 0) ringNextAt = now6 + 10000;
+                if (now6 >= ringNextAt) {
+                    const wbMult = 1 + weaponBayLevel * 0.1;
+                    ringProjectiles.push({
+                        x: player.x,
+                        y: player.y - 20,
+                        vy: -2,          // 缓慢向前推进
+                        r: 20,           // 环形半径（直径40px，与敌机大小相近）
+                        angle: 0,        // 旋转角度（逐帧递增，视觉旋转）
+                        dmg: wbMult * 1.2,
+                        born: now6
+                    });
+                    ringNextAt = now6 + 10000;
                 }
             }
 
@@ -4681,6 +4763,93 @@
             // 光束飞出屏幕后移除
             laserFlashes = laserFlashes.filter(lf => lf.y + lf.len > 0);
 
+            // ── 未来-3 环绕弹（移动 + 消除敌弹 + 伤害敌机 + 渲染）──
+            const SXr = WIDTH / 600;
+            ringProjectiles.forEach(ring => {
+                ring.y += ring.vy;
+                ring.angle += 0.04;
+
+                // 计算8颗子弹的实时位置
+                const rpos = [];
+                for (let i = 0; i < 8; i++) {
+                    const a = ring.angle + i * Math.PI / 4;
+                    rpos.push({ x: ring.x + Math.cos(a) * ring.r, y: ring.y + Math.sin(a) * ring.r });
+                }
+
+                // 消除敌机子弹
+                enemies.forEach(e => {
+                    if (e.isAlly || !e.bullets) return;
+                    e.bullets = e.bullets.filter(b => {
+                        for (const p of rpos) {
+                            if (Math.abs(b.x - p.x) < 9 && Math.abs(b.y - p.y) < 9) {
+                                createExplosion(b.x, b.y, '#FFD700', 4);
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+                });
+
+                // 伤害敌机（每架敌机每帧最多触发一次）
+                enemies.forEach(e => {
+                    if (e.isAlly) return;
+                    for (const p of rpos) {
+                        if (Math.abs(p.x - e.x) < e.w / 2 + 5 && Math.abs(p.y - e.y) < e.h / 2 + 5) {
+                            e.currentHp -= ring.dmg;
+                            dmgMainGun += ring.dmg * 100;
+                            createExplosion(p.x, p.y, '#FFD700', 3);
+                            if (e.currentHp <= 0) {
+                                score += e.score; levelXP += e.score;
+                                createExplosion(e.x, e.y, '#FFD700', 12);
+                                playKillSound(); checkUpgrade();
+                                if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
+                            }
+                            break;
+                        }
+                    }
+                });
+                enemies = enemies.filter(e => e.currentHp > 0);
+
+                // 绘制环绕弹
+                ctx.save();
+                // 虚线连接圆环
+                ctx.shadowBlur = 14; ctx.shadowColor = '#FFD700';
+                ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+                ctx.lineWidth = 1.5 * SXr;
+                ctx.setLineDash([4 * SXr, 4 * SXr]);
+                ctx.beginPath(); ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI * 2); ctx.stroke();
+                ctx.setLineDash([]);
+                // 8颗子弹（外圈青蓝 + 内核金白）
+                for (const p of rpos) {
+                    ctx.shadowBlur = 12; ctx.shadowColor = '#00CCFF';
+                    ctx.fillStyle = '#00DDFF';
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 4 * SXr, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 6; ctx.shadowColor = '#FFD700';
+                    ctx.fillStyle = '#FFE878';
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2.2 * SXr, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.shadowBlur = 0; ctx.restore();
+            });
+            ringProjectiles = ringProjectiles.filter(ring => ring.y - ring.r < HEIGHT && ring.y + ring.r > 0);
+
+            // 冷却进度条（环绕弹就绪提示）
+            if (selectedPlane === 6 && ringNextAt > 0) {
+                const remaining6 = Math.max(0, ringNextAt - Date.now());
+                const pct6 = 1 - remaining6 / 10000;
+                const bw6 = 60 * (WIDTH/600), bh6 = 5 * (HEIGHT/1000);
+                const bx6 = player.x - bw6/2, by6 = player.y + 28 * (HEIGHT/1000);
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(bx6, by6, bw6, bh6);
+                ctx.fillStyle = pct6 >= 1 ? '#FFD700' : '#996600';
+                ctx.fillRect(bx6, by6, bw6 * pct6, bh6);
+                if (pct6 >= 1) {
+                    ctx.font = `${10*(HEIGHT/1000)}px monospace`;
+                    ctx.fillStyle = 'rgba(255,215,0,0.9)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('环绕弹就绪', player.x, by6 + 14*(HEIGHT/1000));
+                }
+            }
+
             // ── 友军子弹（绿色能量弹）──
             allyBullets.forEach(b => {
                 ctx.save();
@@ -4833,7 +5002,7 @@
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
-            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = [];
+            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = []; ringProjectiles = [];
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
@@ -4851,7 +5020,7 @@
             score = 0; level = 1; maxHp = 1000; currentHp = 1000;
             bulletCount = 1; ricochetCount = 0; levelXP = 0;
             dmgMainGun = 0; dmgMissile = 0; dmgWingman = 0; dmgHQ9 = 0; dmgPL17 = 0;
-            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = [];
+            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = []; ringProjectiles = [];
             player.x = WIDTH / 2; player.y = HEIGHT - 100;
             droneWarningUntil = 0; lastDroneSwarm = 0; nextDroneInterval = 12000;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
@@ -4881,7 +5050,8 @@
             paused = false;
             stealthUntil = 0; nextStealthAt = 0;
             conversionNextAt = 0; sonicWaves = []; allyBullets = []; laserFlashes = [];
-            player.prevY = null; player.movingDown = false; player.lastSideMissile = 0;
+            ringProjectiles = []; ringNextAt = 0;
+            player.prevY = null; player.movingUp = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
             updateEMFBtn(); updateHQ9Btn(); updatePL17Btn();
@@ -4892,8 +5062,9 @@
                 'rgba(120,140,160,0.18)', 'rgba(180,30,30,0.18)',
                 'rgba(50,140,50,0.18)',   'rgba(50,80,180,0.18)',
                 'rgba(120,60,220,0.18)',  'rgba(0,180,160,0.18)',
+                'rgba(200,150,0,0.18)',
             ];
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 7; i++) {
                 const el = document.getElementById('preview' + i);
                 if (!el) continue;
                 const c = el.getContext('2d');
@@ -5228,7 +5399,7 @@
                 saveAccount();
             }
             // 清理游戏状态
-            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = [];
+            enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = []; ringProjectiles = [];
             currentMission = null;
             missionKillCount = 0;
             missionSpecialKillCount = 0;
