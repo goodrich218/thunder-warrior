@@ -4278,6 +4278,55 @@
             });
             enemies = enemies.filter(e => !e.isAlly || e.currentHp > 0);
 
+            // 未来-3 环绕弹：移动 + 消除敌弹 + 伤害敌机（必须在敌弹打玩家之前执行，才能拦截）
+            if (selectedPlane === 6 && ringProjectiles.length > 0) {
+                const SXr6 = WIDTH / 600;
+                ringProjectiles.forEach(ring => {
+                    ring.y += ring.vy;
+                    const spacing6 = 32 * SXr6;
+                    const rpos6 = [];
+                    for (let i = 0; i < 4; i++) {
+                        if (ring.planeHp[i] > 0)
+                            rpos6.push({ x: ring.x + (i - 1.5) * spacing6, y: ring.y, idx: i });
+                    }
+                    // 消除敌机子弹，同时对命中的小飞机扣血
+                    enemies.forEach(e => {
+                        if (e.isAlly || !e.bullets) return;
+                        e.bullets = e.bullets.filter(b => {
+                            for (const p of rpos6) {
+                                if (Math.abs(b.x - p.x) < 14 && Math.abs(b.y - p.y) < 14) {
+                                    ring.planeHp[p.idx] = Math.max(0, ring.planeHp[p.idx] - 50);
+                                    createExplosion(b.x, b.y, '#FFD700', 4);
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
+                    });
+                    // 伤害敌机（每架敌机每帧最多触发一次）
+                    enemies.forEach(e => {
+                        if (e.isAlly) return;
+                        for (const p of rpos6) {
+                            if (Math.abs(p.x - e.x) < e.w / 2 + 10 && Math.abs(p.y - e.y) < e.h / 2 + 10) {
+                                e.currentHp -= ring.dmg;
+                                dmgMainGun += ring.dmg * 100;
+                                createExplosion(p.x, p.y, '#FFD700', 3);
+                                if (e.currentHp <= 0) {
+                                    score += e.score; levelXP += e.score;
+                                    createExplosion(e.x, e.y, '#FFD700', 12);
+                                    playKillSound(); checkUpgrade();
+                                    if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
+                                }
+                                break;
+                            }
+                        }
+                    });
+                    enemies = enemies.filter(e => e.currentHp > 0);
+                });
+                ringProjectiles = ringProjectiles.filter(ring =>
+                    ring.y < HEIGHT + 20 && ring.y > -50 && ring.planeHp.some(hp => hp > 0));
+            }
+
             // 敌机子弹打玩家
             enemies.forEach(e => {
                 if (e.isAlly || !e.bullets) return;
@@ -5127,11 +5176,9 @@
             // 光束飞出屏幕后移除
             laserFlashes = laserFlashes.filter(lf => lf.y + lf.len > 0);
 
-            // ── 未来-3 环绕弹（移动 + 消除敌弹 + 伤害敌机 + 渲染）──
+            // ── 未来-3 环绕弹渲染（逻辑已移至 update()）──
             const SXr = WIDTH / 600;
             ringProjectiles.forEach(ring => {
-                ring.y += ring.vy;
-
                 // 4架小飞机横排位置（只包含存活的，带索引）
                 const spacing = 32 * SXr;
                 const rpos = [];
@@ -5139,41 +5186,6 @@
                     if (ring.planeHp[i] > 0)
                         rpos.push({ x: ring.x + (i - 1.5) * spacing, y: ring.y, idx: i });
                 }
-
-                // 消除敌机子弹，同时对命中的小飞机扣血
-                enemies.forEach(e => {
-                    if (e.isAlly || !e.bullets) return;
-                    e.bullets = e.bullets.filter(b => {
-                        for (const p of rpos) {
-                            if (Math.abs(b.x - p.x) < 14 && Math.abs(b.y - p.y) < 14) {
-                                ring.planeHp[p.idx] = Math.max(0, ring.planeHp[p.idx] - 50);
-                                createExplosion(b.x, b.y, '#FFD700', 4);
-                                return false;
-                            }
-                        }
-                        return true;
-                    });
-                });
-
-                // 伤害敌机（每架敌机每帧最多触发一次）
-                enemies.forEach(e => {
-                    if (e.isAlly) return;
-                    for (const p of rpos) {
-                        if (Math.abs(p.x - e.x) < e.w / 2 + 10 && Math.abs(p.y - e.y) < e.h / 2 + 10) {
-                            e.currentHp -= ring.dmg;
-                            dmgMainGun += ring.dmg * 100;
-                            createExplosion(p.x, p.y, '#FFD700', 3);
-                            if (e.currentHp <= 0) {
-                                score += e.score; levelXP += e.score;
-                                createExplosion(e.x, e.y, '#FFD700', 12);
-                                playKillSound(); checkUpgrade();
-                                if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
-                            }
-                            break;
-                        }
-                    }
-                });
-                enemies = enemies.filter(e => e.currentHp > 0);
 
                 // 绘制存活的横排小飞机
                 for (const p of rpos) {
@@ -5247,8 +5259,6 @@
                     ctx.restore();
                 }
             });
-            ringProjectiles = ringProjectiles.filter(ring =>
-                ring.y < HEIGHT + 20 && ring.y > -50 && ring.planeHp.some(hp => hp > 0));
 
             // 冷却进度条（环绕弹就绪提示）
             if (selectedPlane === 6 && ringNextAt > 0) {
