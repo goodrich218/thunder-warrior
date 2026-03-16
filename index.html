@@ -251,6 +251,14 @@
         .ctrl-btn-lg canvas { display: block; margin: 0 auto 12px; }
         .ctrl-btn-lg .ctrl-name { font-size: 13px; font-weight: bold; letter-spacing: 2px; margin-bottom: 6px; }
         .ctrl-btn-lg .ctrl-desc { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.5px; line-height: 1.6; }
+        .joy-sens-wrap { margin-top: 22px; padding: 0 24px 4px; }
+        .joy-sens-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .joy-sens-title { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: rgba(0,229,255,0.55); }
+        .joy-sens-val { font-size: 14px; font-weight: bold; color: #00e5ff; letter-spacing: 1px; min-width: 36px; text-align: right; }
+        input[type=range].joy-sens-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; background: rgba(0,229,255,0.18); border-radius: 2px; outline: none; }
+        input[type=range].joy-sens-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.8); cursor: pointer; }
+        input[type=range].joy-sens-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.8); cursor: pointer; border: none; }
+        .joy-sens-hints { display: flex; justify-content: space-between; margin-top: 6px; font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 1px; }
         .sp-hdr { text-align: center; margin-bottom: 18px; position: relative; z-index: 1; }
         .sp-hdr-badge { font-size: 8px; letter-spacing: 6px; text-transform: uppercase; color: rgba(255,130,0,0.6); margin-bottom: 8px; }
         .sp-hdr h2 { font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #fff; margin: 0 0 4px; }
@@ -897,6 +905,14 @@
                     <div class="ctrl-name">摇杆模式</div>
                     <div class="ctrl-desc">360° 方向控制<br>不遮挡飞机</div>
                 </div>
+            </div>
+            <div class="joy-sens-wrap" id="joySensWrap">
+                <div class="joy-sens-row">
+                    <span class="joy-sens-title">摇杆灵敏度 · Sensitivity</span>
+                    <span class="joy-sens-val" id="joySensVal">1.0×</span>
+                </div>
+                <input type="range" class="joy-sens-slider" id="joySensSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+                <div class="joy-sens-hints"><span>0.5×  慢</span><span>快  3.0×</span></div>
             </div>
         </div>
         <div id="selectPanel">
@@ -2011,6 +2027,7 @@
         let mouseX = WIDTH/2, mouseY = HEIGHT - 100;
         // 控制方案：'joystick' | 'direct'，持久化到 localStorage
         let controlMode = localStorage.getItem('thunderWarriorControl') || 'joystick';
+        let joySensitivity = parseFloat(localStorage.getItem('thunderWarriorJoySens') || '1.0');
 
         // ── 虚拟摇杆 ──
         const JOY_R = 58;       // 摇杆底盘半径（canvas像素）
@@ -3684,8 +3701,8 @@
                 const dl = Math.hypot(joyKnobDx, joyKnobDy);
                 if (dl > 4) {
                     const intensity = dl / JOY_R;
-                    player.x += (joyKnobDx / dl) * intensity * JOY_SPEED;
-                    player.y += (joyKnobDy / dl) * intensity * JOY_SPEED;
+                    player.x += (joyKnobDx / dl) * intensity * JOY_SPEED * joySensitivity;
+                    player.y += (joyKnobDy / dl) * intensity * JOY_SPEED * joySensitivity;
                 }
             } else if (controlMode === 'direct' && usingTouch) {
                 // 跟随模式：触控直接跟随最新触点
@@ -4011,6 +4028,7 @@
                 let hit = false;
                 enemies = enemies.filter(e => {
                     if (e.isAlly) return true; // 友军不受玩家子弹伤害
+                    if (selectedPlane === 7 && devourState && devourState.target === e) return true; // 吞噬目标免疫玩家子弹
                     if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
                         const dmg = b.damage || 1;
                         e.currentHp -= dmg; hit = true;
@@ -5332,6 +5350,8 @@
             document.querySelectorAll('.ctrl-btn-lg').forEach(b => {
                 b.classList.toggle('selected', b.dataset.mode === controlMode);
             });
+            const wrap = document.getElementById('joySensWrap');
+            if (wrap) wrap.style.opacity = controlMode === 'joystick' ? '1' : '0.35';
         }
 
         // 触摸控制 - 手机大拇指拖动
@@ -5669,6 +5689,20 @@
                 if (selectPanel) selectPanel.style.display = 'block';
             });
         });
+
+        // 摇杆灵敏度滑块
+        const joySensSlider = document.getElementById('joySensSlider');
+        const joySensValEl = document.getElementById('joySensVal');
+        if (joySensSlider) {
+            joySensSlider.value = joySensitivity;
+            joySensValEl.textContent = joySensitivity.toFixed(1) + '×';
+            joySensSlider.addEventListener('input', () => {
+                joySensitivity = parseFloat(joySensSlider.value);
+                joySensValEl.textContent = joySensitivity.toFixed(1) + '×';
+                localStorage.setItem('thunderWarriorJoySens', joySensitivity);
+            });
+        }
+        updateCtrlSelection(); // 初始化选中状态和灵敏度透明度
 
         // restartBtn is injected dynamically in gameOver(), listener added there
         
