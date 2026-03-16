@@ -1658,6 +1658,7 @@
         let laserFlashes = [];                               // 未来-2 激光闪光
         let ringProjectiles = [], ringNextAt = 0;            // 未来-3 环绕弹
         let devourState = null, devourNextAt = 0;            // 未来-4 吞噬
+        let gameStartTime = 0, bossSpawned = false;          // 大BOSS
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -3362,6 +3363,150 @@
                 ctx.shadowBlur = 10; ctx.shadowColor = '#44FF44';
                 ctx.fillStyle = `rgba(70,255,70,${0.85+0.15*pulse})`; ctx.beginPath(); ctx.arc(38,30,2.2,0,Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
+
+            } else if (t === 8) {
+                // 大BOSS · 深渊之翼 —— 恐怖怪兽战机
+                const cx = 20;
+                const pb  = 0.5 + 0.5 * Math.sin(Date.now() / 80);
+                const pb2 = 0.5 + 0.5 * Math.sin(Date.now() / 220);
+                const pb3 = 0.5 + 0.5 * Math.sin(Date.now() / 130 + 1.5);
+
+                // 整体暗红气场光晕
+                ctx.save();
+                ctx.shadowBlur = 50; ctx.shadowColor = 'rgba(200,0,0,0.7)';
+                ctx.globalAlpha = 0.12 + 0.08 * pb2;
+                ctx.fillStyle = '#AA0000';
+                ctx.beginPath(); ctx.ellipse(cx, 20, 24, 20, 0, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+                ctx.restore();
+
+                // 左主翼（锯齿形尖翼）
+                ctx.fillStyle = '#1C0303';
+                ctx.beginPath();
+                ctx.moveTo(cx-3, 12);
+                ctx.lineTo(-5, 20);
+                ctx.lineTo(-2, 25); ctx.lineTo(1, 20);
+                ctx.lineTo(0, 28);  ctx.lineTo(4, 23);
+                ctx.lineTo(2, 31);  ctx.lineTo(6, 27);
+                ctx.lineTo(cx-4, 33); ctx.lineTo(cx-3, 18);
+                ctx.closePath(); ctx.fill();
+                // 左翼暗红光泽
+                ctx.fillStyle = 'rgba(130,0,0,0.45)';
+                ctx.beginPath();
+                ctx.moveTo(cx-3,12); ctx.lineTo(-5,20); ctx.lineTo(-2,23); ctx.lineTo(cx-3,14);
+                ctx.closePath(); ctx.fill();
+
+                // 右主翼（镜像）
+                ctx.fillStyle = '#1C0303';
+                ctx.beginPath();
+                ctx.moveTo(cx+3, 12);
+                ctx.lineTo(45, 20);
+                ctx.lineTo(42, 25); ctx.lineTo(39, 20);
+                ctx.lineTo(40, 28); ctx.lineTo(36, 23);
+                ctx.lineTo(38, 31); ctx.lineTo(34, 27);
+                ctx.lineTo(cx+4, 33); ctx.lineTo(cx+3, 18);
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = 'rgba(130,0,0,0.45)';
+                ctx.beginPath();
+                ctx.moveTo(cx+3,12); ctx.lineTo(45,20); ctx.lineTo(42,23); ctx.lineTo(cx+3,14);
+                ctx.closePath(); ctx.fill();
+
+                // 机身（厚重暗红渐变）
+                const bg8 = ctx.createLinearGradient(cx-9,0,cx+9,0);
+                bg8.addColorStop(0,'#1E0303'); bg8.addColorStop(0.25,'#6B0008');
+                bg8.addColorStop(0.5,'#900012'); bg8.addColorStop(0.75,'#6B0008'); bg8.addColorStop(1,'#1E0303');
+                ctx.fillStyle = bg8;
+                ctx.beginPath();
+                ctx.moveTo(cx,0);
+                ctx.bezierCurveTo(cx+6,0, cx+9,5, cx+9,11);
+                ctx.lineTo(cx+8,29); ctx.lineTo(cx+5,38); ctx.lineTo(cx+2,40);
+                ctx.lineTo(cx-2,40); ctx.lineTo(cx-5,38); ctx.lineTo(cx-8,29);
+                ctx.bezierCurveTo(cx-9,5, cx-6,0, cx,0);
+                ctx.fill();
+
+                // 头部骷髅装甲
+                ctx.shadowBlur = 16; ctx.shadowColor = '#CC0000';
+                const skullG = ctx.createRadialGradient(cx,8,1,cx,8,10);
+                skullG.addColorStop(0,'#550010'); skullG.addColorStop(1,'#1E0005');
+                ctx.fillStyle = skullG;
+                ctx.beginPath(); ctx.arc(cx,8,9.5,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // 邪恶双眼（蛇瞳）
+                ctx.shadowBlur = 22; ctx.shadowColor = '#FF0000';
+                // 眼眶
+                ctx.fillStyle = 'rgba(50,30,0,0.95)';
+                ctx.beginPath(); ctx.ellipse(cx-4.5,6.5,3.2,2.2,-0.2,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx+4.5,6.5,3.2,2.2, 0.2,0,Math.PI*2); ctx.fill();
+                // 血红眼球
+                ctx.fillStyle = `rgba(255,${8+18*pb},0,${0.92+0.08*pb})`;
+                ctx.beginPath(); ctx.ellipse(cx-4.5,6.5,2.2,1.6,-0.2,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx+4.5,6.5,2.2,1.6, 0.2,0,Math.PI*2); ctx.fill();
+                // 竖瞳（蛇眼）
+                ctx.fillStyle = '#000';
+                ctx.beginPath(); ctx.ellipse(cx-4.5,6.5,0.55,1.55,0,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx+4.5,6.5,0.55,1.55,0,0,Math.PI*2); ctx.fill();
+                // 眼睛高光
+                ctx.fillStyle = `rgba(255,200,200,${0.45+0.3*pb})`;
+                ctx.beginPath(); ctx.ellipse(cx-5.3,5.7,0.7,0.45,-0.5,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx+3.7,5.7,0.7,0.45, 0.5,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // 尖牙（6颗参差不齐）
+                const teethX = [cx-7.5,cx-4.8,cx-2.1,cx+0.6,cx+3.3,cx+6];
+                const teethH = [5.5, 4.2, 5.8, 4.6, 5.2, 4.8];
+                ctx.shadowBlur = 5; ctx.shadowColor = 'rgba(255,160,0,0.4)';
+                for (let ti=0;ti<6;ti++) {
+                    ctx.fillStyle = ti%2===0 ? '#EAE0BE' : '#CEC8A0';
+                    ctx.beginPath();
+                    ctx.moveTo(teethX[ti],12); ctx.lineTo(teethX[ti]+1.3,12+teethH[ti]); ctx.lineTo(teethX[ti]+2.6,12);
+                    ctx.closePath(); ctx.fill();
+                }
+                // 血液从牙缝滴落
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = `rgba(180,0,0,${0.45+0.35*pb3})`;
+                [cx-6, cx-0.5, cx+5].forEach(bx => {
+                    ctx.beginPath(); ctx.ellipse(bx,18.5,0.75,2.8,0,0,Math.PI*2); ctx.fill();
+                });
+
+                // 左侧武器炮台
+                ctx.shadowBlur = 14; ctx.shadowColor = '#FF4400';
+                ctx.fillStyle = '#280000';
+                ctx.beginPath(); ctx.roundRect(cx-15,19,7,13,2); ctx.fill();
+                ctx.fillStyle = '#180000';
+                ctx.fillRect(cx-14,14,2.2,8); ctx.fillRect(cx-12,15,2,7);
+                ctx.fillStyle = `rgba(255,${90+80*pb},0,${0.8+0.2*pb})`;
+                ctx.beginPath(); ctx.arc(cx-13,14,2.4,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cx-11,15,1.9,0,Math.PI*2); ctx.fill();
+                // 右侧武器炮台（镜像）
+                ctx.fillStyle = '#280000';
+                ctx.beginPath(); ctx.roundRect(cx+8,19,7,13,2); ctx.fill();
+                ctx.fillStyle = '#180000';
+                ctx.fillRect(cx+11.8,14,2.2,8); ctx.fillRect(cx+9.8,15,2,7);
+                ctx.fillStyle = `rgba(255,${90+80*pb},0,${0.8+0.2*pb})`;
+                ctx.beginPath(); ctx.arc(cx+13,14,2.4,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cx+11,15,1.9,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // 机身脊背红光
+                ctx.shadowBlur = 10; ctx.shadowColor = '#FF0000';
+                ctx.strokeStyle = `rgba(255,10,0,${0.35+0.4*pb2})`; ctx.lineWidth = 1.8;
+                ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,38); ctx.stroke();
+                // 骨骼横纹
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(70,0,0,0.5)'; ctx.lineWidth = 0.5;
+                for (let yi=15;yi<=34;yi+=6) { ctx.beginPath(); ctx.moveTo(cx-7,yi); ctx.lineTo(cx+7,yi); ctx.stroke(); }
+
+                // 尾部双发引擎
+                exhaust(cx-4,40,8,'rgba(255,40,0,','rgba(130,0,0,');
+                exhaust(cx+4,40,8,'rgba(255,40,0,','rgba(130,0,0,');
+
+                // 翼尖血色闪烁灯
+                ctx.shadowBlur = 20; ctx.shadowColor = '#FF1100';
+                ctx.fillStyle = `rgba(255,20,0,${pb})`;
+                ctx.beginPath(); ctx.arc(-5,20,3.5,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(45,20,3.5,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
             }
 
             ctx.restore();
@@ -3379,6 +3524,21 @@
             ];
             const e = types[typeIdx];
             enemies.push({x: Math.random() * (WIDTH - e.w) + e.w/2, y: -e.h, w: e.w, h: e.h, type: e.t, hp: e.hp, currentHp: e.hp, speed: e.s, score: e.sc, bullets: []});
+        }
+        function spawnBoss() {
+            enemies.push({
+                x: WIDTH / 2, y: -140,
+                w: 160, h: 130,
+                type: 8, isBoss: true,
+                hp: 100000, currentHp: 100000,
+                speed: 0, score: 50000,
+                bullets: [],
+                hoverY: 120,       // 目标悬停 Y
+                phaseX: 0,         // 水平摆动相位
+                entered: false,    // 是否已到达悬停位置
+                lastSpread: 0,     // 上次扇形射击时间
+                lastCircle: 0,     // 上次圆形爆炸时间
+            });
         }
         function spawnEnemy() {
             // ── 关卡特殊生成逻辑 ──
@@ -3980,7 +4140,36 @@
             enemies.forEach(e => {
                 const frozen = (e.frozenUntil && Date.now() < e.frozenUntil) || Date.now() < emfActiveUntil;
                 if (!frozen) {
-                    if (e.type === 7) {
+                    if (e.isBoss) {
+                        // 入场：从顶部缓慢下降到悬停位置
+                        if (!e.entered) {
+                            e.y += 1.5;
+                            if (e.y >= e.hoverY) { e.y = e.hoverY; e.entered = true; }
+                        } else {
+                            // 左右正弦摆动
+                            e.phaseX += 0.007;
+                            e.x = WIDTH / 2 + Math.sin(e.phaseX) * WIDTH * 0.30;
+                        }
+                        // Boss 射击
+                        const nowB = Date.now();
+                        if (!e.bullets) e.bullets = [];
+                        // 扇形弹（5发）每 1200ms
+                        if (nowB - e.lastSpread > 1200) {
+                            for (let si = -2; si <= 2; si++) {
+                                const ang = Math.PI / 2 + si * 0.28;
+                                e.bullets.push({ x: e.x, y: e.y + e.h/2, vx: Math.cos(ang)*3.2, vy: Math.sin(ang)*3.2, damage: 150, isBossB: true });
+                            }
+                            e.lastSpread = nowB;
+                        }
+                        // 环形爆炸弹（12发）每 4500ms
+                        if (nowB - e.lastCircle > 4500) {
+                            for (let ci = 0; ci < 12; ci++) {
+                                const ang = ci * Math.PI * 2 / 12;
+                                e.bullets.push({ x: e.x, y: e.y + e.h/4, vx: Math.cos(ang)*2.8, vy: Math.sin(ang)*2.8, damage: 120, isBossB: true });
+                            }
+                            e.lastCircle = nowB;
+                        }
+                    } else if (e.type === 7) {
                         // 无人机：wait(顶部排队) → dive(俯冲) → climb(折返向上) 三阶段
                         if (e.phase === 'wait') {
                             // 顶部悬停：轻微上下浮动，等待轮到自己
@@ -4015,6 +4204,7 @@
             });
             // 无人机：等待阶段永不移除；折返飞出上边界才移除
             enemies = enemies.filter(e => {
+                if (e.isBoss) return e.currentHp > 0; // boss 血量耗尽才移除
                 if (e.type === 7) {
                     if (e.phase === 'wait') return true;
                     if (e.phase === 'climb') return e.y > -e.h - 20;
@@ -4809,14 +4999,26 @@
                     ctx.shadowBlur = 0; ctx.restore();
                 }
                 if (e.bullets) {
-                    // B-2 子弹为紫色，其他为红色
-                    ctx.fillStyle = e.type === 6 ? '#a0f' : '#f44';
                     e.bullets.forEach(b => {
-                        ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill();
+                        if (b.isBossB) {
+                            // boss 子弹：大红橙色能量球
+                            ctx.save();
+                            ctx.shadowBlur = 14; ctx.shadowColor = '#FF2200';
+                            ctx.fillStyle = 'rgba(180,0,0,0.4)';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = '#FF3300';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = '#FFAA44';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill();
+                            ctx.shadowBlur = 0; ctx.restore();
+                        } else {
+                            ctx.fillStyle = e.type === 6 ? '#a0f' : '#f44';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill();
+                        }
                     });
                 }
-                // 血条
-                if (e.currentHp < e.hp) {
+                // 血条（boss 不在此处画，用顶部大血条）
+                if (!e.isBoss && e.currentHp < e.hp) {
                     ctx.fillStyle = '#333';
                     ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 10, e.w, 4);
                     ctx.fillStyle = '#f00';
@@ -4825,6 +5027,41 @@
             });
 
             drawParticles();
+
+            // ── Boss 顶部血量条 ──
+            const activeBoss = enemies.find(e => e.isBoss);
+            if (activeBoss) {
+                const bpct = Math.max(0, activeBoss.currentHp / activeBoss.hp);
+                const bw = WIDTH * 0.62, bh = 16 * (HEIGHT/1000);
+                const bx = (WIDTH - bw) / 2, by = 10 * (HEIGHT/1000);
+                // 背景框
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                ctx.beginPath(); ctx.roundRect(bx-3, by-14*(HEIGHT/1000), bw+6, bh+20*(HEIGHT/1000), 4); ctx.fill();
+                ctx.strokeStyle = `rgba(200,0,0,${0.5+0.3*Math.sin(Date.now()/150)})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.roundRect(bx-3, by-14*(HEIGHT/1000), bw+6, bh+20*(HEIGHT/1000), 4); ctx.stroke();
+                // Boss 名称
+                ctx.font = `bold ${11*(HEIGHT/1000)}px monospace`;
+                ctx.fillStyle = `rgba(255,80,60,${0.7+0.3*Math.sin(Date.now()/180)})`;
+                ctx.textAlign = 'center';
+                ctx.fillText('深渊之翼  ·  ABYSSAL WING', WIDTH/2, by - 3*(HEIGHT/1000));
+                // 血条底色
+                ctx.fillStyle = 'rgba(60,0,0,0.9)';
+                ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 3); ctx.fill();
+                // 血条填充（渐变）
+                if (bpct > 0) {
+                    const hg = ctx.createLinearGradient(bx, by, bx + bw * bpct, by);
+                    hg.addColorStop(0,'#6B0000'); hg.addColorStop(0.5,'#DD1100'); hg.addColorStop(1,'#FF5500');
+                    ctx.fillStyle = hg;
+                    ctx.beginPath(); ctx.roundRect(bx, by, bw * bpct, bh, 3); ctx.fill();
+                }
+                // 血量数字
+                ctx.font = `${10*(HEIGHT/1000)}px monospace`;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(`${Math.max(0,activeBoss.currentHp).toLocaleString()} / ${activeBoss.hp.toLocaleString()}`, WIDTH/2, by + bh - 3*(HEIGHT/1000));
+                ctx.shadowBlur = 0; ctx.restore();
+            }
 
             // ── 未来-1 超声波扩散圆环 ──
             sonicWaves.forEach(w => {
@@ -5216,6 +5453,7 @@
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
             enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = []; ringProjectiles = [];
+            bossSpawned = false; gameStartTime = 0;
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
@@ -5265,6 +5503,7 @@
             conversionNextAt = 0; sonicWaves = []; allyBullets = []; laserFlashes = [];
             ringProjectiles = []; ringNextAt = 0;
             devourState = null; devourNextAt = 0;
+            gameStartTime = Date.now(); bossSpawned = false;
             player.prevY = null; player.movingUp = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
@@ -5744,6 +5983,11 @@
                 if (gameState === 'playing' && t - lastSpawn > 800 && enemies.length < 60) {
                     spawnEnemy();
                     lastSpawn = t;
+                }
+                // 大BOSS：游戏开始20秒后出现（自由模式，仅一次）
+                if (gameState === 'playing' && !bossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 20000) {
+                    spawnBoss();
+                    bossSpawned = true;
                 }
                 // 无人机编队：12~18秒一波，随积分缩短间隔；关卡4高频出击
                 if (gameState === 'playing' && t - lastDroneSwarm > nextDroneInterval && enemies.length < 50) {
