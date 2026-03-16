@@ -3883,19 +3883,19 @@
             enemies.forEach(e => {
                 if (e.isAlly || !e.bullets) return;
                 e.bullets = e.bullets.filter(b => {
+                    // 歼-10C 挡板：前进时在碰撞检测之前拦截前方区域的子弹
+                    if (selectedPlane === 2 && player.movingUp) {
+                        const sy = player.y - 14;
+                        if ((Math.abs(b.x - (player.x - 18)) < 11 || Math.abs(b.x - (player.x + 18)) < 11) && Math.abs(b.y - sy) < 10) {
+                            createExplosion(b.x, b.y, '#88FFCC', 5);
+                            return false;
+                        }
+                    }
                     if (Math.abs(b.x - player.x) < 16 && Math.abs(b.y - player.y) < 20) {
                         // 歼-31 隐身免疫
                         if (selectedPlane === 3 && Date.now() < stealthUntil) {
                             createExplosion(b.x, b.y, '#4488FF', 4);
                             return false;
-                        }
-                        // 歼-10C 挡板：前进时拦截正面区域（上方±18px, y-15附近）的子弹
-                        if (selectedPlane === 2 && player.movingUp) {
-                            const sy = player.y - 14;
-                            if ((Math.abs(b.x - (player.x - 18)) < 11 || Math.abs(b.x - (player.x + 18)) < 11) && Math.abs(b.y - sy) < 10) {
-                                createExplosion(b.x, b.y, '#88FFCC', 5);
-                                return false;
-                            }
                         }
                         if (Math.random() * 100 >= dodgeLevel) {
                             const shieldMult = 1 - shieldLevel * 0.02;
