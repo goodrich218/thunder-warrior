@@ -1012,6 +1012,21 @@
                         <div class="plane-ability-desc">每10秒发射8颗子弹组成的圆形弹环，缓慢向前推进，自动消除来袭子弹</div>
                     </div>
                 </div>
+                <div class="plane-btn" data-plane="7">
+                    <div class="plane-card-badge">FUTURE-4</div>
+                    <canvas id="preview7" width="96" height="120"></canvas>
+                    <div class="plane-card-name">未来-4 吞噬者</div>
+                    <div class="plane-card-type">虚空吞噬战机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:60%;background:#cc44ff;box-shadow:0 0 5px #cc44ff"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:72%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:80%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 虚空吞噬</div>
+                        <div class="plane-ability-desc">每10秒锁定最近敌机并吞噬，每秒吸取100血量转化为自身血量</div>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- ── 角色管理面板 ── -->
@@ -1626,6 +1641,7 @@
         let allyBullets = [];                                // 友军子弹
         let laserFlashes = [];                               // 未来-2 激光闪光
         let ringProjectiles = [], ringNextAt = 0;            // 未来-3 环绕弹
+        let devourState = null, devourNextAt = 0;            // 未来-4 吞噬
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -3049,6 +3065,54 @@
                 ctx.fillStyle='#150A00'; ctx.beginPath(); ctx.ellipse(cx-2.5,38,2.2,2,0,0,Math.PI*2); ctx.fill();
                 ctx.fillStyle='#150A00'; ctx.beginPath(); ctx.ellipse(cx+2.5,38,2.2,2,0,0,Math.PI*2); ctx.fill();
                 navLight(cx-11,15,cx+11,15,'rgb(255,220,0)','rgb(0,200,255)');
+
+            } else if (type === 7) {
+                // 未来-4 吞噬者 · 暗紫虚空战机
+                const pulse7p = 0.5 + 0.5 * Math.sin(Date.now() / 100);
+                // 宽阔蝠翼（暗紫）
+                const wg7 = ctx.createLinearGradient(0,6,32,36);
+                wg7.addColorStop(0,'#1A0030'); wg7.addColorStop(0.5,'#5A0090'); wg7.addColorStop(1,'#100020');
+                gpoly([[cx,6],[0,28],[3,36],[cx-4,30]], wg7);
+                gpoly([[cx,6],[32,28],[29,36],[cx+4,30]], wg7);
+                // 翼尖（蝙蝠翼末端）
+                poly([[0,28],[3,36],[0,40],[cx-14,22]],'#280048');
+                poly([[32,28],[29,36],[32,40],[cx+14,22]],'#280048');
+                // 机身（深紫渐变）
+                const bg7 = ctx.createLinearGradient(cx-5,0,cx+5,0);
+                bg7.addColorStop(0,'#180028'); bg7.addColorStop(0.35,'#5A0090'); bg7.addColorStop(0.5,'#7800B8');
+                bg7.addColorStop(0.65,'#5A0090'); bg7.addColorStop(1,'#180028');
+                gpoly([[cx,0],[cx+3,8],[cx+5,22],[cx+4,35],[cx+2,40],[cx-2,40],[cx-4,35],[cx-5,22],[cx-3,8]], bg7);
+                // 机身脊线（紫光）
+                const rg7 = ctx.createLinearGradient(cx,0,cx,40);
+                rg7.addColorStop(0,'#EE88FF'); rg7.addColorStop(0.4,'#9900CC'); rg7.addColorStop(1,'#180028');
+                gpoly([[cx,0],[cx+2,8],[cx+2,33],[cx,38],[cx-2,33],[cx-2,8]], rg7);
+                // 鼻部虚空漩涡
+                ctx.shadowBlur = 18; ctx.shadowColor = '#CC00FF';
+                const vortex = ctx.createRadialGradient(cx,4,0,cx,4,7);
+                vortex.addColorStop(0,'rgba(230,100,255,0.95)');
+                vortex.addColorStop(0.5,'rgba(120,0,200,0.8)');
+                vortex.addColorStop(1,'rgba(50,0,100,0)');
+                ctx.fillStyle = vortex; ctx.beginPath(); ctx.arc(cx,4,7,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+                // 同心旋涡环（随pulse脉动）
+                ctx.strokeStyle = `rgba(220,120,255,${0.55 * pulse7p})`; ctx.lineWidth = 0.8;
+                for (let ri = 2; ri <= 6; ri += 2) {
+                    ctx.beginPath(); ctx.arc(cx, 4, ri, 0, Math.PI*2); ctx.stroke();
+                }
+                // 侧面进气口
+                poly([[cx-5,14],[cx-9,20],[cx-7,22],[cx-4,17]],'#2C0048');
+                poly([[cx+5,14],[cx+9,20],[cx+7,22],[cx+4,17]],'#2C0048');
+                ctx.shadowBlur = 6; ctx.shadowColor = '#9900FF';
+                ctx.strokeStyle = 'rgba(180,50,255,0.7)'; ctx.lineWidth = 0.7;
+                ctx.beginPath(); ctx.moveTo(cx-5,14); ctx.lineTo(cx-9,20); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx+5,14); ctx.lineTo(cx+9,20); ctx.stroke();
+                ctx.shadowBlur = 0;
+                cockpit(9,'#0C001A','rgba(200,80,255,0.95)','#CC44FF');
+                jet(cx-2.5,41, 3,8, 'rgba(180,50,255,', 'rgba(80,0,160,');
+                jet(cx+2.5,41, 3,8, 'rgba(180,50,255,', 'rgba(80,0,160,');
+                ctx.fillStyle='#0C0018'; ctx.beginPath(); ctx.ellipse(cx-2.5,39,2.2,2,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#0C0018'; ctx.beginPath(); ctx.ellipse(cx+2.5,39,2.2,2,0,0,Math.PI*2); ctx.fill();
+                navLight(cx-14,23,cx+14,23,'rgb(180,0,255)','rgb(180,0,255)');
             }
 
             ctx.restore();
@@ -3757,6 +3821,50 @@
                         born: now6
                     });
                     ringNextAt = now6 + 10000;
+                }
+            }
+
+            // 未来-4（7号）：每10秒吞噬最近敌机，每秒吸血100转为自身血量
+            if (selectedPlane === 7) {
+                const now7 = Date.now();
+                if (devourNextAt === 0) devourNextAt = now7 + 10000;
+                // 清除已死亡或已不在敌机列表中的目标
+                if (devourState && (!enemies.includes(devourState.target) || devourState.target.currentHp <= 0)) {
+                    devourState = null;
+                }
+                // 触发新一次吞噬
+                if (!devourState && now7 >= devourNextAt) {
+                    const foes = enemies.filter(e => !e.isAlly);
+                    if (foes.length > 0) {
+                        let nearest = foes[0];
+                        let minD = (player.x - foes[0].x) ** 2 + (player.y - foes[0].y) ** 2;
+                        for (const e of foes) {
+                            const d = (player.x - e.x) ** 2 + (player.y - e.y) ** 2;
+                            if (d < minD) { minD = d; nearest = e; }
+                        }
+                        devourState = { target: nearest, lastTick: now7 };
+                        devourNextAt = now7 + 10000;
+                    } else {
+                        devourNextAt = now7 + 3000; // 无敌机时3秒后重试
+                    }
+                }
+                // 持续吸血（每秒100）
+                if (devourState && now7 - devourState.lastTick >= 1000) {
+                    const t7 = devourState.target;
+                    const drain = Math.min(100, t7.currentHp);
+                    t7.currentHp -= drain;
+                    currentHp = Math.min(maxHp, currentHp + drain);
+                    createExplosion(t7.x, t7.y, '#CC44FF', 6);
+                    updateUI();
+                    devourState.lastTick = now7;
+                    if (t7.currentHp <= 0) {
+                        score += t7.score; levelXP += t7.score;
+                        createExplosion(t7.x, t7.y, '#CC44FF', 18);
+                        playKillSound(); checkUpgrade();
+                        if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
+                        devourState = null;
+                    }
+                    enemies = enemies.filter(e => e.currentHp > 0);
                 }
             }
 
@@ -4850,6 +4958,64 @@
                 }
             }
 
+            // ── 未来-4 吞噬光束渲染 ──
+            if (selectedPlane === 7 && devourState && devourState.target) {
+                const dt = devourState.target;
+                const now7r = Date.now();
+                const pulse7r = 0.5 + 0.5 * Math.sin(now7r / 80);
+                ctx.save();
+                // 外层紫色光晕粗线
+                ctx.shadowBlur = 24; ctx.shadowColor = '#CC00FF';
+                ctx.strokeStyle = `rgba(160,40,255,${0.3 + 0.2 * pulse7r})`;
+                ctx.lineWidth = 12 * (WIDTH/600);
+                ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(player.x, player.y - 20); ctx.lineTo(dt.x, dt.y); ctx.stroke();
+                // 内层亮线
+                ctx.shadowBlur = 8;
+                ctx.strokeStyle = `rgba(230,160,255,${0.7 + 0.3 * pulse7r})`;
+                ctx.lineWidth = 2.5 * (WIDTH/600);
+                ctx.beginPath(); ctx.moveTo(player.x, player.y - 20); ctx.lineTo(dt.x, dt.y); ctx.stroke();
+                // 沿光束流动粒子（从敌机飞向玩家）
+                for (let pi = 0; pi < 6; pi++) {
+                    const phase = ((now7r / 600 + pi / 6) % 1);
+                    const fpx = dt.x + (player.x - dt.x) * phase;
+                    const fpy = dt.y + (player.y - 20 - dt.y) * phase;
+                    const fAlpha = 0.9 - phase * 0.7;
+                    const fR = (4 - phase * 2.5) * (WIDTH/600);
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#FF88FF';
+                    ctx.fillStyle = `rgba(230,150,255,${fAlpha})`;
+                    ctx.beginPath(); ctx.arc(fpx, fpy, fR, 0, Math.PI * 2); ctx.fill();
+                }
+                // 目标敌机吸取特效（同心收缩圆环）
+                ctx.globalAlpha = 0.35 + 0.2 * pulse7r;
+                ctx.strokeStyle = '#CC00FF'; ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 10; ctx.shadowColor = '#CC00FF';
+                for (let ri = 1; ri <= 3; ri++) {
+                    const rr = ri * 9 + (1 - pulse7r) * 6;
+                    ctx.beginPath(); ctx.arc(dt.x, dt.y, rr, 0, Math.PI * 2); ctx.stroke();
+                }
+                ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
+            // 吞噬冷却进度条
+            if (selectedPlane === 7 && devourNextAt > 0 && !devourState) {
+                const rem7 = Math.max(0, devourNextAt - Date.now());
+                const pct7 = 1 - rem7 / 10000;
+                const bw7 = 60 * (WIDTH/600), bh7 = 5 * (HEIGHT/1000);
+                const bx7 = player.x - bw7/2, by7 = player.y + 28 * (HEIGHT/1000);
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(bx7, by7, bw7, bh7);
+                ctx.fillStyle = pct7 >= 1 ? '#CC44FF' : '#550088';
+                ctx.fillRect(bx7, by7, bw7 * pct7, bh7);
+                if (pct7 >= 1) {
+                    ctx.font = `${10*(HEIGHT/1000)}px monospace`;
+                    ctx.fillStyle = 'rgba(200,100,255,0.9)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('吞噬就绪', player.x, by7 + 14*(HEIGHT/1000));
+                }
+            }
+
             // ── 友军子弹（绿色能量弹）──
             allyBullets.forEach(b => {
                 ctx.save();
@@ -5051,6 +5217,7 @@
             stealthUntil = 0; nextStealthAt = 0;
             conversionNextAt = 0; sonicWaves = []; allyBullets = []; laserFlashes = [];
             ringProjectiles = []; ringNextAt = 0;
+            devourState = null; devourNextAt = 0;
             player.prevY = null; player.movingUp = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
@@ -5062,9 +5229,9 @@
                 'rgba(120,140,160,0.18)', 'rgba(180,30,30,0.18)',
                 'rgba(50,140,50,0.18)',   'rgba(50,80,180,0.18)',
                 'rgba(120,60,220,0.18)',  'rgba(0,180,160,0.18)',
-                'rgba(200,150,0,0.18)',
+                'rgba(200,150,0,0.18)',  'rgba(100,0,180,0.18)',
             ];
-            for (let i = 0; i < 7; i++) {
+            for (let i = 0; i < 8; i++) {
                 const el = document.getElementById('preview' + i);
                 if (!el) continue;
                 const c = el.getContext('2d');
