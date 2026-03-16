@@ -3995,7 +3995,8 @@
                         r: 20,           // 环形半径（直径40px，与敌机大小相近）
                         angle: 0,        // 旋转角度（逐帧递增，视觉旋转）
                         dmg: wbMult * 1.2,
-                        born: now6
+                        born: now6,
+                        planeHp: [500, 500, 500, 500]  // 每架小飞机500血，共2000
                     });
                     ringNextAt = now6 + 10000;
                 }
@@ -5131,19 +5132,21 @@
             ringProjectiles.forEach(ring => {
                 ring.y += ring.vy;
 
-                // 4架小飞机横排位置（全部朝前，间距32px）
+                // 4架小飞机横排位置（只包含存活的，带索引）
                 const spacing = 32 * SXr;
                 const rpos = [];
                 for (let i = 0; i < 4; i++) {
-                    rpos.push({ x: ring.x + (i - 1.5) * spacing, y: ring.y });
+                    if (ring.planeHp[i] > 0)
+                        rpos.push({ x: ring.x + (i - 1.5) * spacing, y: ring.y, idx: i });
                 }
 
-                // 消除敌机子弹
+                // 消除敌机子弹，同时对命中的小飞机扣血
                 enemies.forEach(e => {
                     if (e.isAlly || !e.bullets) return;
                     e.bullets = e.bullets.filter(b => {
                         for (const p of rpos) {
                             if (Math.abs(b.x - p.x) < 14 && Math.abs(b.y - p.y) < 14) {
+                                ring.planeHp[p.idx] = Math.max(0, ring.planeHp[p.idx] - 50);
                                 createExplosion(b.x, b.y, '#FFD700', 4);
                                 return false;
                             }
@@ -5172,7 +5175,7 @@
                 });
                 enemies = enemies.filter(e => e.currentHp > 0);
 
-                // 绘制4架横排小飞机（全部朝上，大小是原来2倍）
+                // 绘制存活的横排小飞机
                 for (const p of rpos) {
                     ctx.save();
                     ctx.translate(p.x, p.y);
@@ -5227,10 +5230,20 @@
                     ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.restore();
-                    ctx.shadowBlur = 0; ctx.restore();
+                    ctx.shadowBlur = 0;
+                    // 血条（飞机正下方）
+                    const hpRatio = ring.planeHp[p.idx] / 500;
+                    const bw = s * 2.6, bh = s * 0.35;
+                    const bx = -bw / 2, by = s * 1.6;
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(bx, by, bw, bh);
+                    ctx.fillStyle = hpRatio > 0.5 ? '#44FF88' : hpRatio > 0.25 ? '#FFCC00' : '#FF4444';
+                    ctx.fillRect(bx, by, bw * hpRatio, bh);
+                    ctx.restore();
                 }
             });
-            ringProjectiles = ringProjectiles.filter(ring => ring.y < HEIGHT + 20 && ring.y > -50);
+            ringProjectiles = ringProjectiles.filter(ring =>
+                ring.y < HEIGHT + 20 && ring.y > -50 && ring.planeHp.some(hp => hp > 0));
 
             // 冷却进度条（环绕弹就绪提示）
             if (selectedPlane === 6 && ringNextAt > 0) {
