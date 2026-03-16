@@ -5176,8 +5176,8 @@
                 for (const p of rpos) {
                     ctx.save();
                     ctx.translate(p.x, p.y);
-                    ctx.rotate(-Math.PI / 2); // 机头朝上
-                    const s = 10 * SXr;
+                    // 不旋转，机头默认朝上（朝前）
+                    const s = 8 * SXr;
                     ctx.shadowBlur = 12; ctx.shadowColor = '#00CCFF';
                     // 机身
                     ctx.fillStyle = '#00DDFF';
