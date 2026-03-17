@@ -1658,7 +1658,7 @@
         let laserFlashes = [];                               // 未来-2 激光闪光
         let ringProjectiles = [], ringNextAt = 0;            // 未来-3 环绕弹
         let devourState = null, devourNextAt = 0;            // 未来-4 吞噬
-        let gameStartTime = 0, bossSpawned = false;          // 大BOSS
+        let gameStartTime = 0, bossSpawned = false, bomberBossSpawned = false; // 大BOSS
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
         let currentMission = null; // null = 自由模式, 0-5 = 关卡索引
@@ -3540,6 +3540,115 @@
                 lastCircle: 0,     // 上次圆形爆炸时间
             });
         }
+        function spawnBomberBoss() {
+            const bw = Math.min(WIDTH * 0.92, 500);
+            enemies.push({
+                x: WIDTH / 2, y: -130,
+                w: bw, h: 100,
+                type: 9, isBomberBoss: true,
+                hp: 40000, currentHp: 40000,
+                speed: 0, score: 20000,
+                bullets: [],
+                hoverY: 100,
+                phaseX: 0,
+                entered: false,
+                lastSpread: 0,
+                lastBomb: 0,
+            });
+        }
+
+        function drawBomberBoss(ctx, e) {
+            const cx = e.x, cy = e.y;
+            const hw = e.w / 2, hh = e.h / 2;
+            const now = Date.now();
+            const pulse = 0.6 + 0.4 * Math.sin(now / 200);
+            ctx.save();
+
+            // ── 主机翼（梯形，宽大）──
+            ctx.shadowBlur = 18; ctx.shadowColor = 'rgba(60,60,90,0.9)';
+            ctx.fillStyle = '#3A3A4A';
+            ctx.beginPath();
+            ctx.moveTo(cx - hw,      cy + hh * 0.55);
+            ctx.lineTo(cx - hw * 0.9, cy - hh * 0.65);
+            ctx.lineTo(cx - hw * 0.12, cy - hh * 0.9);
+            ctx.lineTo(cx + hw * 0.12, cy - hh * 0.9);
+            ctx.lineTo(cx + hw * 0.9,  cy - hh * 0.65);
+            ctx.lineTo(cx + hw,       cy + hh * 0.55);
+            ctx.lineTo(cx + hw * 0.55, cy + hh * 1.05);
+            ctx.lineTo(cx - hw * 0.55, cy + hh * 1.05);
+            ctx.closePath(); ctx.fill();
+
+            // 翼面分割线
+            ctx.strokeStyle = '#545468'; ctx.lineWidth = 1.2;
+            [-0.68, -0.42, -0.18, 0.18, 0.42, 0.68].forEach(fx => {
+                ctx.beginPath();
+                ctx.moveTo(cx + fx * hw, cy - hh * 0.55);
+                ctx.lineTo(cx + fx * hw * 1.12, cy + hh * 0.75);
+                ctx.stroke();
+            });
+
+            // ── 机身（中央粗短）──
+            const fsW = hw * 0.18;
+            const fsg = ctx.createLinearGradient(cx - fsW, cy, cx + fsW, cy);
+            fsg.addColorStop(0, '#222230'); fsg.addColorStop(0.5, '#484858'); fsg.addColorStop(1, '#222230');
+            ctx.fillStyle = fsg;
+            ctx.shadowBlur = 10; ctx.shadowColor = '#000';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - hh * 1.08);
+            ctx.lineTo(cx - fsW, cy - hh * 0.5);
+            ctx.lineTo(cx - fsW * 1.15, cy + hh * 0.9);
+            ctx.lineTo(cx + fsW * 1.15, cy + hh * 0.9);
+            ctx.lineTo(cx + fsW, cy - hh * 0.5);
+            ctx.closePath(); ctx.fill();
+
+            // ── 4个发动机舱 ──
+            [-0.58, -0.32, 0.32, 0.58].forEach(ex => {
+                const epx = cx + ex * hw, epy = cy + hh * 0.1;
+                ctx.fillStyle = '#1E1E2A';
+                ctx.shadowBlur = 4; ctx.shadowColor = '#000';
+                ctx.beginPath();
+                ctx.ellipse(epx, epy, hw * 0.058, hh * 0.52, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // 排气火焰
+                const eg = ctx.createRadialGradient(epx, epy + hh * 0.38, 0, epx, epy + hh * 0.38, hh * 0.32);
+                eg.addColorStop(0, `rgba(255,200,80,${pulse})`);
+                eg.addColorStop(0.5, `rgba(255,100,0,${pulse * 0.7})`);
+                eg.addColorStop(1, 'rgba(255,50,0,0)');
+                ctx.fillStyle = eg;
+                ctx.beginPath(); ctx.arc(epx, epy + hh * 0.38, hh * 0.32, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // ── 炮塔（8个，朝上）──
+            ctx.shadowBlur = 6; ctx.shadowColor = '#000';
+            [-0.72, -0.52, -0.32, -0.12, 0.12, 0.32, 0.52, 0.72].forEach(tx => {
+                const tpx = cx + tx * hw, tpy = cy - hh * 0.42;
+                ctx.fillStyle = '#18181F';
+                ctx.beginPath(); ctx.arc(tpx, tpy, hw * 0.028, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#28283A'; ctx.lineWidth = hw * 0.016;
+                ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(tpx, tpy); ctx.lineTo(tpx, tpy - hh * 0.6); ctx.stroke();
+            });
+
+            // ── 驾驶舱红色光晕 ──
+            ctx.shadowBlur = 14; ctx.shadowColor = '#FF3300';
+            ctx.fillStyle = `rgba(255,80,0,${0.45 + 0.3 * pulse})`;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - hh * 0.48, fsW * 0.9, hh * 0.22, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ── 低血量受损红光 ──
+            if (e.currentHp < e.hp * 0.5) {
+                const dp = 0.4 + 0.4 * Math.sin(now / 130);
+                ctx.shadowBlur = 28; ctx.shadowColor = '#FF2200';
+                ctx.strokeStyle = `rgba(255,60,0,${dp * 0.55})`;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, hw * 0.82, hh * 0.82, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0; ctx.restore();
+        }
+
         function spawnEnemy() {
             // ── 关卡特殊生成逻辑 ──
             // 关卡5 枣庄之战：全部 F-22
@@ -4170,6 +4279,31 @@
                             }
                             e.lastCircle = nowB;
                         }
+                    } else if (e.isBomberBoss) {
+                        if (!e.entered) {
+                            e.y += 1.2;
+                            if (e.y >= e.hoverY) { e.y = e.hoverY; e.entered = true; }
+                        } else {
+                            e.phaseX += 0.0035;
+                            e.x = WIDTH / 2 + Math.sin(e.phaseX) * WIDTH * 0.16;
+                        }
+                        const nowBB = Date.now();
+                        if (!e.bullets) e.bullets = [];
+                        // 7发扇形弹每1400ms
+                        if (nowBB - e.lastSpread > 1400) {
+                            for (let si = -3; si <= 3; si++) {
+                                const ang = Math.PI / 2 + si * 0.2;
+                                e.bullets.push({ x: e.x + si * 28, y: e.y + e.h/2, vx: Math.cos(ang) * 2.6, vy: Math.sin(ang) * 2.6, damage: 120, isBomberB: true });
+                            }
+                            e.lastSpread = nowBB;
+                        }
+                        // 3颗炸弹每3200ms
+                        if (nowBB - e.lastBomb > 3200) {
+                            for (let bi = -1; bi <= 1; bi++) {
+                                e.bullets.push({ x: e.x + bi * 55, y: e.y + e.h/2, vx: bi * 0.35, vy: 1.6, damage: 200, isBomberBomb: true });
+                            }
+                            e.lastBomb = nowBB;
+                        }
                     } else if (e.type === 7) {
                         // 无人机：wait(顶部排队) → dive(俯冲) → climb(折返向上) 三阶段
                         if (e.phase === 'wait') {
@@ -4205,7 +4339,7 @@
             });
             // 无人机：等待阶段永不移除；折返飞出上边界才移除
             enemies = enemies.filter(e => {
-                if (e.isBoss) return e.currentHp > 0; // boss 血量耗尽才移除
+                if (e.isBoss || e.isBomberBoss) return e.currentHp > 0;
                 if (e.type === 7) {
                     if (e.phase === 'wait') return true;
                     if (e.phase === 'climb') return e.y > -e.h - 20;
@@ -5025,7 +5159,9 @@
                     return;
                 }
                 // 无人机折返时翻转朝向（机头朝上飞出）
-                if (e.type === 7 && e.phase === 'climb') {
+                if (e.isBomberBoss) {
+                    drawBomberBoss(ctx, e);
+                } else if (e.type === 7 && e.phase === 'climb') {
                     ctx.save();
                     ctx.translate(e.x, e.y);
                     ctx.scale(1, -1);
@@ -5050,7 +5186,25 @@
                 }
                 if (e.bullets) {
                     e.bullets.forEach(b => {
-                        if (b.isBossB) {
+                        if (b.isBomberBomb) {
+                            ctx.save();
+                            ctx.shadowBlur = 14; ctx.shadowColor = '#FF6600';
+                            ctx.fillStyle = 'rgba(50,15,0,0.65)';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = '#FF4400';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 6.5, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = '#FFCC00';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI*2); ctx.fill();
+                            ctx.shadowBlur = 0; ctx.restore();
+                        } else if (b.isBomberB) {
+                            ctx.save();
+                            ctx.shadowBlur = 10; ctx.shadowColor = '#FF44BB';
+                            ctx.fillStyle = '#FF44BB';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 4.5, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 1.5, 0, Math.PI*2); ctx.fill();
+                            ctx.shadowBlur = 0; ctx.restore();
+                        } else if (b.isBossB) {
                             // boss 子弹：大红橙色能量球
                             ctx.save();
                             ctx.shadowBlur = 14; ctx.shadowColor = '#FF2200';
@@ -5067,8 +5221,8 @@
                         }
                     });
                 }
-                // 血条（boss 不在此处画，用顶部大血条）
-                if (!e.isBoss && e.currentHp < e.hp) {
+                // 血条（boss/轰炸机boss 不在此处画，用顶部大血条）
+                if (!e.isBoss && !e.isBomberBoss && e.currentHp < e.hp) {
                     ctx.fillStyle = '#333';
                     ctx.fillRect(e.x - e.w/2, e.y - e.h/2 - 10, e.w, 4);
                     ctx.fillStyle = '#f00';
@@ -5110,6 +5264,36 @@
                 ctx.font = `${10*(HEIGHT/1000)}px monospace`;
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillText(`${Math.max(0,activeBoss.currentHp).toLocaleString()} / ${activeBoss.hp.toLocaleString()}`, WIDTH/2, by + bh - 3*(HEIGHT/1000));
+                ctx.shadowBlur = 0; ctx.restore();
+            }
+
+            // ── 轰炸机BOSS血量条 ──
+            const activeBomber = enemies.find(e => e.isBomberBoss);
+            if (activeBomber && activeBomber.entered) {
+                const bpct = Math.max(0, activeBomber.currentHp / activeBomber.hp);
+                const bw2 = WIDTH * 0.62, bh2 = 14 * (HEIGHT/1000);
+                const bx2 = (WIDTH - bw2) / 2, by2 = 36 * (HEIGHT/1000);
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.72)';
+                ctx.beginPath(); ctx.roundRect(bx2-3, by2-12*(HEIGHT/1000), bw2+6, bh2+18*(HEIGHT/1000), 4); ctx.fill();
+                ctx.strokeStyle = `rgba(255,100,0,${0.5+0.3*Math.sin(Date.now()/150)})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.roundRect(bx2-3, by2-12*(HEIGHT/1000), bw2+6, bh2+18*(HEIGHT/1000), 4); ctx.stroke();
+                ctx.font = `bold ${10*(HEIGHT/1000)}px monospace`;
+                ctx.fillStyle = `rgba(255,140,0,${0.7+0.3*Math.sin(Date.now()/180)})`;
+                ctx.textAlign = 'center';
+                ctx.fillText('钢铁要塞  ·  IRON FORTRESS', WIDTH/2, by2 - 1*(HEIGHT/1000));
+                ctx.fillStyle = 'rgba(60,20,0,0.9)';
+                ctx.beginPath(); ctx.roundRect(bx2, by2, bw2, bh2, 3); ctx.fill();
+                if (bpct > 0) {
+                    const hg2 = ctx.createLinearGradient(bx2, by2, bx2 + bw2 * bpct, by2);
+                    hg2.addColorStop(0,'#5A3000'); hg2.addColorStop(0.5,'#DD6600'); hg2.addColorStop(1,'#FF9900');
+                    ctx.fillStyle = hg2;
+                    ctx.beginPath(); ctx.roundRect(bx2, by2, bw2 * bpct, bh2, 3); ctx.fill();
+                }
+                ctx.font = `${9*(HEIGHT/1000)}px monospace`;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(`${Math.max(0,activeBomber.currentHp).toLocaleString()} / ${activeBomber.hp.toLocaleString()}`, WIDTH/2, by2 + bh2 - 2*(HEIGHT/1000));
                 ctx.shadowBlur = 0; ctx.restore();
             }
 
@@ -5489,7 +5673,7 @@
             levelXP = 0;
             joyActive = false; joyKnobDx = 0; joyKnobDy = 0; joyTouchId = null;
             enemies = []; particles = []; player.bullets = []; allyBullets = []; sonicWaves = []; laserFlashes = []; ringProjectiles = [];
-            bossSpawned = false; gameStartTime = 0;
+            bossSpawned = false; bomberBossSpawned = false; gameStartTime = 0;
             player.x = WIDTH/2; player.y = HEIGHT - 100;
             gameState = 'select';
             document.getElementById('gameOver').style.display = 'none';
@@ -5539,7 +5723,7 @@
             conversionNextAt = 0; sonicWaves = []; allyBullets = []; laserFlashes = [];
             ringProjectiles = []; ringNextAt = 0;
             devourState = null; devourNextAt = 0;
-            gameStartTime = Date.now(); bossSpawned = false;
+            gameStartTime = Date.now(); bossSpawned = false; bomberBossSpawned = false;
             player.prevY = null; player.movingUp = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
             gameState = 'playing';
@@ -6021,6 +6205,10 @@
                     lastSpawn = t;
                 }
                 // 大BOSS：游戏开始20秒后出现（自由模式，仅一次）
+                if (gameState === 'playing' && !bomberBossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 5000) {
+                    spawnBomberBoss();
+                    bomberBossSpawned = true;
+                }
                 if (gameState === 'playing' && !bossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 20000) {
                     spawnBoss();
                     bossSpawned = true;
