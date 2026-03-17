@@ -6204,8 +6204,8 @@
                     spawnEnemy();
                     lastSpawn = t;
                 }
-                // 钢铁要塞：游戏开始5秒后出现（自由模式，仅一次）
-                if (gameState === 'playing' && !bomberBossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 5000) {
+                // 钢铁要塞：游戏开始50秒后出现（自由模式，仅一次）
+                if (gameState === 'playing' && !bomberBossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 50000) {
                     spawnBomberBoss();
                     bomberBossSpawned = true;
                 }
