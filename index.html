@@ -6204,12 +6204,14 @@
                     spawnEnemy();
                     lastSpawn = t;
                 }
-                // 大BOSS：游戏开始20秒后出现（自由模式，仅一次）
+                // 钢铁要塞：游戏开始5秒后出现（自由模式，仅一次）
                 if (gameState === 'playing' && !bomberBossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 5000) {
                     spawnBomberBoss();
                     bomberBossSpawned = true;
                 }
-                if (gameState === 'playing' && !bossSpawned && currentMission === null && gameStartTime > 0 && Date.now() - gameStartTime >= 20000) {
+                // 深渊之翼：钢铁要塞被击败后出现（自由模式，仅一次）
+                if (gameState === 'playing' && !bossSpawned && bomberBossSpawned && currentMission === null &&
+                    !enemies.some(e => e.isBomberBoss)) {
                     spawnBoss();
                     bossSpawned = true;
                 }
