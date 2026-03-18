@@ -4073,12 +4073,12 @@
             player.prevY = player.y;
 
             // 射击 - 普通子弹（plane 5 使用激光，跳过此处）
-            if (selectedPlane !== 5 && (!player.lastShot || Date.now() - player.lastShot > 450 - bulletRateLevel * 50)) {
+            if (selectedPlane !== 5 && selectedPlane !== 8 && (!player.lastShot || Date.now() - player.lastShot > 450 - bulletRateLevel * 50)) {
                 playerShoot();
                 player.lastShot = Date.now();
             }
-            // 射击 - 跟踪弹（间隔更慢，400ms）
-            if (missileTier > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 1600)) {
+            // 射击 - 跟踪弹（间隔更慢，400ms）歼-15纯火焰不发射导弹
+            if (selectedPlane !== 8 && missileTier > 0 && (!player.lastMissileShot || Date.now() - player.lastMissileShot > 1600)) {
                 playerShootMissile();
                 player.lastMissileShot = Date.now();
             }
