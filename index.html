@@ -4260,8 +4260,8 @@
                     if (elapsed < flameActive.duration) {
                         // 火焰伤害：每帧对范围内敌机造成伤害
                         const wbMult = 1 + weaponBayLevel * 0.1;
-                        const flameRadius = 150;
-                        const flameAngle = Math.PI / 3; // 60度
+                        const flameRadius = 260;
+                        const flameAngle = Math.PI / 2.2; // 约82度
                         enemies.forEach(e => {
                             const dx = e.x - player.x;
                             const dy = e.y - player.y;
@@ -5450,8 +5450,8 @@
                 const now = Date.now();
                 const elapsed = now - flameActive.born;
                 const progress = elapsed / flameActive.duration;
-                const flameRadius = 150;
-                const flameAngle = Math.PI / 3; // 60度
+                const flameRadius = 260;
+                const flameAngle = Math.PI / 2.2; // 约82度
                 const intensity = 1 - progress;
                 
                 ctx.save();
