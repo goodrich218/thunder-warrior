@@ -3983,8 +3983,8 @@
                 for (; gi < gw.length && (gr -= gw[gi]) > 0; gi++);
                 const ge = groundTypes[gi];
                 
-                // 10% 概率从前方出现（从上方降落），90% 概率在底部（身后）
-                const fromTop = Math.random() < 0.10;
+                // 90% 概率从前方出现（从上方降落），10% 概率在底部（身后）
+                const fromTop = Math.random() < 0.90;
                 const gx = ge.s === 0 || fromTop
                     ? Math.random() * (WIDTH - ge.w) + ge.w/2  // 固定炮台或顶部出现随机位置
                     : (Math.random() < 0.5 ? ge.w/2 : WIDTH - ge.w/2); // 坦克从两侧驶入
