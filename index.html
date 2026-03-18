@@ -3994,8 +3994,10 @@
                     y: fromTop ? -ge.h : HEIGHT - ge.h - 10,  // 10%从顶部，90%在底部
                     w: ge.w, h: ge.h,
                     type: ge.t, hp: ge.hp, currentHp: ge.hp,
-                    speed: ge.s, score: ge.sc,
-                    isGround: !fromTop,  // 从顶部出现的不是地面单位，会向下移动
+                    speed: fromTop ? 2 : ge.s,  // 从顶部降落时速度更快
+                    score: ge.sc,
+                    isGround: !fromTop,  // 从顶部出现的先标记为非地面，降落后再变
+                    landing: fromTop,    // 标记正在降落
                     vx: ge.s > 0 && !fromTop ? (gx < WIDTH/2 ? ge.s : -ge.s) : 0,
                     lastShot: 0,
                     bullets: []
@@ -4757,6 +4759,16 @@
                         });
                     } else {
                         e.y += e.speed;
+                        // 降落中的单位到达底部后变成地面单位
+                        if (e.landing && e.y >= HEIGHT - e.h - 10) {
+                            e.y = HEIGHT - e.h - 10;
+                            e.isGround = true;
+                            e.landing = false;
+                            // 给坦克和导弹车添加横向移动
+                            if (e.type === 10 || e.type === 12) {
+                                e.vx = (Math.random() < 0.5 ? 1 : -1) * (e.type === 10 ? 0.6 : 0.4);
+                            }
+                        }
                         if (Math.random() < 0.01 && e.y > 50) {
                             if (!e.bullets) e.bullets = [];
                             const dx = player.x - e.x;
