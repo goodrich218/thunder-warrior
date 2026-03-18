@@ -1673,6 +1673,7 @@
         let laserFlashes = [];                               // 未来-2 激光闪光
         let ringProjectiles = [], ringNextAt = 0;            // 未来-3 环绕弹
         let devourState = null, devourNextAt = 0;            // 未来-4 吞噬
+        let flameNextAt = 0, flameActive = null;             // 歼-15 炽焰喷射
         let gameStartTime = 0, bossSpawned = false, bomberBossSpawned = false; // 大BOSS
         let dmgMainGun = 0, dmgMissile = 0, dmgWingman = 0, dmgHQ9 = 0, dmgPL17 = 0;
         // ── 剧情模式 ──
@@ -3146,6 +3147,45 @@
                 ctx.fillStyle='#0C0018'; ctx.beginPath(); ctx.ellipse(cx-2.5,39,2.2,2,0,0,Math.PI*2); ctx.fill();
                 ctx.fillStyle='#0C0018'; ctx.beginPath(); ctx.ellipse(cx+2.5,39,2.2,2,0,0,Math.PI*2); ctx.fill();
                 navLight(cx-14,23,cx+14,23,'rgb(180,0,255)','rgb(180,0,255)');
+            } else if (type === 8) {
+                // 歼-15 飞鲨 · 舰载重型战斗/攻击机 · 深海蓝
+                // 主三角翼
+                const wg8 = ctx.createLinearGradient(0,14,32,37);
+                wg8.addColorStop(0,'#1A3A5C'); wg8.addColorStop(0.5,'#0D2840'); wg8.addColorStop(1,'#071828');
+                gpoly([[cx-3,14],[0,36],[4,41],[cx-4,39]], wg8);
+                gpoly([[cx+3,14],[32,36],[28,41],[cx+4,39]], wg8);
+                poly([[0,36],[4,41],[6,37]],'#051220'); poly([[32,36],[28,41],[26,37]],'#051220');
+                // 前置鸭翼（三翼面布局特点）
+                const cg8 = ctx.createLinearGradient(cx-14,15,cx,8);
+                cg8.addColorStop(0,'#0D2840'); cg8.addColorStop(1,'#1A3A5C');
+                gpoly([[cx-4,7],[cx-15,16],[cx-10,18],[cx-3,10]], cg8);
+                gpoly([[cx+4,7],[cx+15,16],[cx+10,18],[cx+3,10]], cg8);
+                poly([[cx-4,7],[cx-15,16],[cx-14,12]],'#1E4A70');
+                poly([[cx+4,7],[cx+15,16],[cx+14,12]],'#1E4A70');
+                // 机身
+                const bg8 = ctx.createLinearGradient(cx-7,0,cx+7,0);
+                bg8.addColorStop(0,'#0D2840'); bg8.addColorStop(0.35,'#1E5080'); bg8.addColorStop(0.5,'#2868A0');
+                bg8.addColorStop(0.65,'#1E5080'); bg8.addColorStop(1,'#0D2840');
+                gpoly([[cx,0],[cx+5,9],[cx+7,23],[cx+5,37],[cx+2,41],[cx-2,41],[cx-5,37],[cx-7,23],[cx-5,9]], bg8);
+                // 进气道
+                poly([[cx-5,14],[cx-9,16],[cx-9,25],[cx-6,26],[cx-5,21]],'#040E18');
+                poly([[cx+5,14],[cx+9,16],[cx+9,25],[cx+6,26],[cx+5,21]],'#040E18');
+                // 脊线
+                const rg8 = ctx.createLinearGradient(cx,0,cx,41);
+                rg8.addColorStop(0,'#4A90C0'); rg8.addColorStop(0.4,'#2868A0'); rg8.addColorStop(1,'#0D2840');
+                gpoly([[cx,1],[cx+2.5,9],[cx+2,35],[cx,39],[cx-2,35],[cx-2.5,9]], rg8);
+                // 面板线
+                pline(cx,5,cx-5,23); pline(cx,5,cx+5,23);
+                pline(cx-7,23,cx-5,37); pline(cx+7,23,cx+5,37);
+                pline(cx-4,7,cx-15,16,'rgba(40,100,160,0.3)',0.5);
+                pline(cx+4,7,cx+15,16,'rgba(40,100,160,0.3)',0.5);
+                cockpit(9,'#040810','rgba(255,140,0,0.95)','#FF8C00');
+                // 双发橙焰
+                jet(cx-2.5,43, 3.2,8, 'rgba(255,160,40,', 'rgba(255,80,0,');
+                jet(cx+2.5,43, 3.2,8, 'rgba(255,160,40,', 'rgba(255,80,0,');
+                ctx.fillStyle='#081018'; ctx.beginPath(); ctx.ellipse(cx-2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#081018'; ctx.beginPath(); ctx.ellipse(cx+2.5,40,2.4,2.1,0,0,Math.PI*2); ctx.fill();
+                navLight(0,37,32,37,'rgb(255,140,0)','rgb(255,140,0)');
             }
 
             ctx.restore();
@@ -4177,6 +4217,53 @@
                 if (now >= nextStealthAt && now >= stealthUntil) {
                     stealthUntil = now + 3000;
                     nextStealthAt = now + 13000; // 隐身结束后再计10秒
+                }
+            }
+
+            // 歼-15（8号）：每8秒喷出60°扇形火焰，半径150px，群体伤害×70%
+            if (selectedPlane === 8) {
+                const now8 = Date.now();
+                if (flameNextAt === 0) flameNextAt = now8 + 8000;
+                if (now8 >= flameNextAt && !flameActive) {
+                    flameActive = { born: now8, duration: 400 }; // 持续400ms
+                    flameNextAt = now8 + 8000;
+                }
+                if (flameActive) {
+                    const elapsed = now8 - flameActive.born;
+                    if (elapsed < flameActive.duration) {
+                        // 火焰伤害：每帧对范围内敌机造成伤害
+                        const wbMult = 1 + weaponBayLevel * 0.1;
+                        const flameRadius = 150;
+                        const flameAngle = Math.PI / 3; // 60度
+                        enemies.forEach(e => {
+                            const dx = e.x - player.x;
+                            const dy = e.y - player.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < flameRadius && dy < 0) { // 只影响前方的敌机
+                                const angle = Math.atan2(Math.abs(dx), -dy);
+                                if (angle < flameAngle / 2) {
+                                    const dmg = wbMult * 0.7 * 0.15; // 每帧约15%基础伤害
+                                    e.currentHp -= dmg;
+                                    dmgMainGun += dmg * 100;
+                                }
+                            }
+                        });
+                        enemies = enemies.filter(e => {
+                            if (e.currentHp <= 0) {
+                                score += e.score;
+                                levelXP += e.score;
+                                if (leechLevel > 0) currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
+                                createExplosion(e.x, e.y, '#FF6600', 15);
+                                playKillSound();
+                                checkUpgrade();
+                                if (currentMission !== null) { missionKillCount++; checkMissionComplete(); }
+                                return false;
+                            }
+                            return true;
+                        });
+                    } else {
+                        flameActive = null;
+                    }
                 }
             }
 
@@ -5331,6 +5418,48 @@
                 ctx.shadowBlur = 0; ctx.restore();
             });
 
+            // ── 歼-15 炽焰喷射（60°扇形）──
+            if (flameActive) {
+                const now = Date.now();
+                const elapsed = now - flameActive.born;
+                const progress = elapsed / flameActive.duration;
+                const flameRadius = 150;
+                const flameAngle = Math.PI / 3; // 60度
+                const intensity = 1 - progress;
+                
+                ctx.save();
+                ctx.translate(player.x, player.y);
+                
+                // 绘制扇形火焰
+                for (let i = 0; i < 5; i++) {
+                    const layerAlpha = intensity * (0.6 - i * 0.1);
+                    const layerRadius = flameRadius * (0.6 + i * 0.1);
+                    const gradient = ctx.createRadialGradient(0, -20, 0, 0, -20, layerRadius);
+                    gradient.addColorStop(0, `rgba(255,255,200,${layerAlpha})`);
+                    gradient.addColorStop(0.3, `rgba(255,150,0,${layerAlpha * 0.8})`);
+                    gradient.addColorStop(0.7, `rgba(255,60,0,${layerAlpha * 0.5})`);
+                    gradient.addColorStop(1, 'rgba(255,0,0,0)');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -10);
+                    ctx.arc(0, -10, layerRadius, Math.PI - flameAngle/2, Math.PI + flameAngle/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // 火焰核心亮光
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#FF8800';
+                ctx.fillStyle = `rgba(255,255,150,${intensity * 0.8})`;
+                ctx.beginPath();
+                ctx.ellipse(0, -15, 20 * intensity + 10, 40 * intensity, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
             // ── 未来-2 激光束（移动 + 穿透伤害）──
             laserFlashes.forEach(lf => {
                 // 每帧向上移动
@@ -5738,6 +5867,7 @@
             conversionNextAt = 0; sonicWaves = []; allyBullets = []; laserFlashes = [];
             ringProjectiles = []; ringNextAt = 0;
             devourState = null; devourNextAt = 0;
+            flameNextAt = 0; flameActive = null;
             gameStartTime = Date.now(); bossSpawned = false; bomberBossSpawned = false;
             player.prevY = null; player.movingUp = false; player.lastSideMissile = 0;
             document.getElementById('pauseBtn').style.display = 'flex';
