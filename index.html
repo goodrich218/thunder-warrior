@@ -5457,31 +5457,68 @@
                 ctx.save();
                 ctx.translate(player.x, player.y);
                 
-                // 绘制扇形火焰
-                for (let i = 0; i < 5; i++) {
-                    const layerAlpha = intensity * (0.6 - i * 0.1);
-                    const layerRadius = flameRadius * (0.6 + i * 0.1);
-                    const gradient = ctx.createRadialGradient(0, -20, 0, 0, -20, layerRadius);
-                    gradient.addColorStop(0, `rgba(255,255,200,${layerAlpha})`);
-                    gradient.addColorStop(0.3, `rgba(255,150,0,${layerAlpha * 0.8})`);
-                    gradient.addColorStop(0.7, `rgba(255,60,0,${layerAlpha * 0.5})`);
-                    gradient.addColorStop(1, 'rgba(255,0,0,0)');
+                // 绘制向前喷射的火焰（多层椭圆模拟真实火焰）
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = '#FF6600';
+                
+                // 火焰主体：多层渐变椭圆，向前（上方）喷射
+                for (let i = 0; i < 8; i++) {
+                    const layerProgress = i / 8;
+                    const flameLength = flameRadius * (1 - layerProgress * 0.3) * intensity;
+                    const flameWidth = 25 * (1 - layerProgress * 0.5) * intensity;
+                    const offsetY = -10 - layerProgress * flameRadius * 0.9 * intensity;
+                    
+                    // 随机抖动模拟火焰跳动
+                    const jitterX = (Math.random() - 0.5) * 8 * intensity;
+                    const jitterY = (Math.random() - 0.5) * 4 * intensity;
+                    
+                    const gradient = ctx.createRadialGradient(
+                        jitterX, offsetY + jitterY, 0,
+                        jitterX, offsetY + jitterY, flameWidth
+                    );
+                    
+                    const alpha = intensity * (0.9 - i * 0.08);
+                    gradient.addColorStop(0, `rgba(255,255,220,${alpha})`);
+                    gradient.addColorStop(0.2, `rgba(255,200,50,${alpha * 0.9})`);
+                    gradient.addColorStop(0.5, `rgba(255,100,0,${alpha * 0.7})`);
+                    gradient.addColorStop(0.8, `rgba(255,50,0,${alpha * 0.4})`);
+                    gradient.addColorStop(1, 'rgba(200,0,0,0)');
                     
                     ctx.fillStyle = gradient;
                     ctx.beginPath();
-                    ctx.moveTo(0, -10);
-                    ctx.arc(0, -10, layerRadius, Math.PI - flameAngle/2, Math.PI + flameAngle/2);
-                    ctx.closePath();
+                    // 椭圆火焰，向前拉长
+                    ctx.ellipse(
+                        jitterX, 
+                        offsetY + jitterY, 
+                        flameWidth, 
+                        flameLength * 0.4, 
+                        0, 0, Math.PI * 2
+                    );
                     ctx.fill();
                 }
                 
-                // 火焰核心亮光
-                ctx.shadowBlur = 25;
-                ctx.shadowColor = '#FF8800';
-                ctx.fillStyle = `rgba(255,255,150,${intensity * 0.8})`;
+                // 火焰核心白热区
+                const coreGradient = ctx.createRadialGradient(0, -20, 0, 0, -20, 30 * intensity);
+                coreGradient.addColorStop(0, `rgba(255,255,255,${intensity * 0.9})`);
+                coreGradient.addColorStop(0.3, `rgba(255,255,150,${intensity * 0.8})`);
+                coreGradient.addColorStop(1, 'rgba(255,200,50,0)');
+                ctx.fillStyle = coreGradient;
                 ctx.beginPath();
-                ctx.ellipse(0, -15, 20 * intensity + 10, 40 * intensity, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, -15, 15 * intensity, 35 * intensity, 0, 0, Math.PI * 2);
                 ctx.fill();
+                
+                // 火焰尾迹粒子
+                for (let p = 0; p < 12; p++) {
+                    const px = (Math.random() - 0.5) * 40 * intensity;
+                    const py = -20 - Math.random() * flameRadius * 0.8 * intensity;
+                    const pSize = (3 + Math.random() * 5) * intensity;
+                    const pAlpha = intensity * (0.8 - Math.random() * 0.3);
+                    
+                    ctx.fillStyle = `rgba(255,${150 + Math.random() * 100},0,${pAlpha})`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, pSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 
                 ctx.shadowBlur = 0;
                 ctx.restore();
