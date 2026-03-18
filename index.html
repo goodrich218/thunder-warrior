@@ -3593,97 +3593,231 @@
 
             // ── 地面单位 ──
             else if (t === 10) {
-                // M1A2 坦克 · 沙漠黄绿迷彩
-                ctx.save(); ctx.translate(0, 0);
-                // 履带
-                ctx.fillStyle = '#1A1A0E'; ctx.fillRect(2,28,36,8); ctx.fillRect(2,28,36,8);
-                ctx.strokeStyle = '#2A2A18'; ctx.lineWidth = 1;
-                for(let xi=4;xi<38;xi+=5){ ctx.beginPath(); ctx.moveTo(xi,28); ctx.lineTo(xi,36); ctx.stroke(); }
-                // 车体
-                const tg = ctx.createLinearGradient(0,10,40,30);
-                tg.addColorStop(0,'#6B6B3A'); tg.addColorStop(0.5,'#8A8A4A'); tg.addColorStop(1,'#5A5A30');
-                ctx.fillStyle = tg; ctx.beginPath(); ctx.roundRect(4,16,32,14,2); ctx.fill();
-                // 炮塔
-                const turretG = ctx.createLinearGradient(10,6,30,16);
-                turretG.addColorStop(0,'#7A7A45'); turretG.addColorStop(1,'#4A4A28');
-                ctx.fillStyle = turretG; ctx.beginPath(); ctx.ellipse(20,14,12,8,0,0,Math.PI*2); ctx.fill();
-                // 主炮（朝上）
-                ctx.fillStyle = '#303020';
-                ctx.save(); ctx.translate(20,14); ctx.rotate(-Math.PI/2);
-                ctx.fillRect(-1.5,-18,3,20); ctx.restore();
-                // 炮口
-                ctx.shadowBlur = 8; ctx.shadowColor = '#FF8800';
-                ctx.fillStyle = '#1A1A0A'; ctx.beginPath(); ctx.arc(20,-3,2.5,0,Math.PI*2); ctx.fill();
-                ctx.shadowBlur = 0;
-                // 迷彩斑点
-                ctx.globalAlpha = 0.25;
-                ctx.fillStyle = '#3A4A1A'; ctx.beginPath(); ctx.ellipse(14,18,4,3,0.3,0,Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#2A3A10'; ctx.beginPath(); ctx.ellipse(26,20,3,2,-0.2,0,Math.PI*2); ctx.fill();
+                // M1A2 主战坦克 · 沙漠数码迷彩
+                const p10 = 0.6 + 0.4 * Math.sin(Date.now() / 200);
+                ctx.save();
+                // 履带组件（左右各一条）
+                const trackG = ctx.createLinearGradient(0,26,0,38);
+                trackG.addColorStop(0,'#2A2818'); trackG.addColorStop(0.5,'#181610'); trackG.addColorStop(1,'#0E0C08');
+                ctx.fillStyle = trackG;
+                ctx.beginPath(); ctx.roundRect(0,26,40,12,3); ctx.fill();
+                // 履带齿纹
+                ctx.strokeStyle = 'rgba(60,55,35,0.8)'; ctx.lineWidth = 1.2;
+                for(let xi=3; xi<39; xi+=4.5){
+                    ctx.beginPath(); ctx.moveTo(xi,26); ctx.lineTo(xi,38); ctx.stroke();
+                }
+                // 履带高光边
+                ctx.strokeStyle = 'rgba(80,75,50,0.5)'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.roundRect(0,26,40,12,3); ctx.stroke();
+                // 负重轮（5个）
+                [5,11,18,25,32].forEach(wx => {
+                    const wg = ctx.createRadialGradient(wx,32,1,wx,32,5);
+                    wg.addColorStop(0,'#3A3828'); wg.addColorStop(1,'#1A1810');
+                    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx,32,5,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = 'rgba(80,75,50,0.6)'; ctx.lineWidth = 0.7;
+                    ctx.beginPath(); ctx.arc(wx,32,5,0,Math.PI*2); ctx.stroke();
+                    ctx.fillStyle = '#252318'; ctx.beginPath(); ctx.arc(wx,32,2,0,Math.PI*2); ctx.fill();
+                });
+                // 车体下部裙板
+                const skirtG = ctx.createLinearGradient(0,18,40,26);
+                skirtG.addColorStop(0,'#5C5830'); skirtG.addColorStop(0.5,'#787448'); skirtG.addColorStop(1,'#4A4828');
+                ctx.fillStyle = skirtG; ctx.beginPath(); ctx.roundRect(2,20,36,8,1); ctx.fill();
+                // 车体主体（梯形，前倾装甲）
+                const bodyG = ctx.createLinearGradient(0,8,40,22);
+                bodyG.addColorStop(0,'#8A8650'); bodyG.addColorStop(0.4,'#9E9A5E'); bodyG.addColorStop(1,'#6A6638');
+                ctx.fillStyle = bodyG;
+                ctx.beginPath();
+                ctx.moveTo(4,22); ctx.lineTo(36,22); ctx.lineTo(38,12); ctx.lineTo(2,12); ctx.closePath();
+                ctx.fill();
+                // 车体侧面装甲板棱线
+                ctx.strokeStyle = 'rgba(160,155,100,0.4)'; ctx.lineWidth = 0.6;
+                ctx.beginPath(); ctx.moveTo(4,22); ctx.lineTo(36,22); ctx.stroke();
+                ctx.strokeStyle = 'rgba(120,115,70,0.3)'; ctx.lineWidth = 0.5;
+                ctx.beginPath(); ctx.moveTo(8,16); ctx.lineTo(32,16); ctx.stroke();
+                // 迷彩斑块
+                ctx.globalAlpha = 0.2;
+                ctx.fillStyle = '#3C4A1A';
+                ctx.beginPath(); ctx.ellipse(10,16,5,3,0.4,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(30,14,4,2.5,-0.3,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#2A3810';
+                ctx.beginPath(); ctx.ellipse(20,19,6,2.5,0,0,Math.PI*2); ctx.fill();
                 ctx.globalAlpha = 1;
+                // 炮塔基座
+                const tbaseG = ctx.createRadialGradient(20,13,2,20,13,14);
+                tbaseG.addColorStop(0,'#A0986A'); tbaseG.addColorStop(0.6,'#807848'); tbaseG.addColorStop(1,'#585430');
+                ctx.fillStyle = tbaseG; ctx.beginPath(); ctx.ellipse(20,13,13,7,0,0,Math.PI*2); ctx.fill();
+                ctx.strokeStyle = 'rgba(180,170,110,0.3)'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.ellipse(20,13,13,7,0,0,Math.PI*2); ctx.stroke();
+                // 炮塔装甲块
+                const turG = ctx.createLinearGradient(10,6,30,14);
+                turG.addColorStop(0,'#909060'); turG.addColorStop(0.5,'#B0A870'); turG.addColorStop(1,'#686440');
+                ctx.fillStyle = turG;
+                ctx.beginPath();
+                ctx.moveTo(11,14); ctx.lineTo(29,14); ctx.lineTo(27,6); ctx.lineTo(13,6); ctx.closePath();
+                ctx.fill();
+                // 炮塔顶面高光
+                ctx.fillStyle = 'rgba(200,195,140,0.25)';
+                ctx.beginPath(); ctx.moveTo(14,7); ctx.lineTo(26,7); ctx.lineTo(24,10); ctx.lineTo(16,10); ctx.closePath(); ctx.fill();
+                // 主炮管（120mm滑膛炮）
+                const gunG = ctx.createLinearGradient(18,0,22,0);
+                gunG.addColorStop(0,'#3A3820'); gunG.addColorStop(0.5,'#6A6648'); gunG.addColorStop(1,'#2A2818');
+                ctx.fillStyle = gunG; ctx.beginPath(); ctx.roundRect(18,-4,4,14,1); ctx.fill();
+                // 炮管防尘罩（中部略粗）
+                ctx.fillStyle = '#4A4830'; ctx.beginPath(); ctx.roundRect(17,3,6,4,1); ctx.fill();
+                // 炮口制退器
+                ctx.fillStyle = '#2A2818'; ctx.beginPath(); ctx.roundRect(17.5,-6,5,4,1); ctx.fill();
+                ctx.shadowBlur = 10; ctx.shadowColor = `rgba(255,160,40,${p10*0.6})`;
+                ctx.fillStyle = `rgba(255,140,20,${p10*0.4})`;
+                ctx.beginPath(); ctx.arc(20,-5,3,0,Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+                // 指挥塔
+                ctx.fillStyle = '#706C44'; ctx.beginPath(); ctx.roundRect(15,6,6,5,1); ctx.fill();
+                ctx.fillStyle = 'rgba(0,200,255,0.5)'; ctx.beginPath(); ctx.arc(18,7,1.5,0,Math.PI*2); ctx.fill();
+                // 车体前装甲棱线
+                ctx.strokeStyle = 'rgba(200,190,130,0.35)'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.moveTo(2,12); ctx.lineTo(38,12); ctx.stroke();
                 ctx.restore();
             }
             else if (t === 11) {
-                // 榴弹炮阵地 · 固定炮台
+                // M198 榴弹炮 · 丛林掩体
                 ctx.save();
-                // 沙袋掩体
-                ctx.fillStyle = '#5A4A2A';
-                for(let bi=0;bi<5;bi++){ ctx.beginPath(); ctx.ellipse(5+bi*7,34,5,4,0,0,Math.PI*2); ctx.fill(); }
-                ctx.fillStyle = '#7A6A3A';
-                for(let bi=0;bi<4;bi++){ ctx.beginPath(); ctx.ellipse(8+bi*7,30,4,3,0,0,Math.PI*2); ctx.fill(); }
-                // 炮架
-                ctx.fillStyle = '#4A4030'; ctx.fillRect(14,20,12,14);
-                ctx.fillStyle = '#3A3020'; ctx.fillRect(12,28,16,6);
-                // 轮子
-                ctx.fillStyle = '#252015'; ctx.beginPath(); ctx.arc(11,33,5,0,Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(29,33,5,0,Math.PI*2); ctx.fill();
-                ctx.strokeStyle = '#4A4030'; ctx.lineWidth = 1.2;
-                ctx.beginPath(); ctx.arc(11,33,5,0,Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(29,33,5,0,Math.PI*2); ctx.stroke();
-                // 炮管（大口径，朝左上方）
-                ctx.fillStyle = '#2A2818';
-                ctx.save(); ctx.translate(20,20); ctx.rotate(-Math.PI*0.65);
-                ctx.fillRect(-2,-22,4,24); ctx.restore();
-                // 炮口光晕
-                const muzzleX = 20 + Math.cos(-Math.PI*0.65-Math.PI/2) * 22;
-                const muzzleY = 20 + Math.sin(-Math.PI*0.65-Math.PI/2) * 22;
-                ctx.shadowBlur = 10; ctx.shadowColor = '#FFAA00';
-                ctx.fillStyle = '#1A1808'; ctx.beginPath(); ctx.arc(muzzleX,muzzleY,3,0,Math.PI*2); ctx.fill();
+                // 地面阴影
+                ctx.fillStyle = 'rgba(0,0,0,0.25)';
+                ctx.beginPath(); ctx.ellipse(20,38,18,3,0,0,Math.PI*2); ctx.fill();
+                // 沙袋掩体（前后两排，立体感）
+                const bagColors = ['#6B5432','#7A6240','#5A4428'];
+                for(let row=0;row<2;row++){
+                    const by = 30 + row*4, count = row===0?5:4, startX = row===0?4:7;
+                    for(let bi=0;bi<count;bi++){
+                        const bx = startX + bi*7;
+                        ctx.fillStyle = bagColors[bi%3];
+                        ctx.beginPath(); ctx.ellipse(bx,by,3.8,3,0,0,Math.PI*2); ctx.fill();
+                        ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 0.5;
+                        ctx.beginPath(); ctx.ellipse(bx,by,3.8,3,0,0,Math.PI*2); ctx.stroke();
+                        // 沙袋顶部高光
+                        ctx.fillStyle = 'rgba(180,155,100,0.3)';
+                        ctx.beginPath(); ctx.ellipse(bx-0.5,by-1,2,1.5,0,0,Math.PI*2); ctx.fill();
+                    }
+                }
+                // 炮架主体
+                const frameG = ctx.createLinearGradient(10,18,30,34);
+                frameG.addColorStop(0,'#4E4C30'); frameG.addColorStop(0.5,'#5E5C3C'); frameG.addColorStop(1,'#363420');
+                ctx.fillStyle = frameG; ctx.beginPath(); ctx.roundRect(12,22,16,12,2); ctx.fill();
+                // 炮架侧面结构线
+                ctx.strokeStyle = 'rgba(120,115,70,0.5)'; ctx.lineWidth = 0.7;
+                ctx.beginPath(); ctx.moveTo(14,22); ctx.lineTo(14,34); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(26,22); ctx.lineTo(26,34); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(12,27); ctx.lineTo(28,27); ctx.stroke();
+                // 大轮子（左右各一）
+                [9,31].forEach(wx => {
+                    const wg = ctx.createRadialGradient(wx,32,2,wx,32,6);
+                    wg.addColorStop(0,'#4A4828'); wg.addColorStop(0.6,'#2A2818'); wg.addColorStop(1,'#1A1810');
+                    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx,32,6,0,Math.PI*2); ctx.fill();
+                    // 轮辐
+                    ctx.strokeStyle = 'rgba(100,95,60,0.6)'; ctx.lineWidth = 0.8;
+                    for(let a=0;a<6;a++){
+                        const ra = a*Math.PI/3;
+                        ctx.beginPath(); ctx.moveTo(wx,32); ctx.lineTo(wx+Math.cos(ra)*5,32+Math.sin(ra)*5); ctx.stroke();
+                    }
+                    ctx.strokeStyle = 'rgba(120,115,70,0.4)'; ctx.lineWidth = 0.6;
+                    ctx.beginPath(); ctx.arc(wx,32,6,0,Math.PI*2); ctx.stroke();
+                    ctx.fillStyle = '#383620'; ctx.beginPath(); ctx.arc(wx,32,2,0,Math.PI*2); ctx.fill();
+                });
+                // 炮管（大仰角朝上，155mm口径感）
+                ctx.save(); ctx.translate(20,24); ctx.rotate(-Math.PI*0.58);
+                const barrelG = ctx.createLinearGradient(-3,0,3,0);
+                barrelG.addColorStop(0,'#282618'); barrelG.addColorStop(0.5,'#585640'); barrelG.addColorStop(1,'#1C1A10');
+                ctx.fillStyle = barrelG; ctx.beginPath(); ctx.roundRect(-2.5,-24,5,26,1); ctx.fill();
+                // 炮管箍环
+                ctx.fillStyle = '#3A3828';
+                [-20,-12,-4].forEach(ry => { ctx.fillRect(-3,ry,6,2); });
+                ctx.restore();
+                // 炮口制退器
+                const mAng = -Math.PI*0.58 - Math.PI/2;
+                const mX = 20 + Math.cos(mAng)*24, mY = 24 + Math.sin(mAng)*24;
+                ctx.shadowBlur = 14; ctx.shadowColor = '#FFAA00';
+                ctx.fillStyle = '#1C1A10'; ctx.beginPath(); ctx.arc(mX,mY,3.5,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle = `rgba(255,180,60,${0.5+0.5*Math.sin(Date.now()/120)})`;
+                ctx.beginPath(); ctx.arc(mX,mY,2,0,Math.PI*2); ctx.fill();
                 ctx.shadowBlur = 0;
                 ctx.restore();
             }
             else if (t === 12) {
-                // 防空导弹车 · 红绿迷彩
+                // 9K37 山毛榉防空导弹车 · 军绿三色迷彩
+                const p12 = 0.5 + 0.5 * Math.sin(Date.now() / 150);
                 ctx.save();
                 // 履带
-                ctx.fillStyle = '#12180A'; ctx.fillRect(1,28,38,8);
-                ctx.strokeStyle = '#1E2812'; ctx.lineWidth = 1;
-                for(let xi=3;xi<38;xi+=5){ ctx.beginPath(); ctx.moveTo(xi,28); ctx.lineTo(xi,36); ctx.stroke(); }
-                // 车体
-                const mg = ctx.createLinearGradient(0,10,40,30);
-                mg.addColorStop(0,'#2A4218'); mg.addColorStop(0.5,'#385830'); mg.addColorStop(1,'#203010');
-                ctx.fillStyle = mg; ctx.beginPath(); ctx.roundRect(3,16,34,14,2); ctx.fill();
-                // 导弹发射架（4管）
-                ctx.fillStyle = '#1A2810';
-                ctx.beginPath(); ctx.roundRect(8,6,24,12,3); ctx.fill();
-                const pulse12 = 0.5 + 0.5 * Math.sin(Date.now() / 150);
-                // 4个导弹管
-                [10,15,21,26].forEach((mx,i) => {
-                    ctx.fillStyle = '#0A1408'; ctx.fillRect(mx,6,4,10);
-                    // 导弹头部（红色警示）
-                    ctx.shadowBlur = 6; ctx.shadowColor = '#FF2200';
-                    ctx.fillStyle = `rgba(255,${40+i*20},0,${0.7+0.3*pulse12})`;
-                    ctx.beginPath(); ctx.ellipse(mx+2,6,2,3,0,0,Math.PI*2); ctx.fill();
-                    ctx.shadowBlur = 0;
+                const tG12 = ctx.createLinearGradient(0,26,0,38);
+                tG12.addColorStop(0,'#1C2210'); tG12.addColorStop(1,'#0C1008');
+                ctx.fillStyle = tG12; ctx.beginPath(); ctx.roundRect(0,26,40,12,3); ctx.fill();
+                ctx.strokeStyle = 'rgba(40,55,25,0.8)'; ctx.lineWidth = 1.2;
+                for(let xi=3;xi<39;xi+=4.5){
+                    ctx.beginPath(); ctx.moveTo(xi,26); ctx.lineTo(xi,38); ctx.stroke();
+                }
+                [5,12,20,28,35].forEach(wx => {
+                    const wg12 = ctx.createRadialGradient(wx,32,1,wx,32,4);
+                    wg12.addColorStop(0,'#2C3818'); wg12.addColorStop(1,'#141C0A');
+                    ctx.fillStyle = wg12; ctx.beginPath(); ctx.arc(wx,32,4,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = 'rgba(60,80,35,0.5)'; ctx.lineWidth = 0.5;
+                    ctx.beginPath(); ctx.arc(wx,32,4,0,Math.PI*2); ctx.stroke();
                 });
-                // 雷达（旋转）
-                ctx.save(); ctx.translate(20,10); ctx.rotate(Date.now()/300);
-                ctx.strokeStyle = 'rgba(0,255,80,0.7)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-7); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(6,3); ctx.stroke();
+                // 车体
+                const bG12 = ctx.createLinearGradient(0,14,40,26);
+                bG12.addColorStop(0,'#2E4420'); bG12.addColorStop(0.5,'#3A5428'); bG12.addColorStop(1,'#243818');
+                ctx.fillStyle = bG12; ctx.beginPath(); ctx.roundRect(2,18,36,10,2); ctx.fill();
+                // 迷彩
+                ctx.globalAlpha = 0.22;
+                ctx.fillStyle = '#1A2C0E'; ctx.beginPath(); ctx.ellipse(10,22,6,3,0.5,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#4A6030'; ctx.beginPath(); ctx.ellipse(28,21,5,2.5,-0.4,0,Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1;
+                // 发射架底座（可旋转平台）
+                const plateG = ctx.createLinearGradient(6,10,34,18);
+                plateG.addColorStop(0,'#344A22'); plateG.addColorStop(1,'#203015');
+                ctx.fillStyle = plateG; ctx.beginPath(); ctx.ellipse(20,18,16,5,0,0,Math.PI*2); ctx.fill();
+                ctx.strokeStyle = 'rgba(80,110,50,0.4)'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.ellipse(20,18,16,5,0,0,Math.PI*2); ctx.stroke();
+                // 4枚导弹（竖立，两两排列）
+                [[9,4],[15,2],[21,2],[27,4]].forEach(([mx,my],i) => {
+                    // 导弹弹体
+                    const missG = ctx.createLinearGradient(mx-2,my,mx+2,my);
+                    missG.addColorStop(0,'#2A3C18'); missG.addColorStop(0.5,'#506030'); missG.addColorStop(1,'#1E2C10');
+                    ctx.fillStyle = missG; ctx.beginPath(); ctx.roundRect(mx-2,my,4,18,1); ctx.fill();
+                    // 弹体肋环
+                    ctx.strokeStyle = 'rgba(100,130,60,0.5)'; ctx.lineWidth = 0.5;
+                    [my+5,my+10,my+14].forEach(ry => {
+                        ctx.beginPath(); ctx.moveTo(mx-2,ry); ctx.lineTo(mx+2,ry); ctx.stroke();
+                    });
+                    // 导弹头锥（红外制导头，橙红色）
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#FF3300';
+                    ctx.fillStyle = '#CC2200';
+                    ctx.beginPath(); ctx.moveTo(mx,my-1); ctx.lineTo(mx-2,my+3); ctx.lineTo(mx+2,my+3); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = `rgba(255,80,20,${0.6+0.4*p12})`;
+                    ctx.beginPath(); ctx.arc(mx,my,1.8,0,Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0;
+                    // 尾翼
+                    ctx.fillStyle = '#1A2810';
+                    ctx.beginPath(); ctx.moveTo(mx-2,my+18); ctx.lineTo(mx-5,my+22); ctx.lineTo(mx-2,my+22); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(mx+2,my+18); ctx.lineTo(mx+5,my+22); ctx.lineTo(mx+2,my+22); ctx.closePath(); ctx.fill();
+                });
+                // 旋转雷达碟形天线
+                ctx.save(); ctx.translate(20,14); ctx.rotate(Date.now()/250);
+                // 雷达碟
+                ctx.fillStyle = '#1E2C14';
+                ctx.beginPath(); ctx.ellipse(0,0,7,2.5,0,0,Math.PI*2); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,255,80,0.6)'; ctx.lineWidth = 0.8;
+                ctx.beginPath(); ctx.ellipse(0,0,7,2.5,0,0,Math.PI*2); ctx.stroke();
+                // 雷达支架
+                ctx.strokeStyle = 'rgba(60,90,35,0.8)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,4); ctx.stroke();
+                // 雷达扫描波束
+                ctx.shadowBlur = 8; ctx.shadowColor = '#00FF55';
+                ctx.strokeStyle = `rgba(0,255,80,${0.4+0.4*p12})`; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(9,0); ctx.stroke();
+                ctx.shadowBlur = 0;
                 ctx.restore();
-                // 车轮
-                ctx.fillStyle = '#0E1208';
-                [8,20,32].forEach(wx => { ctx.beginPath(); ctx.arc(wx,33,4,0,Math.PI*2); ctx.fill(); });
+                // 车体棱线高光
+                ctx.strokeStyle = 'rgba(100,140,60,0.3)'; ctx.lineWidth = 0.6;
+                ctx.beginPath(); ctx.moveTo(2,18); ctx.lineTo(38,18); ctx.stroke();
                 ctx.restore();
             }
 
