@@ -4223,10 +4223,10 @@
             // 歼-15（8号）：每8秒喷出60°扇形火焰，半径150px，群体伤害×70%
             if (selectedPlane === 8) {
                 const now8 = Date.now();
-                if (flameNextAt === 0) flameNextAt = now8 + 8000;
+                if (flameNextAt === 0) flameNextAt = now8 + 500;
                 if (now8 >= flameNextAt && !flameActive) {
-                    flameActive = { born: now8, duration: 400 }; // 持续400ms
-                    flameNextAt = now8 + 8000;
+                    flameActive = { born: now8, duration: 800 }; // 持续800ms
+                    flameNextAt = now8 + 500;
                 }
                 if (flameActive) {
                     const elapsed = now8 - flameActive.born;
