@@ -3982,16 +3982,21 @@
                 let gr = Math.random() * gt, gi = 0;
                 for (; gi < gw.length && (gr -= gw[gi]) > 0; gi++);
                 const ge = groundTypes[gi];
-                const gx = ge.s === 0
-                    ? Math.random() * (WIDTH - ge.w) + ge.w/2  // 固定炮台随机位置
+                
+                // 10% 概率从前方出现（从上方降落），90% 概率在底部（身后）
+                const fromTop = Math.random() < 0.10;
+                const gx = ge.s === 0 || fromTop
+                    ? Math.random() * (WIDTH - ge.w) + ge.w/2  // 固定炮台或顶部出现随机位置
                     : (Math.random() < 0.5 ? ge.w/2 : WIDTH - ge.w/2); // 坦克从两侧驶入
+                
                 enemies.push({
-                    x: gx, y: HEIGHT - ge.h - 10,
+                    x: gx, 
+                    y: fromTop ? -ge.h : HEIGHT - ge.h - 10,  // 10%从顶部，90%在底部
                     w: ge.w, h: ge.h,
                     type: ge.t, hp: ge.hp, currentHp: ge.hp,
                     speed: ge.s, score: ge.sc,
-                    isGround: true,
-                    vx: ge.s > 0 ? (gx < WIDTH/2 ? ge.s : -ge.s) : 0,
+                    isGround: !fromTop,  // 从顶部出现的不是地面单位，会向下移动
+                    vx: ge.s > 0 && !fromTop ? (gx < WIDTH/2 ? ge.s : -ge.s) : 0,
                     lastShot: 0,
                     bullets: []
                 });
