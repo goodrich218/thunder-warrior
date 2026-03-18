@@ -3835,8 +3835,8 @@
                 spawnEnemyOfType(6);
                 return;
             }
-            // ── 地面单位（积分超过3000后开始混入）──
-            if (score > 3000 && Math.random() < 0.18) {
+            // ── 地面单位（积分超过1500后开始混入）──
+            if (score > 1500 && Math.random() < 0.30) {
                 const groundTypes = [
                     {t: 10, w: 40, h: 36, hp: 8,  s: 0.6,  sc: 300},  // M1A2 坦克
                     {t: 11, w: 40, h: 36, hp: 20, s: 0,    sc: 600},  // 榴弹炮（固定）
