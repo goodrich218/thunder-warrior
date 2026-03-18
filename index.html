@@ -5617,17 +5617,73 @@
                 } else {
                     drawEnemy(ctx, e.x - e.w/2, e.y - e.h/2, e.w, e.h, e.type);
                 }
-                // 冰冻效果：蓝色光晕
+                // 冰冻效果：冰晶封冻特效
                 if (e.frozenUntil && Date.now() < e.frozenUntil) {
-                    const prog = Math.min(1, (e.frozenUntil - Date.now()) / Math.max(1, freezeLevel * 500));
-                    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 120);
+                    const now_f = Date.now();
+                    const prog = Math.min(1, (e.frozenUntil - now_f) / Math.max(1, freezeLevel * 500));
+                    const pulse = 0.5 + 0.5 * Math.sin(now_f / 180);
+                    const pulse2 = 0.5 + 0.5 * Math.sin(now_f / 90 + 1.5);
+                    const rw = e.w * 0.65, rh = e.h * 0.65;
                     ctx.save();
-                    ctx.shadowBlur = 14 * prog; ctx.shadowColor = 'rgba(100,220,255,0.9)';
-                    ctx.strokeStyle = `rgba(140,220,255,${0.75 * prog * pulse})`;
-                    ctx.lineWidth = 2.5;
-                    ctx.beginPath(); ctx.ellipse(e.x, e.y, e.w * 0.62, e.h * 0.62, 0, 0, Math.PI * 2); ctx.stroke();
-                    ctx.fillStyle = `rgba(180,235,255,${0.12 * prog})`;
-                    ctx.beginPath(); ctx.ellipse(e.x, e.y, e.w * 0.58, e.h * 0.58, 0, 0, Math.PI * 2); ctx.fill();
+
+                    // 层1：外层冰雾光晕
+                    const fogG = ctx.createRadialGradient(e.x, e.y, rw*0.3, e.x, e.y, rw*1.1);
+                    fogG.addColorStop(0, `rgba(160,230,255,${0.18*prog})`);
+                    fogG.addColorStop(0.6, `rgba(80,180,255,${0.10*prog})`);
+                    fogG.addColorStop(1, 'rgba(40,120,200,0)');
+                    ctx.fillStyle = fogG;
+                    ctx.beginPath(); ctx.ellipse(e.x, e.y, rw*1.1, rh*1.1, 0, 0, Math.PI*2); ctx.fill();
+
+                    // 层2：冰蓝色半透明覆盖（机体染色）
+                    ctx.fillStyle = `rgba(140,210,255,${0.22*prog})`;
+                    ctx.beginPath(); ctx.ellipse(e.x, e.y, rw*0.9, rh*0.9, 0, 0, Math.PI*2); ctx.fill();
+
+                    // 层3：外圈旋转冰晶环（虚线）
+                    ctx.save();
+                    ctx.translate(e.x, e.y);
+                    ctx.rotate(now_f / 800);
+                    ctx.shadowBlur = 12*prog; ctx.shadowColor = '#88DDFF';
+                    ctx.strokeStyle = `rgba(160,235,255,${0.7*prog*pulse})`;
+                    ctx.lineWidth = 1.8;
+                    ctx.setLineDash([4, 5]);
+                    ctx.beginPath(); ctx.ellipse(0, 0, rw*1.05, rh*1.05, 0, 0, Math.PI*2); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+
+                    // 层4：内圈反向旋转光环
+                    ctx.save();
+                    ctx.translate(e.x, e.y);
+                    ctx.rotate(-now_f / 500);
+                    ctx.strokeStyle = `rgba(200,245,255,${0.45*prog*pulse2})`;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 8]);
+                    ctx.beginPath(); ctx.ellipse(0, 0, rw*0.72, rh*0.72, 0, 0, Math.PI*2); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+
+                    // 层5：6颗冰晶尖刺（围绕机体均匀分布）
+                    ctx.shadowBlur = 8*prog; ctx.shadowColor = '#AAEEFF';
+                    for (let si = 0; si < 6; si++) {
+                        const ang = (si / 6) * Math.PI * 2 + now_f / 1200;
+                        const sx = e.x + Math.cos(ang) * rw * 0.95;
+                        const sy = e.y + Math.sin(ang) * rh * 0.95;
+                        const slen = (4 + 2 * prog) * (0.8 + 0.2 * pulse);
+                        ctx.strokeStyle = `rgba(200,245,255,${0.8*prog})`;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(sx - Math.cos(ang)*slen*0.4, sy - Math.sin(ang)*slen*0.4);
+                        ctx.lineTo(sx + Math.cos(ang)*slen, sy + Math.sin(ang)*slen);
+                        ctx.stroke();
+                        // 晶尖光点
+                        ctx.fillStyle = `rgba(220,250,255,${0.9*prog*pulse})`;
+                        ctx.beginPath(); ctx.arc(sx + Math.cos(ang)*slen, sy + Math.sin(ang)*slen, 1.5, 0, Math.PI*2); ctx.fill();
+                    }
+
+                    // 层6：中心冰芯闪光（脉冲）
+                    ctx.shadowBlur = 20*prog*pulse; ctx.shadowColor = '#FFFFFF';
+                    ctx.fillStyle = `rgba(255,255,255,${0.15*prog*pulse2})`;
+                    ctx.beginPath(); ctx.ellipse(e.x, e.y, rw*0.35, rh*0.35, 0, 0, Math.PI*2); ctx.fill();
+
                     ctx.shadowBlur = 0; ctx.restore();
                 }
                 if (e.bullets) {
