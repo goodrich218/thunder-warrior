@@ -4721,10 +4721,13 @@
                     pl17DamageDealt = true;
                     const pl17Mult = 2.5 + 0.5 * pl17Level; // L1=3, L2=3.5, L3=4, L4=4.5, L5=5
                     let pl17Kills = 0, pl17SpecialKills = 0;
+                    let explosionCount = 0;
                     enemies.forEach(e => {
-                        const dmg = e.hp * pl17Mult;
+                        const isBossType = e.isBoss || e.isBomberBoss || e.isXwingBoss || e.isBoss4 || e.isBoss5 || e.isBoss6 || e.isBoss7 || e.isBoss8;
+                        // Boss 只扣固定大额伤害（不被一击秒杀，防止卡顿）
+                        const dmg = isBossType ? Math.min(e.currentHp * 0.4, 200000) : e.hp * pl17Mult;
                         e.currentHp -= dmg;
-                        dmgPL17 += dmg * 100;
+                        dmgPL17 += dmg;
                         if (e.currentHp <= 0) {
                             score += e.score;
                             levelXP += e.score;
@@ -4732,8 +4735,11 @@
                             if (currentMission === 3 && e.type === 6) pl17SpecialKills++;
                             if (currentMission === 4 && e.type === 7) pl17SpecialKills++;
                             if (leechLevel > 0) currentHp = Math.min(maxHp, currentHp + LEECH_HEAL[leechLevel]);
-                            createExplosion(e.x, e.y, '#AAFF44', 25);
+                            if (explosionCount < 20) { createExplosion(e.x, e.y, '#AAFF44', 12); explosionCount++; }
                             playKillSound();
+                        } else if (isBossType) {
+                            // Boss 受创但未死：只做小爆炸，不移除
+                            if (explosionCount < 5) { createExplosion(e.x, e.y, '#AAFF44', 8); explosionCount++; }
                         }
                     });
                     enemies = enemies.filter(e => e.currentHp > 0);
