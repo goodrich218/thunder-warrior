@@ -5199,7 +5199,58 @@
             });
         }
 
-        // ── 游戏风格飞行背景（Stylized Sky） ──
+        // ── 电影级城市夜空背景（Urban Night Sky） ──
+        if (!window._cityData) {
+            const rng = (a,b) => a+Math.random()*(b-a);
+            const rint = (a,b) => Math.floor(rng(a,b));
+
+            // 远景建筑群（后排，细小密集）
+            const farBuildings = Array.from({length:28}, (_,i) => ({
+                x: i/28, w: rng(0.022,0.05), h: rng(0.18,0.42),
+                baseCol: `hsl(${rint(220,270)},${rint(8,22)}%,${rint(8,18)}%)`,
+                windows: Array.from({length:rint(6,18)}, () => ({
+                    wx: rng(0.1,0.9), wy: rng(0.1,0.9),
+                    on: Math.random()>0.38, col: Math.random()>0.6?'#ffe8a0':'#a0c8ff'
+                }))
+            }));
+
+            // 中景建筑群（中排，中等高度）
+            const midBuildings = Array.from({length:14}, (_,i) => ({
+                x: i/14 + rng(-0.02,0.02), w: rng(0.04,0.09), h: rng(0.30,0.62),
+                baseCol: `hsl(${rint(220,260)},${rint(10,25)}%,${rint(6,15)}%)`,
+                accent: Math.random()>0.5,
+                windows: Array.from({length:rint(12,35)}, () => ({
+                    wx: rng(0.05,0.95), wy: rng(0.05,0.95),
+                    on: Math.random()>0.35, col: Math.random()>0.5?'#ffe890':'#b0d8ff',
+                    size: rng(0.8,1.4)
+                }))
+            }));
+
+            // 近景建筑（前排，极高，只露顶部）
+            const nearBuildings = Array.from({length:8}, (_,i) => ({
+                x: i/8 + rng(-0.03,0.03), w: rng(0.09,0.16), h: rng(0.55,0.85),
+                baseCol: `hsl(${rint(215,250)},${rint(12,28)}%,${rint(4,11)}%)`,
+                windows: Array.from({length:rint(8,20)}, () => ({
+                    wx: rng(0.08,0.92), wy: rng(0.02,0.55),
+                    on: Math.random()>0.3, col: Math.random()>0.4?'#ffd870':'#90c8ff',
+                    size: rng(1.0,2.0)
+                }))
+            }));
+
+            // 地面车流光带（街道，向上移动）
+            const streets = Array.from({length:5}, (_,i) => ({
+                x: rng(0.05,0.95), w: rng(0.008,0.018),
+                col: Math.random()>0.5?'rgba(255,200,60,':'rgba(255,80,80,'
+            }));
+
+            // 远处雾气光晕点（城市泛光）
+            const glows = Array.from({length:6}, () => ({
+                x: rng(0,1), y: rng(0.55,0.85),
+                r: rng(0.08,0.18), col: Math.random()>0.5?'rgba(255,160,60,':'rgba(100,140,255,'
+            }));
+
+            window._cityData = { farBuildings, midBuildings, nearBuildings, streets, glows };
+        }
         if (!window._skyData) {
             const rng = (a,b) => a + Math.random()*(b-a);
             window._skyData = {
@@ -5224,130 +5275,196 @@
             const SX = WIDTH / 600;
             const now = Date.now();
             const W = WIDTH, H = HEIGHT;
-            const sky = window._skyData;
-            const drift = bgScrollY * 0.12;
-            const pulse = 0.5 + 0.5 * Math.sin(now / 2400);
+            const city = window._cityData;
+            const pulse = 0.5 + 0.5 * Math.sin(now / 1800);
+            const pulse2 = 0.5 + 0.5 * Math.sin(now / 2600 + 1.1);
+            // 建筑随 bgScrollY 纵向慢速滚动（视差）
+            const farOff  = bgScrollY * 0.04;
+            const midOff  = bgScrollY * 0.10;
+            const nearOff = bgScrollY * 0.20;
+            // 街道车流快速向上
+            const trafficOff = bgScrollY * 0.9;
 
-            // ── 1. 天空渐变（清晰蓝→地平线暖色）──
+            // ── 1. 夜空渐变（深蓝紫→城市霓虹地平线）──
             const skyG = ctx.createLinearGradient(0, 0, 0, H);
-            skyG.addColorStop(0,    '#06183a');   // 深邃宇宙蓝（顶部）
-            skyG.addColorStop(0.15, '#0d3070');   // 高空蓝
-            skyG.addColorStop(0.38, '#1a60b0');   // 主体天空蓝（鲜艳）
-            skyG.addColorStop(0.58, '#3a90d8');   // 中空明蓝
-            skyG.addColorStop(0.72, '#70c0e8');   // 浅亮蓝
-            skyG.addColorStop(0.82, '#ffd080');   // 地平线金橙
-            skyG.addColorStop(0.90, '#ff9030');   // 橙红
-            skyG.addColorStop(1,    '#c05018');   // 深橙底
+            skyG.addColorStop(0,    '#03040f');   // 极深太空黑
+            skyG.addColorStop(0.10, '#080a22');   // 深夜黑蓝
+            skyG.addColorStop(0.28, '#0d1540');   // 深蓝
+            skyG.addColorStop(0.48, '#121a52');   // 午夜蓝紫
+            skyG.addColorStop(0.65, '#1a1460');   // 深紫蓝
+            skyG.addColorStop(0.78, '#2a1a70');   // 紫色
+            skyG.addColorStop(0.88, '#3a1060');   // 霓虹紫
+            skyG.addColorStop(0.94, '#280820');   // 深紫红
+            skyG.addColorStop(1,    '#100408');   // 极深底
             ctx.fillStyle = skyG; ctx.fillRect(0, 0, W, H);
 
-            // ── 2. 太阳（右上，清晰发光）──
-            const sunX = W * 0.78, sunY = H * 0.07;
-            // 大光晕
-            const sunHalo = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, W * 0.35);
-            sunHalo.addColorStop(0,    `rgba(255,240,180,${0.18+0.08*pulse})`);
-            sunHalo.addColorStop(0.15, `rgba(255,200,80,0.12)`);
-            sunHalo.addColorStop(0.4,  `rgba(255,160,30,0.05)`);
-            sunHalo.addColorStop(1,    'rgba(0,0,0,0)');
-            ctx.fillStyle = sunHalo; ctx.fillRect(0, 0, W, H);
-            // 太阳本体
-            ctx.save();
-            ctx.shadowBlur = 40; ctx.shadowColor = 'rgba(255,220,100,1)';
-            const sunC = ctx.createRadialGradient(sunX-6, sunY-6, 0, sunX, sunY, 22);
-            sunC.addColorStop(0, 'rgba(255,255,230,1)');
-            sunC.addColorStop(0.5, 'rgba(255,220,100,0.9)');
-            sunC.addColorStop(1, 'rgba(255,160,30,0)');
-            ctx.fillStyle = sunC; ctx.beginPath(); ctx.arc(sunX, sunY, 22, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0; ctx.restore();
-
-            // ── 3. 星点（顶部高空，稀疏）──
+            // ── 2. 星点（顶部，夜空）──
             ctx.save();
             window._stars.forEach(s => {
-                const tw = 0.5 + 0.5 * Math.sin(now/(900+s.r*300) + s.x*8);
-                ctx.fillStyle = `rgba(200,220,255,${s.a*tw})`;
-                ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2); ctx.fill();
+                const tw = 0.5 + 0.5 * Math.sin(now/(700+s.r*200) + s.x*6);
+                ctx.fillStyle = `rgba(200,210,255,${s.a*tw})`;
+                ctx.beginPath(); ctx.arc(s.x*W, s.y*H*0.5, s.r*0.7, 0, Math.PI*2); ctx.fill();
             });
             ctx.restore();
 
-            // ── 4. 边缘云团（左右侧，清晰白云，不遮中央）──
-            function drawCloudPuff(cx2, cy2, r, alpha) {
-                const cG = ctx.createRadialGradient(cx2-r*0.2, cy2-r*0.3, 0, cx2, cy2, r);
-                cG.addColorStop(0, `rgba(255,254,252,${alpha})`);
-                cG.addColorStop(0.4, `rgba(235,240,248,${alpha*0.85})`);
-                cG.addColorStop(0.75, `rgba(200,215,230,${alpha*0.45})`);
-                cG.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = cG;
-                ctx.beginPath(); ctx.arc(cx2, cy2, r, 0, Math.PI*2); ctx.fill();
-                // 顶部高光
-                ctx.save(); ctx.globalAlpha = alpha * 0.5;
-                ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.arc(cx2, cy2, r*0.88, Math.PI*1.1, Math.PI*1.9); ctx.stroke();
+            // ── 3. 城市地平线泛光（霓虹光晕，底部背光）──
+            city.glows.forEach(g => {
+                const gx = g.x * W, gy = g.y * H;
+                const gr = g.r * W;
+                const glowG = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+                glowG.addColorStop(0, g.col + `${0.18+0.08*pulse})`);
+                glowG.addColorStop(0.4, g.col + '0.07)');
+                glowG.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = glowG; ctx.fillRect(gx-gr, gy-gr, gr*2, gr*2);
+            });
+
+            // 通用建筑绘制函数
+            function drawBuilding(bx, bw, bh, baseY, baseCol, windows, winScale, scroll) {
+                const x1 = bx * W, w1 = bw * W;
+                const y1 = baseY - bh * H - scroll * 0.1;
+                const y2 = baseY + 2;
+                // 建筑主体
+                const bG = ctx.createLinearGradient(x1, y1, x1+w1, y1);
+                bG.addColorStop(0, 'rgba(0,0,0,0.4)');
+                bG.addColorStop(0.3, baseCol);
+                bG.addColorStop(0.7, baseCol);
+                bG.addColorStop(1, 'rgba(0,0,0,0.4)');
+                ctx.fillStyle = bG;
+                ctx.fillRect(x1, y1, w1, y2 - y1);
+                // 边缘高光（建筑轮廓线）
+                ctx.save(); ctx.globalAlpha = 0.35;
+                ctx.strokeStyle = 'rgba(100,120,200,0.5)';
+                ctx.lineWidth = 0.8;
+                ctx.strokeRect(x1, y1, w1, y2 - y1);
                 ctx.restore();
+                // 窗户灯光
+                windows.forEach(win => {
+                    if (!win.on) return;
+                    const wx = x1 + win.wx * w1;
+                    const wy = y1 + win.wy * (y2 - y1);
+                    const wr = (win.size || 1) * winScale;
+                    // 闪烁（少数窗户）
+                    const flicker = Math.random() > 0.998 ? 0 : 1;
+                    if (!flicker) return;
+                    ctx.save();
+                    ctx.shadowBlur = 4; ctx.shadowColor = win.col;
+                    ctx.fillStyle = win.col;
+                    ctx.fillRect(wx - wr, wy - wr*0.7, wr*2, wr*1.4);
+                    ctx.restore();
+                });
             }
 
-            sky.edgeClouds.forEach((c, i) => {
-                const isL = c.side === 'L';
-                const baseX = isL ? W * 0.0 : W * 1.0;
-                const anchorX = isL ? baseX + (c.w/600)*W*0.55 : baseX - (c.w/600)*W*0.55;
-                const cy2 = (c.y / 1000) * H + drift * (0.08 + i*0.02);
-                const r = (c.h / 1000) * H * 0.85;
-                const nPuffs = 4;
-                for (let p = 0; p < nPuffs; p++) {
-                    const t = p / (nPuffs-1);
-                    const px = anchorX + (isL ? -1 : 1) * t * (c.w/600)*W*0.4;
-                    const py = cy2 - r * Math.sin(t * Math.PI) * 0.5;
-                    const pr = r * (0.75 + 0.35 * Math.sin(t*Math.PI + c.seed));
-                    drawCloudPuff(px, py, pr, c.alpha * (1 - t*0.3));
+            // ── 4. 远景建筑群（后排，密集细小，有远景雾化）──
+            ctx.save(); ctx.globalAlpha = 0.55;
+            const farBaseY = H * 0.72;
+            city.farBuildings.forEach(b => {
+                drawBuilding(b.x, b.w, b.h * 0.65, farBaseY, b.baseCol, b.windows, 0.8, farOff);
+            });
+            // 远景雾化（大气透视）
+            const farFogG = ctx.createLinearGradient(0, H*0.30, 0, farBaseY+5);
+            farFogG.addColorStop(0, 'rgba(10,8,30,0)');
+            farFogG.addColorStop(0.5, 'rgba(15,10,40,0.12)');
+            farFogG.addColorStop(1, 'rgba(20,12,50,0.35)');
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = farFogG; ctx.fillRect(0, H*0.30, W, farBaseY - H*0.30 + 5);
+            ctx.restore();
+
+            // ── 5. 中景建筑群（中排，清晰）──
+            ctx.save(); ctx.globalAlpha = 0.82;
+            const midBaseY = H * 0.80;
+            city.midBuildings.forEach(b => {
+                drawBuilding(b.x, b.w, b.h, midBaseY, b.baseCol, b.windows, 1.0, midOff);
+                // 楼顶天线/信号灯
+                if (b.accent) {
+                    const ax = b.x*W + b.w*W*0.5, ay = midBaseY - b.h*H - midOff*0.1;
+                    ctx.save();
+                    ctx.shadowBlur = 6; ctx.shadowColor = `rgba(255,60,60,${0.6+0.4*pulse2})`;
+                    ctx.fillStyle = `rgba(255,60,60,${0.7+0.3*pulse2})`;
+                    ctx.beginPath(); ctx.arc(ax, ay, 1.8, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0; ctx.restore();
                 }
             });
+            ctx.restore();
 
-            // ── 5. 底部云海（宽扁积云带，向下流动）──
-            sky.baseClouds.forEach((c, i) => {
-                const cx2 = c.x * W + (drift * (0.5 + i*0.1)) % W;
-                const wrapX = cx2 > W + 150 ? cx2 - W - 200 : cx2;
-                const cy2 = H * 0.85;
-                const r = (c.h / 1000) * H;
-                const nP = 5;
-                for (let p = 0; p < nP; p++) {
-                    const t = p / (nP-1);
-                    const px = wrapX + (t - 0.5) * (c.w/600)*W;
-                    const py = cy2 - r * Math.sin(t*Math.PI) * 0.6;
-                    const pr = r * (0.8 + 0.4*Math.sin(t*Math.PI));
-                    drawCloudPuff(px, py, pr, c.alpha * 0.9);
-                }
-            });
-
-            // ── 6. 底部云海整体雾层（渐隐）──
-            const fogG = ctx.createLinearGradient(0, H*0.78, 0, H);
-            fogG.addColorStop(0,   'rgba(0,0,0,0)');
-            fogG.addColorStop(0.25,`rgba(255,220,160,0.12)`);
-            fogG.addColorStop(0.6, `rgba(220,170,90,0.30)`);
-            fogG.addColorStop(1,   `rgba(160,100,40,0.55)`);
-            ctx.fillStyle = fogG; ctx.fillRect(0, H*0.78, W, H*0.22);
-
-            // ── 7. 中央区域轻微暗角（突出飞机）──
-            // 仅上下加轻遮罩，中间完全透明
-            const vigT = ctx.createLinearGradient(0, 0, 0, H*0.22);
-            vigT.addColorStop(0, 'rgba(0,0,20,0.35)');
-            vigT.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = vigT; ctx.fillRect(0, 0, W, H*0.22);
-
-            // ── 8. 简洁 Lens Flare（太阳方向，3个光点）──
+            // ── 6. 街道车流光带（从下向上流动）──
             ctx.save();
-            [0.0, 0.35, 0.65].forEach((t, i) => {
-                const fx = sunX + (W*0.5 - sunX) * t * 1.2;
-                const fy = sunY + (H*0.5 - sunY) * t * 1.2;
-                const fr = [18, 10, 6][i] * SX;
-                const fa = [0.18, 0.12, 0.08][i] * (0.7 + 0.3*pulse);
+            city.streets.forEach(s => {
+                const sx = s.x * W, sw = s.w * W;
+                // 车流线（多条短线向上移动）
+                const period = H * 0.18;
+                const off2 = trafficOff % period;
+                for (let y = -period + off2; y < H; y += period * (0.6 + Math.random()*0.4)) {
+                    const len = H * (0.04 + Math.random()*0.06);
+                    const alpha = 0.5 + 0.4*Math.random();
+                    const lineG = ctx.createLinearGradient(sx, y, sx, y+len);
+                    lineG.addColorStop(0, s.col + '0)');
+                    lineG.addColorStop(0.2, s.col + `${alpha})`);
+                    lineG.addColorStop(0.8, s.col + `${alpha})`);
+                    lineG.addColorStop(1, s.col + '0)');
+                    ctx.fillStyle = lineG;
+                    ctx.fillRect(sx - sw/2, y, sw, len);
+                }
+            });
+            ctx.restore();
+
+            // ── 7. 近景建筑（前排，极高，两侧压迫感）──
+            const nearBaseY = H * 0.92;
+            // 左侧近景楼
+            city.nearBuildings.slice(0,4).forEach((b,i) => {
+                const bx = b.x * 0.45; // 压缩到左半部
+                ctx.save(); ctx.globalAlpha = 0.95;
+                drawBuilding(bx, b.w*0.8, b.h, nearBaseY, b.baseCol, b.windows, 1.5, nearOff);
+                ctx.restore();
+            });
+            // 右侧近景楼
+            city.nearBuildings.slice(4).forEach((b,i) => {
+                const bx = 0.55 + b.x * 0.45;
+                ctx.save(); ctx.globalAlpha = 0.95;
+                drawBuilding(bx, b.w*0.8, b.h, nearBaseY, b.baseCol, b.windows, 1.5, nearOff);
+                ctx.restore();
+            });
+
+            // ── 8. 地面发光带（城市地面光晕）──
+            const groundG = ctx.createLinearGradient(0, H*0.85, 0, H);
+            groundG.addColorStop(0, 'rgba(0,0,0,0)');
+            groundG.addColorStop(0.3, `rgba(80,40,120,0.25)`);
+            groundG.addColorStop(0.7, `rgba(50,20,80,0.55)`);
+            groundG.addColorStop(1, `rgba(20,5,30,0.85)`);
+            ctx.fillStyle = groundG; ctx.fillRect(0, H*0.85, W, H*0.15);
+
+            // ── 9. 轻微雾气（中部大气感）──
+            const atmG = ctx.createLinearGradient(0, H*0.55, 0, H*0.82);
+            atmG.addColorStop(0, 'rgba(0,0,0,0)');
+            atmG.addColorStop(0.5, `rgba(30,20,60,${0.06+0.03*pulse})`);
+            atmG.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = atmG; ctx.fillRect(0, H*0.55, W, H*0.27);
+
+            // ── 10. Lens Flare（霓虹灯折射，3个彩色光点）──
+            ctx.save();
+            const flareColors = ['rgba(180,100,255,', 'rgba(80,180,255,', 'rgba(255,100,160,'];
+            [[W*0.15, H*0.62], [W*0.85, H*0.58], [W*0.5, H*0.70]].forEach(([fx,fy],i) => {
+                const fa = (0.12+0.06*pulse) * (0.7 + 0.3*Math.sin(now/1200+i));
                 ctx.globalAlpha = fa;
-                ctx.strokeStyle = 'rgba(255,235,140,0.9)';
-                ctx.lineWidth = 1.2;
-                ctx.beginPath(); ctx.arc(fx, fy, fr*4, 0, Math.PI*2); ctx.stroke();
-                const flG = ctx.createRadialGradient(fx,fy,0,fx,fy,fr*1.5);
-                flG.addColorStop(0,'rgba(255,250,210,0.8)'); flG.addColorStop(1,'rgba(255,210,80,0)');
-                ctx.fillStyle = flG; ctx.beginPath(); ctx.arc(fx,fy,fr*1.5,0,Math.PI*2); ctx.fill();
+                ctx.strokeStyle = flareColors[i] + '0.8)';
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(fx, fy, 22+i*8, 0, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(fx, fy, 12+i*4, 0, Math.PI*2); ctx.stroke();
+                const flG = ctx.createRadialGradient(fx,fy,0,fx,fy,18+i*6);
+                flG.addColorStop(0, flareColors[i]+'0.5)'); flG.addColorStop(1,'rgba(0,0,0,0)');
+                ctx.fillStyle = flG; ctx.beginPath(); ctx.arc(fx,fy,18+i*6,0,Math.PI*2); ctx.fill();
             });
             ctx.globalAlpha = 1; ctx.restore();
+
+            // ── 11. 暗角（边缘压暗，中央干净）──
+            const vigL = ctx.createLinearGradient(0, 0, W*0.18, 0);
+            vigL.addColorStop(0, 'rgba(0,0,10,0.6)'); vigL.addColorStop(1, 'rgba(0,0,0,0)');
+            const vigR = ctx.createLinearGradient(W*0.82, 0, W, 0);
+            vigR.addColorStop(0, 'rgba(0,0,0,0)'); vigR.addColorStop(1, 'rgba(0,0,10,0.6)');
+            ctx.fillStyle = vigL; ctx.fillRect(0, 0, W*0.18, H);
+            ctx.fillStyle = vigR; ctx.fillRect(W*0.82, 0, W*0.18, H);
+            const vigTop = ctx.createLinearGradient(0, 0, 0, H*0.12);
+            vigTop.addColorStop(0, 'rgba(0,0,8,0.7)'); vigTop.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = vigTop; ctx.fillRect(0, 0, W, H*0.12);
 
             void 0;
         }
