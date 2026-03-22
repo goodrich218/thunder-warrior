@@ -5386,26 +5386,7 @@
             });
             ctx.restore();
 
-            // ── 6. 街道车流光带（从下向上流动）──
-            ctx.save();
-            city.streets.forEach(s => {
-                const sx = s.x * W, sw = s.w * W;
-                // 车流线（多条短线向上移动）
-                const period = H * 0.18;
-                const off2 = trafficOff % period;
-                for (let y = -period + off2; y < H; y += period * (0.6 + Math.random()*0.4)) {
-                    const len = H * (0.04 + Math.random()*0.06);
-                    const alpha = 0.5 + 0.4*Math.random();
-                    const lineG = ctx.createLinearGradient(sx, y, sx, y+len);
-                    lineG.addColorStop(0, s.col + '0)');
-                    lineG.addColorStop(0.2, s.col + `${alpha})`);
-                    lineG.addColorStop(0.8, s.col + `${alpha})`);
-                    lineG.addColorStop(1, s.col + '0)');
-                    ctx.fillStyle = lineG;
-                    ctx.fillRect(sx - sw/2, y, sw, len);
-                }
-            });
-            ctx.restore();
+
 
             // ── 7. 近景建筑（前排，极高，两侧压迫感）──
             const nearBaseY = H * 0.92;
