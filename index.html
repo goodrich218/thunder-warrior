@@ -3358,19 +3358,19 @@
                         if (n<=2) block9(wx,wy3,O_COL,O_DARK,O_LIGHT,false);
                     });
                 });
-                // 尾翼（机尾 n=+2，两侧小橙块）
-                [-1,1].forEach(s => block9(cx+s*SP*1.02, bcy+2*SP, O_COL,O_DARK,O_LIGHT,false));
+                // 尾翼（机尾=小Y端 n=-2，两侧小橙块）
+                [-1,1].forEach(s => block9(cx+s*SP*1.02, bcy-2*SP, O_COL,O_DARK,O_LIGHT,false));
                 // 机身（7块白色，覆盖在翼上）
                 [-3,-2,-1,0,1,2,3].forEach(n => block9(cx, bcy+n*SP, W_COL,W_DARK,W_LIGHT, true));
-                // 机首装饰橙色小翼（机首 n=-3处，两侧）
-                [-1,1].forEach(s => block9(cx+s*SP*1.02, bcy-3*SP, O_COL,O_DARK,O_LIGHT,false));
+                // 机首装饰橙色小翼（机首=大Y端 n=+3处，两侧）
+                [-1,1].forEach(s => block9(cx+s*SP*1.02, bcy+3*SP, O_COL,O_DARK,O_LIGHT,false));
                 // 整体荧光
                 ctx.save(); ctx.globalAlpha=.05+.03*gp;
                 const auraG9 = ctx.createRadialGradient(cx,bcy,2,cx,bcy,10);
                 auraG9.addColorStop(0,'rgba(160,255,160,.5)'); auraG9.addColorStop(1,'rgba(0,0,0,0)');
                 ctx.fillStyle=auraG9; ctx.beginPath(); ctx.arc(cx,bcy,10,0,Math.PI*2); ctx.fill(); ctx.restore();
-                // 尾焰（机尾=大Y）
-                jet(cx, bcy+3*SP+BS+2, 2.5,6, 'rgba(255,140,30,', 'rgba(255,80,0,');
+                // 尾焰（机尾=小Y端，即顶部）
+                jet(cx, bcy-3*SP-BS-2, 2.5,6, 'rgba(255,140,30,', 'rgba(255,80,0,');
             }
 
             ctx.restore();
@@ -4237,6 +4237,11 @@
             fireBurst();
             // 歼-35（0号）：连发 —— 80ms 后再射一次
             if (selectedPlane === 0) setTimeout(() => { if (gameState === 'playing') fireBurst(); }, 80);
+            // 积木猎鹰（9号）：双弹同时射出，十字形积木子弹，130%伤害
+            if (selectedPlane === 9) {
+                player.bullets.push({x: player.x - 7, y: player.y - 20, vx: -0.3, vy: -5, isMissile: false, isCrossBlock: true, damage: wbMult * 1.3, isFreeze: freezeLevel > 0});
+                player.bullets.push({x: player.x + 7, y: player.y - 20, vx:  0.3, vy: -5, isMissile: false, isCrossBlock: true, damage: wbMult * 1.3, isFreeze: freezeLevel > 0});
+            }
         }
 
         function playerShootMissile() {
@@ -5706,6 +5711,23 @@
                     ctx.shadowBlur = 0;
                     ctx.strokeStyle = 'rgba(160,230,255,0.7)'; ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke();
+                } else if (b.isCrossBlock) {
+                    // 积木猎鹰十字形积木子弹（橙色Plus-Plus积木）
+                    const cbS=6, cbA=cbS*.42;
+                    ctx.save();
+                    const vGc=ctx.createLinearGradient(b.x-cbS,b.y,b.x+cbS,b.y);
+                    vGc.addColorStop(0,'#c05010'); vGc.addColorStop(.5,'#ffb860'); vGc.addColorStop(1,'#c05010');
+                    ctx.fillStyle=vGc; ctx.beginPath(); ctx.roundRect(b.x-cbA,b.y-cbS,cbA*2,cbS*2,cbA*.45); ctx.fill();
+                    const hGc=ctx.createLinearGradient(b.x,b.y-cbS,b.x,b.y+cbS);
+                    hGc.addColorStop(0,'#c05010'); hGc.addColorStop(.5,'#ffb860'); hGc.addColorStop(1,'#c05010');
+                    ctx.fillStyle=hGc; ctx.beginPath(); ctx.roundRect(b.x-cbS,b.y-cbA,cbS*2,cbA*2,cbA*.45); ctx.fill();
+                    const cGc=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,cbS*.55);
+                    cGc.addColorStop(0,'#ffb860'); cGc.addColorStop(.5,'#ff8020'); cGc.addColorStop(1,'#c05010');
+                    ctx.fillStyle=cGc; ctx.beginPath(); ctx.arc(b.x,b.y,cbS*.55,0,Math.PI*2); ctx.fill();
+                    ctx.save(); ctx.shadowBlur=10; ctx.shadowColor='rgba(255,140,40,.7)';
+                    ctx.fillStyle='rgba(255,180,60,.12)'; ctx.beginPath(); ctx.arc(b.x,b.y,cbS*.8,0,Math.PI*2); ctx.fill();
+                    ctx.shadowBlur=0; ctx.restore();
+                    ctx.restore();
                 } else {
                     // 普通子弹 - 等离子能量弹（去掉逐颗渐变创建，改用固定色提升性能）
                     ctx.fillStyle = 'rgba(0,255,220,0.22)';
