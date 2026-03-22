@@ -1058,6 +1058,21 @@
                         <div class="plane-ability-desc">每8秒喷出60°扇形火焰，半径150px，群体伤害×70%</div>
                     </div>
                 </div>
+                <div class="plane-btn" data-plane="9">
+                    <div class="plane-card-badge">PLUS-PLUS</div>
+                    <canvas id="preview9" width="96" height="120"></canvas>
+                    <div class="plane-card-name">积木猎鹰 · Night Glow</div>
+                    <div class="plane-card-type">Plus-Plus夜光积木战机</div>
+                    <div class="plane-stats">
+                        <div class="stat-row"><span>火力</span><div class="stat-bar"><div class="stat-fill" style="width:70%;background:#ff8020;box-shadow:0 0 5px #ff8020"></div></div></div>
+                        <div class="stat-row"><span>速度</span><div class="stat-bar"><div class="stat-fill" style="width:75%;background:#00e5ff;box-shadow:0 0 5px #00e5ff"></div></div></div>
+                        <div class="stat-row"><span>防御</span><div class="stat-bar"><div class="stat-fill" style="width:60%;background:#69f0ae;box-shadow:0 0 5px #69f0ae"></div></div></div>
+                    </div>
+                    <div class="plane-ability">
+                        <div class="plane-ability-tag">专属 · 十字积木弹</div>
+                        <div class="plane-ability-desc">发射橙色十字形积木子弹，每次同时射出双弹，伤害×130%</div>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- ── 角色管理面板 ── -->
@@ -6427,9 +6442,9 @@
                 'rgba(50,140,50,0.18)',   'rgba(50,80,180,0.18)',
                 'rgba(120,60,220,0.18)',  'rgba(0,180,160,0.18)',
                 'rgba(200,150,0,0.18)',   'rgba(100,0,180,0.18)',
-                'rgba(30,100,200,0.18)',  // 歼-15 深海蓝
+                'rgba(30,100,200,0.18)',  'rgba(255,140,20,0.22)',
             ];
-            for (let i = 0; i < 9; i++) {
+            for (let i = 0; i < 10; i++) {
                 const el = document.getElementById('preview' + i);
                 if (!el) continue;
                 const c = el.getContext('2d');
