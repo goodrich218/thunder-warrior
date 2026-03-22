@@ -3317,58 +3317,60 @@
                 ctx.shadowBlur=0;
             } else if (type === 9) {
                 // ── Plus-Plus 积木猎鹰 · 夜光白 + 亮橙 ──
+                // 坐标系：机首朝上(小Y)，机尾朝下(大Y)，cx=16，Y范围0~40
                 const gp = 0.5 + 0.5 * Math.sin(Date.now()/600);
-                const BS = 5.5;
-                const arm = BS * 0.42;
+                const BS = 2.8;   // 积木半径（缩小一倍）
+                const arm9 = BS * 0.42;
                 const O_COL='#ff8020', O_DARK='#c05010', O_LIGHT='#ffb860';
                 const W_COL='#e8ece0', W_DARK='#b8bcb0', W_LIGHT='#f8fcf0';
+                const SP = BS * 1.9; // 积木间距
 
                 function block9(bx, by, bc, bcd, bcl, glowIt) {
                     ctx.save();
                     const vG = ctx.createLinearGradient(bx-BS,by,bx+BS,by);
                     vG.addColorStop(0,bcd); vG.addColorStop(.3,bc); vG.addColorStop(.5,bcl); vG.addColorStop(.7,bc); vG.addColorStop(1,bcd);
-                    ctx.fillStyle=vG; ctx.beginPath(); ctx.roundRect(bx-arm,by-BS,arm*2,BS*2,arm*.45); ctx.fill();
+                    ctx.fillStyle=vG; ctx.beginPath(); ctx.roundRect(bx-arm9,by-BS,arm9*2,BS*2,arm9*.45); ctx.fill();
                     const hG = ctx.createLinearGradient(bx,by-BS,bx,by+BS);
                     hG.addColorStop(0,bcd); hG.addColorStop(.3,bc); hG.addColorStop(.5,bcl); hG.addColorStop(.7,bc); hG.addColorStop(1,bcd);
-                    ctx.fillStyle=hG; ctx.beginPath(); ctx.roundRect(bx-BS,by-arm,BS*2,arm*2,arm*.45); ctx.fill();
+                    ctx.fillStyle=hG; ctx.beginPath(); ctx.roundRect(bx-BS,by-arm9,BS*2,arm9*2,arm9*.45); ctx.fill();
                     const cG = ctx.createRadialGradient(bx-BS*.1,by-BS*.1,0,bx,by,BS*.55);
                     cG.addColorStop(0,bcl); cG.addColorStop(.4,bc); cG.addColorStop(1,bcd);
                     ctx.fillStyle=cG; ctx.beginPath(); ctx.arc(bx,by,BS*.55,0,Math.PI*2); ctx.fill();
                     ctx.fillStyle=bcd; ctx.beginPath(); ctx.arc(bx,by,BS*.28,0,Math.PI*2); ctx.fill();
                     if (glowIt) {
-                        ctx.globalAlpha=.22+.15*gp; ctx.shadowBlur=8; ctx.shadowColor='rgba(180,255,160,.5)';
-                        ctx.fillStyle='rgba(160,255,140,.3)'; ctx.beginPath(); ctx.arc(bx,by,BS*.7,0,Math.PI*2); ctx.fill();
+                        ctx.globalAlpha=.22+.15*gp; ctx.shadowBlur=6; ctx.shadowColor='rgba(180,255,160,.5)';
+                        ctx.fillStyle='rgba(160,255,140,.25)'; ctx.beginPath(); ctx.arc(bx,by,BS*.7,0,Math.PI*2); ctx.fill();
                         ctx.shadowBlur=0;
                     }
                     ctx.restore();
                 }
 
-                const bcy = 20; // 机身中心Y
-                // 机身（7块白色，机首朝上=小Y）
-                [-3,-2,-1,0,1,2,3].forEach(n => block9(cx, bcy+n*BS*1.9, W_COL,W_DARK,W_LIGHT, true));
-                // 翼（左右各3列 × 3行）
-                const wy1=bcy-BS*1.9, wy2=bcy, wy3=bcy+BS*1.9;
+                // 机身中心 Y=19，机首(小Y)在上，机尾(大Y)在下
+                // 7块纵向：n=-3~3，机首=n=-3(Y≈7)，机尾=n=3(Y≈31)
+                const bcy = 19;
+                // 翼（横排3列，翼根对应n=-1,0,1的Y）
+                const wy1=bcy-SP, wy2=bcy, wy3=bcy+SP;
                 [1,2,3].forEach(n => {
                     [-1,1].forEach(s => {
-                        const wx = cx + s*n*BS*1.95;
+                        const wx = cx + s*n*SP*1.02;
                         block9(wx,wy1,O_COL,O_DARK,O_LIGHT,false);
                         block9(wx,wy2,O_COL,O_DARK,O_LIGHT,false);
                         if (n<=2) block9(wx,wy3,O_COL,O_DARK,O_LIGHT,false);
                     });
                 });
-                // 尾翼（机尾=大Y端，两侧小橙块）
-                [-1,1].forEach(s => block9(cx+s*BS*1.95, bcy+2*BS*1.9, O_COL,O_DARK,O_LIGHT,false));
-                // 重绘机身覆盖翼
-                [-3,-2,-1,0,1,2,3].forEach(n => block9(cx, bcy+n*BS*1.9, W_COL,W_DARK,W_LIGHT, true));
-                // 机首装饰橙色小翼
-                [-1,1].forEach(s => block9(cx+s*BS*1.95, bcy-3*BS*1.9, O_COL,O_DARK,O_LIGHT,false));
+                // 尾翼（机尾 n=+2，两侧小橙块）
+                [-1,1].forEach(s => block9(cx+s*SP*1.02, bcy+2*SP, O_COL,O_DARK,O_LIGHT,false));
+                // 机身（7块白色，覆盖在翼上）
+                [-3,-2,-1,0,1,2,3].forEach(n => block9(cx, bcy+n*SP, W_COL,W_DARK,W_LIGHT, true));
+                // 机首装饰橙色小翼（机首 n=-3处，两侧）
+                [-1,1].forEach(s => block9(cx+s*SP*1.02, bcy-3*SP, O_COL,O_DARK,O_LIGHT,false));
                 // 整体荧光
-                ctx.save(); ctx.globalAlpha=.06+.04*gp;
-                const auraG = ctx.createRadialGradient(cx,bcy,2,cx,bcy,14);
-                auraG.addColorStop(0,'rgba(160,255,160,.5)'); auraG.addColorStop(1,'rgba(0,0,0,0)');
-                ctx.fillStyle=auraG; ctx.beginPath(); ctx.arc(cx,bcy,14,0,Math.PI*2); ctx.fill(); ctx.restore();
-                // 尾焰（机尾=大Y处）
-                jet(cx, bcy+3*BS*1.9+6, 3.5,9, 'rgba(255,140,30,', 'rgba(255,80,0,');
+                ctx.save(); ctx.globalAlpha=.05+.03*gp;
+                const auraG9 = ctx.createRadialGradient(cx,bcy,2,cx,bcy,10);
+                auraG9.addColorStop(0,'rgba(160,255,160,.5)'); auraG9.addColorStop(1,'rgba(0,0,0,0)');
+                ctx.fillStyle=auraG9; ctx.beginPath(); ctx.arc(cx,bcy,10,0,Math.PI*2); ctx.fill(); ctx.restore();
+                // 尾焰（机尾=大Y）
+                jet(cx, bcy+3*SP+BS+2, 2.5,6, 'rgba(255,140,30,', 'rgba(255,80,0,');
             }
 
             ctx.restore();
