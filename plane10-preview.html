@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>Plus-Plus 积木小飞机 · 第十架</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#2a1e10; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:'Microsoft YaHei',sans-serif; }
+h1 { color:#f0d090; font-size:1.1rem; letter-spacing:.2em; margin-bottom:4px; text-shadow:0 0 12px rgba(240,180,60,.5); }
+p  { color:#6a5030; font-size:.75rem; letter-spacing:.1em; margin-bottom:14px; }
+canvas { box-shadow:0 4px 40px rgba(0,0,0,.7); border-radius:8px; }
+.info { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.tag { border:1px solid rgba(240,180,60,.3); border-radius:20px; padding:3px 12px; font-size:.72rem; color:#c09040; }
+</style>
+</head>
+<body>
+<h1>Plus-Plus 积木小飞机 · 第十架</h1>
+<p>夜光白 × 亮橙 · 十字拼插积木 · 可爱玩具风</p>
+<canvas id="c" width="860" height="680"></canvas>
+<div class="info">
+  <span class="tag">夜光白机身</span>
+  <span class="tag">亮橙机翼</span>
+  <span class="tag">Plus-Plus 积木</span>
+  <span class="tag">木纹桌面</span>
+  <span class="tag">荧光特效</span>
+</div>
+<script>
+const C=document.getElementById('c');
+const ctx=C.getContext('2d');
+
+let glowPhase=0;
+// 十字形子弹
+const bullets=[];
+let bulletTimer=0;
+const BULLET_INTERVAL=28, BULLET_SPEED=5, BULLET_LIFE=100;
+
+// ── Plus-Plus 十字积木绘制函数
+// x,y = 中心，size = 半径，col = 主色
+function drawBlock(x, y, size, col, colDark, colLight, options={}){
+  const s=size, arm=s*.42;
+  const {glow=false, glowCol='rgba(160,255,160,.3)', label=null, labelSize=7} = options;
+
+  ctx.save();
+
+  // 投影
+  ctx.globalAlpha=.25;
+  ctx.fillStyle='rgba(0,0,0,.5)';
+  // 十字形阴影
+  ctx.beginPath();
+  ctx.roundRect(x-arm+2, y-s+2, arm*2, s*2, arm*.4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x-s+2, y-arm+2, s*2, arm*2, arm*.4);
+  ctx.fill();
+  ctx.globalAlpha=1;
+
+  // 十字主体
+  // 垂直臂
+  const vG=ctx.createLinearGradient(x-s,y,x+s,y);
+  vG.addColorStop(0,colDark); vG.addColorStop(.2,col);
+  vG.addColorStop(.45,colLight); vG.addColorStop(.55,colLight);
+  vG.addColorStop(.8,col); vG.addColorStop(1,colDark);
+  ctx.fillStyle=vG;
+  ctx.beginPath(); ctx.roundRect(x-arm,y-s,arm*2,s*2,arm*.45); ctx.fill();
+  // 水平臂
+  const hG=ctx.createLinearGradient(x,y-s,x,y+s);
+  hG.addColorStop(0,colDark); hG.addColorStop(.2,col);
+  hG.addColorStop(.45,colLight); hG.addColorStop(.55,colLight);
+  hG.addColorStop(.8,col); hG.addColorStop(1,colDark);
+  ctx.fillStyle=hG;
+  ctx.beginPath(); ctx.roundRect(x-s,y-arm,s*2,arm*2,arm*.45); ctx.fill();
+
+  // 中心凸台（塑料感）
+  const cG=ctx.createRadialGradient(x-s*.1,y-s*.1,0,x,y,s*.55);
+  cG.addColorStop(0,colLight); cG.addColorStop(.4,col); cG.addColorStop(1,colDark);
+  ctx.fillStyle=cG;
+  ctx.beginPath(); ctx.arc(x,y,s*.55,0,Math.PI*2); ctx.fill();
+
+  // 中心圆形凹槽（拼插孔特征）
+  ctx.fillStyle=colDark;
+  ctx.beginPath(); ctx.arc(x,y,s*.28,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=colLight; ctx.lineWidth=.5; ctx.globalAlpha=.4;
+  ctx.beginPath(); ctx.arc(x,y,s*.28,0,Math.PI*2); ctx.stroke();
+  ctx.globalAlpha=1;
+
+  // 臂端圆头高光
+  const dirs=[[0,-s],[0,s],[-s,0],[s,0]];
+  dirs.forEach(([dx,dy])=>{
+    ctx.save(); ctx.globalAlpha=.35; ctx.fillStyle=colLight;
+    ctx.beginPath(); ctx.arc(x+dx*.78,y+dy*.78,arm*.6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // 拼接卡扣（臂侧面小凸起）
+  ctx.save(); ctx.globalAlpha=.3; ctx.fillStyle=colLight;
+  // 垂直臂左右各2个卡点
+  [-.9,-.3,.3,.9].forEach(t=>{
+    ctx.beginPath(); ctx.arc(x-arm,y+t*s*.6,arm*.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+arm,y+t*s*.6,arm*.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+t*s*.6,y-arm,arm*.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+t*s*.6,y+arm,arm*.2,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+
+  // 轮廓描边
+  ctx.save(); ctx.globalAlpha=.18; ctx.strokeStyle='#201008'; ctx.lineWidth=.8;
+  ctx.beginPath(); ctx.roundRect(x-arm,y-s,arm*2,s*2,arm*.45); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(x-s,y-arm,s*2,arm*2,arm*.45); ctx.stroke();
+  ctx.restore();
+
+  // 荧光效果
+  if(glow){
+    ctx.save(); ctx.globalAlpha=.35+.2*Math.sin(glowPhase);
+    ctx.shadowBlur=18; ctx.shadowColor=glowCol;
+    ctx.fillStyle=glowCol;
+    ctx.beginPath(); ctx.arc(x,y,s*.7,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0; ctx.restore();
+  }
+
+  // 文字标签（如 Plus-Plus）
+  if(label){
+    ctx.save(); ctx.globalAlpha=.55;
+    ctx.fillStyle=colDark; ctx.font=`bold ${labelSize}px Arial`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label,x,y+s*.62+labelSize*.6);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+// 白色积木参数
+const W_COL  ='#e8ece0';
+const W_DARK ='#b8bcb0';
+const W_LIGHT='#f8fcf0';
+// 橙色积木参数
+const O_COL  ='#ff8020';
+const O_DARK ='#c05010';
+const O_LIGHT='#ffb860';
+
+function draw(){
+  ctx.clearRect(0,0,860,680);
+  const now=Date.now();
+  glowPhase=now/600;
+  const gp=.5+.5*Math.sin(glowPhase);
+
+  // ─────────────────────────────────────────────────────────
+  // 背景：深棕木纹桌面
+  // ─────────────────────────────────────────────────────────
+  // 木纹基色
+  const woodG=ctx.createLinearGradient(0,0,860,680);
+  woodG.addColorStop(0,'#2a1a08'); woodG.addColorStop(.3,'#321e0c');
+  woodG.addColorStop(.6,'#2e1a0a'); woodG.addColorStop(1,'#261608');
+  ctx.fillStyle=woodG; ctx.fillRect(0,0,860,680);
+
+  // 木纹条纹
+  ctx.save(); ctx.globalAlpha=.06;
+  for(let i=0;i<24;i++){
+    const wx=i*38+Math.sin(i*.7)*8;
+    ctx.strokeStyle=i%3===0?'rgba(255,200,80,.8)':'rgba(255,180,60,.4)';
+    ctx.lineWidth=i%3===0?2:1;
+    ctx.beginPath(); ctx.moveTo(wx,0); ctx.bezierCurveTo(wx+10,220,wx-6,460,wx+4,680); ctx.stroke();
+  }
+  ctx.restore();
+
+  // 桌面浅色中心光
+  const tableHL=ctx.createRadialGradient(430,320,30,430,320,400);
+  tableHL.addColorStop(0,'rgba(255,220,140,.06)'); tableHL.addColorStop(.5,'rgba(200,140,60,.03)'); tableHL.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=tableHL; ctx.fillRect(0,0,860,680);
+
+  // ─────────────────────────────────────────────────────────
+  // 飞机整体投影（地面软阴影）
+  // ─────────────────────────────────────────────────────────
+  ctx.save(); ctx.globalAlpha=.35;
+  const shG=ctx.createRadialGradient(430,350,10,430,370,180);
+  shG.addColorStop(0,'rgba(0,0,0,.6)'); shG.addColorStop(.5,'rgba(0,0,0,.25)'); shG.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=shG; ctx.beginPath(); ctx.ellipse(430,370,170,45,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 积木布局（俯视 + 轻微斜透视）
+  // 坐标原点 CX=430, CY=300（机身中心）
+  // ─────────────────────────────────────────────────────────
+  const CX=430, CY=300;
+  const BS=28; // 积木尺寸（半径）
+
+  // ── 飞机（机首朝下 = 正Y方向）
+  // bodyYs: 机尾在上(负Y)，机首在下(正Y)
+  const bodyYs=[-3*BS*1.9, -2*BS*1.9, -1*BS*1.9, 0, BS*1.9, 2*BS*1.9, 3*BS*1.9];
+
+  bodyYs.forEach((dy)=>{
+    drawBlock(CX,CY+dy,BS,W_COL,W_DARK,W_LIGHT,{glow:true,glowCol:`rgba(180,255,160,${.18+.12*gp})`});
+  });
+
+  // ── 机翼（左右各3块橙色）
+  const WING_Y1=CY-BS*1.9;
+  const WING_Y2=CY;
+  const WING_Y3=CY+BS*1.9;
+
+  [1,2,3].forEach(n=>{
+    [-1,1].forEach(sign=>{
+      const wx=CX+sign*n*BS*1.95;
+      drawBlock(wx,WING_Y1,BS,O_COL,O_DARK,O_LIGHT,{label:'Plus-Plus',labelSize:5.5});
+      drawBlock(wx,WING_Y2,BS,O_COL,O_DARK,O_LIGHT,{label:'Plus-Plus',labelSize:5.5});
+      if(n<=2) drawBlock(wx,WING_Y3,BS,O_COL,O_DARK,O_LIGHT,{label:'Plus-Plus',labelSize:5.5});
+    });
+  });
+
+  // ── 尾翼（机尾=上方 负Y端，两侧小橙块）
+  const TAIL_Y=CY-2*BS*1.9;
+  [-1,1].forEach(sign=>{
+    drawBlock(CX+sign*BS*1.95,TAIL_Y,BS*.85,O_COL,O_DARK,O_LIGHT,{});
+  });
+
+  // ── 重绘机身（在翼之上）
+  bodyYs.forEach((dy)=>{
+    drawBlock(CX,CY+dy,BS,W_COL,W_DARK,W_LIGHT,{glow:true,glowCol:`rgba(180,255,160,${.18+.12*gp})`});
+  });
+
+  // ── 机首（下方）两侧小橙色翼片
+  const NOSE_Y=CY+3*BS*1.9;
+  [-1,1].forEach(sign=>{
+    drawBlock(CX+sign*BS*1.95,NOSE_Y,BS*.75,O_COL,O_DARK,O_LIGHT,{});
+  });
+
+  // ── 起落架（机尾上方附近）
+  const gear_s=BS*.55;
+  [[CX-BS*.5, CY-BS*2.8],[CX+BS*.5, CY-BS*2.8]].forEach(([gx,gy])=>{
+    drawBlock(gx,gy,gear_s,W_COL,W_DARK,W_LIGHT,{glow:false});
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // 十字形子弹（橙色，从机首向下发射）
+  // ─────────────────────────────────────────────────────────
+  // 绘制飞行中的子弹
+  bullets.forEach(b=>{
+    drawBlock(b.x, b.y, 10, O_COL, O_DARK, O_LIGHT, {glow:true, glowCol:`rgba(255,180,40,.5)`});
+  });
+
+  // 发射 & 更新
+  bulletTimer++;
+  if(bulletTimer>=BULLET_INTERVAL){
+    bulletTimer=0;
+    // 机首在下方(NOSE_Y = CY+3*BS*1.9)，子弹从机首向上飞
+    bullets.push({x:CX, y:CY+3*BS*1.9+BS, life:0});
+  }
+  for(let i=bullets.length-1;i>=0;i--){
+    const b=bullets[i];
+    b.y-=BULLET_SPEED;
+    b.life++;
+    if(b.life>BULLET_LIFE||b.y<-20) bullets.splice(i,1);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // 荧光氛围（夜光白整体发光）
+  // ─────────────────────────────────────────────────────────
+  ctx.save(); ctx.globalAlpha=(.08+.05*gp);
+  const auraG=ctx.createRadialGradient(CX,CY,10,CX,CY,180);
+  auraG.addColorStop(0,'rgba(160,255,160,.5)'); auraG.addColorStop(.5,'rgba(80,255,120,.15)'); auraG.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=auraG; ctx.beginPath(); ctx.arc(CX,CY,180,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 标签贴纸（桌面右下角）
+  // ─────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.fillStyle='rgba(255,255,255,.06)'; ctx.beginPath(); ctx.roundRect(620,590,210,60,8); ctx.fill();
+  ctx.strokeStyle='rgba(255,200,80,.12)'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(620,590,210,60,8); ctx.stroke();
+  ctx.fillStyle='rgba(240,180,60,.5)'; ctx.font='bold 11px Arial'; ctx.textAlign='left';
+  ctx.fillText('Plus-Plus® Night Glow Edition', 632,612);
+  ctx.fillStyle='rgba(180,130,40,.4)'; ctx.font='9px Arial';
+  ctx.fillText('White × Orange · 10th Fighter', 632,630);
+  ctx.fillText('夜光白 × 亮橙 · 第十架战机', 632,645);
+  ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 标题
+  // ─────────────────────────────────────────────────────────
+  ctx.textAlign='center';
+  ctx.font=`bold 13px 'Microsoft YaHei',sans-serif`;
+  ctx.shadowBlur=12; ctx.shadowColor=`rgba(180,255,150,${.3+.2*gp})`;
+  ctx.fillStyle=`rgba(200,240,180,${.7+.15*gp})`;
+  ctx.fillText('Plus-Plus 夜光版 · 第十架战机  ·  Night Glow Edition', 430, 622);
+  ctx.shadowBlur=0; ctx.font='10px monospace';
+  ctx.fillStyle='rgba(160,200,120,.5)';
+  ctx.fillText('十字拼插积木  ·  夜光白机身 + 亮橙机翼  ·  塑料质感', 430, 640);
+
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

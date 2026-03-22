@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>张凌赫 — 明星成长故事</title>
+  <style>
+    :root {
+      --gold: #c8a96e;
+      --dark: #0d0d0d;
+      --card: #161616;
+      --text: #e8e8e8;
+      --muted: #888;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      line-height: 1.8;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      background: linear-gradient(160deg, #0a0a12 0%, #12100a 50%, #0a0a12 100%);
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(200,169,110,0.08) 0%, transparent 70%);
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-avatar {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      object-fit: cover;
+      margin-bottom: 24px;
+      box-shadow: 0 0 50px rgba(200,169,110,0.35);
+      background: #222;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 4rem;
+      overflow: hidden;
+    }
+    .hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .hero h1 {
+      font-size: clamp(2.6rem, 7vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: .2em;
+      background: linear-gradient(135deg, #f5e6c8, var(--gold), #f5e6c8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero .en-name {
+      margin-top: 6px;
+      font-size: .95rem;
+      color: #555;
+      letter-spacing: .4em;
+    }
+    .hero .subtitle {
+      margin-top: 10px;
+      font-size: .95rem;
+      color: var(--muted);
+      letter-spacing: .2em;
+    }
+    .hero-tags {
+      margin-top: 20px;
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    }
+    .tag {
+      border: 1px solid rgba(200,169,110,.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: .8rem;
+      color: var(--gold);
+    }
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      color: var(--gold); font-size: .8rem; letter-spacing: .2em;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,18,.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(200,169,110,.12);
+      display: flex; justify-content: center; flex-wrap: wrap;
+    }
+    nav a {
+      color: var(--muted); text-decoration: none;
+      padding: 16px 24px; font-size: .88rem; letter-spacing: .1em;
+      transition: color .2s;
+      border-bottom: 2px solid transparent;
+    }
+    nav a:hover, nav a.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    /* ── Section base ── */
+    section { padding: 80px 24px; max-width: 960px; margin: 0 auto; }
+    .section-title {
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--gold); letter-spacing: .12em;
+      margin-bottom: 40px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .section-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(200,169,110,.35), transparent);
+    }
+
+    /* ── 基本信息 ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px;
+    }
+    .info-item {
+      background: var(--card);
+      border: 1px solid rgba(200,169,110,.08);
+      border-radius: 12px; padding: 18px;
+      transition: border-color .2s, transform .2s;
+    }
+    .info-item:hover { border-color: rgba(200,169,110,.4); transform: translateY(-2px); }
+    .info-label { font-size: .72rem; color: var(--muted); letter-spacing: .15em; margin-bottom: 6px; text-transform: uppercase; }
+    .info-value { font-size: 1rem; font-weight: 500; }
+
+    /* ── 成长故事 ── */
+    .story-lead {
+      font-size: 1.1rem; color: #bbb; line-height: 2;
+      border-left: 3px solid var(--gold);
+      padding-left: 20px;
+      margin-bottom: 40px;
+    }
+
+    /* ── 时间轴 ── */
+    .timeline { position: relative; padding-left: 36px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 8px; top: 8px; bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--gold) 0%, rgba(200,169,110,.1) 100%);
+    }
+    .timeline-item { position: relative; margin-bottom: 44px; }
+    .timeline-dot {
+      position: absolute; left: -32px; top: 6px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 12px rgba(200,169,110,.6);
+    }
+    .timeline-year {
+      font-size: .78rem; color: var(--gold); letter-spacing: .2em;
+      margin-bottom: 6px; text-transform: uppercase;
+    }
+    .timeline-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+    .timeline-desc { color: #999; font-size: .95rem; line-height: 1.9; }
+
+    /* ── 作品卡 ── */
+    .works-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .work-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.05);
+      border-radius: 14px; overflow: hidden;
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+    }
+    .work-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.6);
+      border-color: rgba(200,169,110,.25);
+    }
+    .work-thumb {
+      width: 100%; aspect-ratio: 16/9;
+      background: #1c1c1c;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; color: #333;
+    }
+    .work-info { padding: 16px; }
+    .work-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .work-role { font-size: .84rem; color: var(--muted); }
+    .work-meta {
+      display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .badge {
+      font-size: .72rem;
+      border: 1px solid rgba(200,169,110,.3);
+      border-radius: 4px; padding: 2px 8px;
+      color: var(--gold);
+    }
+    .work-desc { font-size: .84rem; color: #777; margin-top: 10px; line-height: 1.7; }
+
+    /* ── 荣誉 ── */
+    .awards-list { display: flex; flex-direction: column; gap: 12px; }
+    .award-item {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--card);
+      border-radius: 10px; padding: 18px 20px;
+      border-left: 3px solid var(--gold);
+      transition: transform .2s;
+    }
+    .award-item:hover { transform: translateX(4px); }
+    .award-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+    .award-name { font-size: .95rem; font-weight: 500; }
+    .award-year { font-size: .8rem; color: var(--muted); margin-top: 3px; }
+
+    /* ── 个人感悟 ── */
+    .quote-block {
+      border-left: 3px solid var(--gold);
+      padding: 20px 28px;
+      background: var(--card);
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 20px;
+      font-size: 1.05rem;
+      color: #ccc;
+      line-height: 1.9;
+      transition: background .2s;
+    }
+    .quote-block:hover { background: #1e1e1e; }
+    .quote-block cite {
+      display: block; margin-top: 10px;
+      font-size: .83rem; color: var(--gold);
+      font-style: normal; letter-spacing: .05em;
+    }
+
+    /* ── 特质卡 ── */
+    .traits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .trait-card {
+      background: var(--card);
+      border: 1px solid rgba(200,169,110,.08);
+      border-radius: 12px; padding: 24px 16px;
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .trait-card:hover { transform: translateY(-3px); border-color: rgba(200,169,110,.35); }
+    .trait-icon { font-size: 2rem; margin-bottom: 10px; }
+    .trait-name { font-size: .9rem; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+    .trait-desc { font-size: .8rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 48px 24px;
+      color: var(--muted); font-size: .85rem;
+      border-top: 1px solid rgba(255,255,255,.05);
+      margin-top: 40px;
+    }
+    footer .footer-name {
+      font-size: 1.2rem; color: var(--gold);
+      letter-spacing: .3em; margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      nav a { padding: 12px 12px; font-size: .78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-avatar">
+      <img
+        src="photos/p1.jpg"
+        onerror="this.parentElement.innerHTML='🌟'"
+        alt="张凌赫"
+      />
+    </div>
+    <div class="en-name">ZHANG LINGHE</div>
+    <h1>张凌赫</h1>
+    <p class="subtitle">演员 · 实力与颜值并存</p>
+    <div class="hero-tags">
+      <span class="tag">北京电影学院</span>
+      <span class="tag">苍兰诀</span>
+      <span class="tag">长月烬明</span>
+      <span class="tag">逐玉</span>
+    </div>
+  </div>
+  <div class="scroll-hint">▼ 向下探索</div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <a href="#info">基本信息</a>
+  <a href="#story">成长故事</a>
+  <a href="#timeline">成长经历</a>
+  <a href="#works">代表作品</a>
+  <a href="#awards">荣誉</a>
+  <a href="#traits">演员特质</a>
+  <a href="#quotes">他说</a>
+</nav>
+
+<!-- 基本信息 -->
+<section id="info">
+  <h2 class="section-title">基本信息</h2>
+  <div class="info-grid">
+    <div class="info-item">
+      <div class="info-label">本名</div>
+      <div class="info-value">张凌赫</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">英文名</div>
+      <div class="info-value">Zhang Linghe</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">出生日期</div>
+      <div class="info-value">1998年8月17日</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">出生地</div>
+      <div class="info-value">四川省成都市</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">身高</div>
+      <div class="info-value">187 cm</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">毕业院校</div>
+      <div class="info-value">北京电影学院</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">出道时间</div>
+      <div class="info-value">2021年</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">粉丝昵称</div>
+      <div class="info-value">小赫兵</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">星座</div>
+      <div class="info-value">狮子座</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">代表角色</div>
+      <div class="info-value">东方青苍 / 吕烟烬 / 逐玉男主</div>
+    </div>
+  </div>
+</section>
+
+<!-- 成长故事 -->
+<section id="story">
+  <h2 class="section-title">关于张凌赫</h2>
+  <p class="story-lead">
+    张凌赫，1998年出生于四川成都，是近年来中国影视圈最受瞩目的新生代男演员之一。
+    他以187cm的挺拔身姿、深邃的五官和精湛的演技迅速征服观众，
+    被誉为"新生代古装第一人"。从北京电影学院科班出身，
+    到一路凭实力走到台前，他的成长故事是一个关于坚持与才华的故事。
+  </p>
+</section>
+
+<!-- 时间轴 -->
+<section id="timeline">
+  <h2 class="section-title">成长经历</h2>
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">1998 · 成都</div>
+      <div class="timeline-title">天府之国里的少年</div>
+      <div class="timeline-desc">
+        出生于四川成都，从小在悠闲的成都文化氛围中长大。
+        少年时期的张凌赫性格开朗，对表演有着天然的热情，
+        立志要成为一名演员。
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2017–2021 · 求学</div>
+      <div class="timeline-title">北京电影学院 · 四年磨砺</div>
+      <div class="timeline-desc">
+        考入北京电影学院表演系，接受系统的专业表演训练。
+        北电严格的培养体系让他对表演有了更深刻的理解，
+        他在校期间勤奋努力，研习大量经典影视作品，
+        练就了扎实的台词功底与形体控制能力。
+        高大挺拔的外形加上科班训练，让他在毕业前已备受关注。
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2021 · 出道</div>
+      <div class="timeline-title">初入荧屏 · 蓄势待发</div>
+      <div class="timeline-desc">
+        毕业后签约公司，开始出演影视作品。
+        初出茅庐的他在剧组中保持低调踏实的作风，
+        认真对待每一个角色，默默积累演出经验，
+        等待属于自己的那次爆发。
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2022 · 《苍兰诀》</div>
+      <div class="timeline-title">一剧成名 · 惊艳全网</div>
+      <div class="timeline-desc">
+        主演奇幻爱情剧《苍兰诀》，饰演魔尊"东方青苍"。
+        凭借极具张力的眼神戏、霸道而深情的人物塑造，
+        张凌赫迅速出圈，成为现象级古装男神。
+        《苍兰诀》全网播放量突破百亿，他也因此登上各大热搜，
+        粉丝数量呈爆炸式增长，成为新生代顶流之一。
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2023 · 《长月烬明》</div>
+      <div class="timeline-title">乘胜追击 · 再证实力</div>
+      <div class="timeline-desc">
+        主演古装虐恋剧《长月烬明》，饰演男主角"吕烟烬"。
+        该剧播出后再次引发全网热议，张凌赫将角色的隐忍与深情
+        诠释得淋漓尽致，进一步巩固了他在古装剧领域的地位，
+        也展现了他驾驭复杂情感角色的能力。
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-year">2024 · 《逐玉》</div>
+      <div class="timeline-title">蜕变升华 · 演技全面爆发</div>
+      <div class="timeline-desc">
+        主演古装剧《逐玉》，这是他演技最为全面爆发的一部作品。
+        张凌赫将男主角身上的多重性格层次——铁血、柔情、执着、隐痛——
+        一一呈现，获得观众和业内的高度认可。
+        《逐玉》也成为他从"流量小生"迈向"实力演员"的重要转折点。
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 代表作品 -->
+<section id="works">
+  <h2 class="section-title">代表作品</h2>
+  <div class="works-grid">
+
+    <div class="work-card">
+      <div class="work-thumb">🌙</div>
+      <div class="work-info">
+        <div class="work-title">苍兰诀</div>
+        <div class="work-role">饰：东方青苍（魔尊）</div>
+        <div class="work-meta">
+          <span class="badge">2022</span>
+          <span class="badge">奇幻爱情</span>
+          <span class="badge">百亿播放</span>
+        </div>
+        <div class="work-desc">一剧成名之作。霸道魔尊与小兰花的虐恋，东方青苍成为现象级角色，全网掀起"苍兰热"。</div>
+      </div>
+    </div>
+
+    <div class="work-card">
+      <div class="work-thumb">🔥</div>
+      <div class="work-info">
+        <div class="work-title">长月烬明</div>
+        <div class="work-role">饰：吕烟烬</div>
+        <div class="work-meta">
+          <span class="badge">2023</span>
+          <span class="badge">古装虐恋</span>
+        </div>
+        <div class="work-desc">继《苍兰诀》之后的第二部爆款，吕烟烬的隐忍深情让无数观众心碎，再次引发全网讨论。</div>
+      </div>
+    </div>
+
+    <div class="work-card">
+      <div class="work-thumb">⚔️</div>
+      <div class="work-info">
+        <div class="work-title">逐玉</div>
+        <div class="work-role">饰：男主角</div>
+        <div class="work-meta">
+          <span class="badge">2024</span>
+          <span class="badge">古装权谋</span>
+          <span class="badge">演技突破</span>
+        </div>
+        <div class="work-desc">演技最为成熟的作品，多层次人物塑造获得业内认可，标志着从流量到实力的蜕变。</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 荣誉 -->
+<section id="awards">
+  <h2 class="section-title">荣誉奖项</h2>
+  <div class="awards-list">
+
+    <div class="award-item">
+      <div class="award-icon">🏆</div>
+      <div>
+        <div class="award-name">年度最受欢迎男演员</div>
+        <div class="award-year">2022 · 凭借《苍兰诀》"东方青苍"一角横扫各平台年度榜单</div>
+      </div>
+    </div>
+
+    <div class="award-item">
+      <div class="award-icon">⭐</div>
+      <div>
+        <div class="award-name">最具潜力新生代演员</div>
+        <div class="award-year">2022–2023 · 多家娱乐媒体、视频平台年度颁奖典礼获奖</div>
+      </div>
+    </div>
+
+    <div class="award-item">
+      <div class="award-icon">🎭</div>
+      <div>
+        <div class="award-name">年度最佳男主角提名</div>
+        <div class="award-year">2023 · 凭借《长月烬明》获多项表演奖项提名</div>
+      </div>
+    </div>
+
+    <div class="award-item">
+      <div class="award-icon">📱</div>
+      <div>
+        <div class="award-name">社交媒体年度影响力艺人</div>
+        <div class="award-year">2022–2024 · 微博、抖音等平台年度热度榜常驻前列</div>
+      </div>
+    </div>
+
+    <div class="award-item">
+      <div class="award-icon">👑</div>
+      <div>
+        <div class="award-name">新生代古装男神称号</div>
+        <div class="award-year">凭借三部古装爆款，被粉丝与媒体誉为"新生代古装第一人"</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 演员特质 -->
+<section id="traits">
+  <h2 class="section-title">演员特质</h2>
+  <div class="traits-grid">
+    <div class="trait-card">
+      <div class="trait-icon">👁️</div>
+      <div class="trait-name">眼神戏</div>
+      <div class="trait-desc">眼神深邃有力，情绪传递精准，被称"一个眼神能演一场戏"</div>
+    </div>
+    <div class="trait-card">
+      <div class="trait-icon">🎭</div>
+      <div class="trait-name">情感层次</div>
+      <div class="trait-desc">擅长诠释复杂人物，能在霸道与柔情之间自由切换</div>
+    </div>
+    <div class="trait-card">
+      <div class="trait-icon">⚡</div>
+      <div class="trait-name">爆发力</div>
+      <div class="trait-desc">情绪爆发场景极具感染力，哭戏、怒戏均有强烈冲击感</div>
+    </div>
+    <div class="trait-card">
+      <div class="trait-icon">🎋</div>
+      <div class="trait-name">古装气质</div>
+      <div class="trait-desc">高挑身材加上冷峻面容，古装造型极具辨识度</div>
+    </div>
+    <div class="trait-card">
+      <div class="trait-icon">📚</div>
+      <div class="trait-name">科班功底</div>
+      <div class="trait-desc">北电系统训练，台词、形体、内心体验三位一体</div>
+    </div>
+    <div class="trait-card">
+      <div class="trait-icon">🌱</div>
+      <div class="trait-name">快速成长</div>
+      <div class="trait-desc">出道仅三年便完成从新人到实力演员的蜕变</div>
+    </div>
+  </div>
+</section>
+
+<!-- 他说 -->
+<section id="quotes">
+  <h2 class="section-title">他说</h2>
+
+  <div class="quote-block">
+    "东方青苍这个角色教会了我，真正的霸道不是横冲直撞，而是深藏在隐忍之下的汹涌。"
+    <cite>— 张凌赫谈《苍兰诀》</cite>
+  </div>
+
+  <div class="quote-block">
+    "我很庆幸自己在北电学的那几年，没有白费。那些基本功，在每一个角色里都用到了。"
+    <cite>— 张凌赫谈求学经历</cite>
+  </div>
+
+  <div class="quote-block">
+    "爆红之后我没有飘，反而更焦虑了。因为我知道，观众的期待是最真实的压力。"
+    <cite>— 张凌赫谈《苍兰诀》走红后</cite>
+  </div>
+
+  <div class="quote-block">
+    "《逐玉》是我最难的一次，也是我最满意的一次。我想让大家看到我不一样的地方。"
+    <cite>— 张凌赫谈《逐玉》</cite>
+  </div>
+
+  <div class="quote-block">
+    "成都给了我松弛感，北京给了我紧张感，这两种东西加在一起，大概就是我这个人。"
+    <cite>— 张凌赫谈成长</cite>
+  </div>
+</section>
+
+
+<!-- 图片墙 -->
+<section id="gallery" style="padding:80px 24px;max-width:960px;margin:0 auto;">
+  <h2 class="section-title">光影留影</h2>
+  <p style="color:#888;font-size:.9rem;margin-bottom:24px;">写真 · 剧照 · 大片</p>
+  <div class="gallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+    <div class="gallery-item">
+      <img src="photos/p1.jpg" alt="写真照" loading="lazy" />
+      <div class="gallery-caption">写真照</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p2.jpg" alt="个人照" loading="lazy" />
+      <div class="gallery-caption">个人照</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p3.jpg" alt="时尚大片" loading="lazy" />
+      <div class="gallery-caption">时尚大片</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p4.jpg" alt="帅气写真" loading="lazy" />
+      <div class="gallery-caption">帅气写真</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p5.jpg" alt="2024近照" loading="lazy" />
+      <div class="gallery-caption">2024近照</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p6.jpg" alt="最新写真" loading="lazy" />
+      <div class="gallery-caption">最新写真</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p7.jpg" alt="苍兰诀 · 东方青苍" loading="lazy" />
+      <div class="gallery-caption">苍兰诀 · 东方青苍</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p8.jpg" alt="苍兰诀 剧照" loading="lazy" />
+      <div class="gallery-caption">苍兰诀 剧照</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p9.jpg" alt="东方青苍 剧照" loading="lazy" />
+      <div class="gallery-caption">东方青苍 剧照</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p10.jpg" alt="苍兰诀 剧照" loading="lazy" />
+      <div class="gallery-caption">苍兰诀 剧照</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p11.jpg" alt="2023 杂志封面" loading="lazy" />
+      <div class="gallery-caption">2023 杂志封面</div>
+    </div>
+    <div class="gallery-item">
+      <img src="photos/p12.jpg" alt="时尚写真" loading="lazy" />
+      <div class="gallery-caption">时尚写真</div>
+    </div>
+  </div>
+</section>
+
+<style>
+.gallery-item {
+  border-radius:10px;overflow:hidden;
+  aspect-ratio:3/4;background:#1a1a1a;
+  border:1px solid rgba(255,255,255,.05);
+  transition:transform .2s;
+  position:relative;cursor:pointer;
+}
+.gallery-item:hover { transform:scale(1.03); }
+.gallery-item img { width:100%;height:100%;object-fit:cover;display:block; }
+.gallery-caption {
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(0,0,0,.75));
+  color:#ddd;font-size:.75rem;padding:20px 8px 8px;
+  opacity:0;transition:opacity .2s;
+}
+.gallery-item:hover .gallery-caption { opacity:1; }
+</style>
+
+<footer>
+  <div class="footer-name">张 凌 赫</div>
+  <p>一步一脚印，从成都走向全国观众的心</p>
+  <p style="margin-top:10px;font-size:.78rem;opacity:.5;">© 2024 明星成长介绍 · 内容仅供欣赏，图片版权归原作者所有</p>
+</footer>
+
+<script>
+  // 导航高亮
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { threshold: 0.35 });
+  sections.forEach(s => observer.observe(s));
+
+  // 平滑滚动
+  navLinks.forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+
+</body>
+</html>

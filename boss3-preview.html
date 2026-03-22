@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>星际判官 · X-07</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:'Microsoft YaHei',sans-serif; }
+h1 { color:#d0d8e8; font-size:1.2rem; letter-spacing:.3em; margin-bottom:4px; }
+p  { color:#555; font-size:.75rem; letter-spacing:.1em; margin-bottom:16px; }
+canvas { box-shadow:0 0 80px rgba(0,0,0,.8); }
+.info { margin-top:14px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+.tag { border:1px solid rgba(180,180,200,.2); border-radius:20px; padding:3px 12px; font-size:.72rem; color:#8090a8; }
+</style>
+</head>
+<body>
+<h1>星际判官 · GALACTIC JUDGE · X-07</h1>
+<p>第三大 BOSS · 俯视正交 · X翼截击机</p>
+<canvas id="c" width="900" height="720"></canvas>
+<div class="info">
+  <span class="tag">HP · 180,000</span>
+  <span class="tag">top-down view</span>
+  <span class="tag">X-wing formation</span>
+  <span class="tag">quad engines</span>
+  <span class="tag">twin laser cannons</span>
+</div>
+<script>
+const C = document.getElementById('c');
+const ctx = C.getContext('2d');
+
+let bPhase=0, bCycle=0;
+const B_IDLE=100, B_CHARGE=65, B_FIRE=120, B_COOL=50;
+const particles=[];
+function spark(x,y,col,n=6){
+  for(let i=0;i<n;i++) particles.push({x,y,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,life:0,max:18+Math.random()*14,r:.8+Math.random()*2,col});
+}
+
+const weatherSeeds=Array.from({length:60},()=>({
+  x:Math.random()*900, y:Math.random()*720,
+  len:3+Math.random()*12, angle:Math.random()*Math.PI,
+  alpha:0.04+Math.random()*0.08
+}));
+
+function draw(){
+  ctx.clearRect(0,0,900,720);
+  const now=Date.now();
+  const pb =.5+.5*Math.sin(now/110);
+  const pb2=.5+.5*Math.sin(now/330);
+  const pb3=.5+.5*Math.sin(now/175+1.2);
+  const pb4=.5+.5*Math.sin(now/68+.8);
+
+  // 背景
+  const bg=ctx.createRadialGradient(450,340,40,450,340,480);
+  bg.addColorStop(0,'#2e3038'); bg.addColorStop(.6,'#1a1c22'); bg.addColorStop(1,'#0e0f12');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,900,720);
+  const shadow=ctx.createRadialGradient(450,365,10,450,370,200);
+  shadow.addColorStop(0,'rgba(0,0,0,.55)'); shadow.addColorStop(.5,'rgba(0,0,0,.2)'); shadow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=shadow; ctx.beginPath(); ctx.ellipse(450,370,190,60,0,0,Math.PI*2); ctx.fill();
+
+  const CX=450, CY=340;
+  const FH=190, FW=14;
+  const WING_ANGLE=0.28;
+
+  function panelLine(x1,y1,x2,y2,alpha=.35,w=.8){
+    ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle='#101418'; ctx.lineWidth=w;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+  }
+  function panelLineHL(x1,y1,x2,y2,alpha=.12,w=.6){
+    ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle='#d0d8e4'; ctx.lineWidth=w;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+  }
+  function seam(x1,y1,x2,y2,offset=.6){
+    panelLine(x1,y1,x2,y2,.4,.7);
+    panelLineHL(x1+offset,y1+offset,x2+offset,y2+offset,.1,.5);
+  }
+  function scorch(x,y,r,alpha=.15){
+    ctx.save(); ctx.globalAlpha=alpha;
+    const sg=ctx.createRadialGradient(x,y,0,x,y,r);
+    sg.addColorStop(0,'rgba(40,30,20,.9)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+
+  function drawXWing(sign){
+    const rootOffset_up = -30, rootOffset_dn = 30;
+    const RX_u=CX+sign*FW*.9, RY_u=CY+rootOffset_up;
+    const RX_d=CX+sign*FW*.9, RY_d=CY+rootOffset_dn;
+    const WLEN=190, wSpread=9, wRoot=22;
+
+    [[RX_u,RY_u,true],[RX_d,RY_d,false]].forEach(([RX,RY,upper])=>{
+      const dx=sign*Math.cos(WING_ANGLE)*WLEN, dy=(upper?-1:1)*Math.sin(WING_ANGLE)*WLEN;
+      const TipX=RX+dx, TipY=RY+dy;
+      const nx2=-dy/WLEN, ny2=dx/WLEN;
+      const WCHR=10, WCHT=5;
+      const A={x:RX+nx2*WCHR,y:RY+ny2*WCHR},B={x:TipX+nx2*WCHT,y:TipY+ny2*WCHT};
+      const Bp={x:TipX-nx2*WCHT,y:TipY-ny2*WCHT},Ap={x:RX-nx2*WCHR,y:RY-ny2*WCHR};
+
+      // 阴影
+      ctx.save(); ctx.globalAlpha=.35; ctx.fillStyle='#000';
+      ctx.beginPath(); ctx.moveTo(A.x+1,A.y+2); ctx.lineTo(B.x+1,B.y+2);
+      ctx.lineTo(Bp.x+1,Bp.y+2); ctx.lineTo(Ap.x+1,Ap.y+2); ctx.closePath(); ctx.fill(); ctx.restore();
+
+      // 翼面
+      const wG=ctx.createLinearGradient(RX,RY,TipX,TipY);
+      wG.addColorStop(0,'#b8c0cc'); wG.addColorStop(.4,'#9aa4b0'); wG.addColorStop(.8,'#7a8490'); wG.addColorStop(1,'#5c6470');
+      ctx.fillStyle=wG;
+      ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(Bp.x,Bp.y); ctx.lineTo(Ap.x,Ap.y); ctx.closePath(); ctx.fill();
+      // 前缘高光
+      ctx.save(); ctx.globalAlpha=.45; ctx.strokeStyle='#dce4ec'; ctx.lineWidth=.8;
+      ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke(); ctx.restore();
+      // 红条纹
+      const st=.55, SX=RX+dx*st, SY=RY+dy*st, sw=WCHR*.4*(1-st*.4);
+      ctx.save(); ctx.globalAlpha=.85; ctx.fillStyle='#b82020';
+      ctx.beginPath();
+      ctx.moveTo(SX+nx2*sw,SY+ny2*sw); ctx.lineTo(SX+nx2*sw+dx*.07,SY+ny2*sw+dy*.07);
+      ctx.lineTo(SX-nx2*sw+dx*.07,SY-ny2*sw+dy*.07); ctx.lineTo(SX-nx2*sw,SY-ny2*sw);
+      ctx.closePath(); ctx.fill(); ctx.restore();
+      // 面板缝
+      [.3,.6].forEach(t=>{ const px=RX+dx*t,py=RY+dy*t,sw2=WCHR*(1-t*.25);
+        ctx.save(); ctx.globalAlpha=.4; ctx.strokeStyle='#101418'; ctx.lineWidth=.5;
+        ctx.beginPath(); ctx.moveTo(px+nx2*sw2,py+ny2*sw2); ctx.lineTo(px-nx2*sw2,py-ny2*sw2); ctx.stroke(); ctx.restore();
+      });
+      // 引擎
+      const engT=.2, EX=RX+dx*engT, EY=RY+dy*engT, EL=18, EW=3.5;
+      const eNG=ctx.createLinearGradient(EX-nx2*EW,EY-ny2*EW,EX+nx2*EW,EY+ny2*EW);
+      eNG.addColorStop(0,'#282e38'); eNG.addColorStop(.5,'#484e58'); eNG.addColorStop(1,'#282e38');
+      ctx.fillStyle=eNG;
+      ctx.beginPath();
+      ctx.moveTo(EX+nx2*EW+(-dx/WLEN)*EL/2,EY+ny2*EW+(-dy/WLEN)*EL/2);
+      ctx.lineTo(EX+nx2*EW+(dx/WLEN)*EL/2,EY+ny2*EW+(dy/WLEN)*EL/2);
+      ctx.lineTo(EX-nx2*EW+(dx/WLEN)*EL/2,EY-ny2*EW+(dy/WLEN)*EL/2);
+      ctx.lineTo(EX-nx2*EW+(-dx/WLEN)*EL/2,EY-ny2*EW+(-dy/WLEN)*EL/2);
+      ctx.closePath(); ctx.fill();
+      // 引擎尾焰
+      const exX=EX+(dx/WLEN)*(EL/2+1),exY=EY+(dy/WLEN)*(EL/2+1);
+      ctx.save(); ctx.shadowBlur=12; ctx.shadowColor=`rgba(255,140,40,${.6+.3*(upper?pb:pb3)})`;
+      const exG=ctx.createRadialGradient(exX,exY,0,exX,exY,EW*1.2);
+      exG.addColorStop(0,'rgba(255,210,120,.9)'); exG.addColorStop(.5,'rgba(255,90,20,.6)'); exG.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=exG; ctx.beginPath(); ctx.arc(exX,exY,EW*1.2,0,Math.PI*2); ctx.fill(); ctx.restore();
+      // 翼尖双联炮
+      [.82,.92].forEach((gt,gi)=>{
+        const GX=RX+dx*gt,GY=RY+dy*gt;
+        const G0X=GX+(gi===0?nx2:-nx2)*3.5, G0Y=GY+(gi===0?ny2:-ny2)*3.5;
+        const GEX=G0X+(dx/WLEN)*14, GEY=G0Y+(dy/WLEN)*14;
+        ctx.save();
+        ctx.strokeStyle='#1c2028'; ctx.lineWidth=2; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(G0X,G0Y); ctx.lineTo(GEX,GEY); ctx.stroke();
+        ctx.strokeStyle='#2c3040'; ctx.lineWidth=1.2;
+        ctx.beginPath(); ctx.moveTo(G0X,G0Y); ctx.lineTo(GEX,GEY); ctx.stroke();
+        const mAlpha=bPhase===2?(.8+.2*pb4):(.3+.15*pb4);
+        ctx.shadowBlur=bPhase===2?14:6; ctx.shadowColor=`rgba(80,210,255,${mAlpha})`;
+        const mG=ctx.createRadialGradient(GEX,GEY,0,GEX,GEY,bPhase===2?6:3);
+        mG.addColorStop(0,`rgba(220,250,255,${mAlpha})`); mG.addColorStop(.5,`rgba(50,190,255,${mAlpha*.7})`); mG.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=mG; ctx.beginPath(); ctx.arc(GEX,GEY,bPhase===2?6:3,0,Math.PI*2); ctx.fill();
+        ctx.shadowBlur=0; ctx.restore();
+      });
+    });
+  }
+
+  drawXWing(-1);
+  drawXWing(1);
+
+  // 机身
+  ctx.save(); ctx.globalAlpha=.45; ctx.fillStyle='#030506';
+  ctx.translate(3,6);
+  ctx.beginPath(); ctx.moveTo(CX,CY-FH-3); ctx.bezierCurveTo(CX+FW+2,CY-FH/2+2,CX+FW+2,CY+FH/2+2,CX+2,CY+FH+2);
+  ctx.lineTo(CX-FW+2,CY+FH+2); ctx.bezierCurveTo(CX-FW+2,CY+FH/2+2,CX-FW+2,CY-FH/2+2,CX-2,CY-FH-3); ctx.closePath(); ctx.fill();
+  ctx.translate(-3,-6); ctx.restore();
+
+  const bG2=ctx.createLinearGradient(CX-FW,CY,CX+FW,CY);
+  bG2.addColorStop(0,'#707880'); bG2.addColorStop(.25,'#a0a8b4'); bG2.addColorStop(.5,'#c8d0d8');
+  bG2.addColorStop(.75,'#a0a8b4'); bG2.addColorStop(1,'#707880');
+  ctx.fillStyle=bG2;
+  ctx.beginPath(); ctx.moveTo(CX,CY-FH-2); ctx.bezierCurveTo(CX+FW,CY-FH/2,CX+FW,CY+FH/2,CX,CY+FH);
+  ctx.lineTo(CX-FW,CY+FH); ctx.bezierCurveTo(CX-FW,CY+FH/2,CX-FW,CY-FH/2,CX,CY-FH-2); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.globalAlpha=.3; ctx.strokeStyle='#e0e8f0'; ctx.lineWidth=.8;
+  ctx.beginPath(); ctx.moveTo(CX,CY-FH-2); ctx.bezierCurveTo(CX+FW,CY-FH/2,CX+FW,CY+FH/2,CX,CY+FH); ctx.stroke(); ctx.restore();
+
+  [-.45,-.15,.2,.5,.75].forEach(t=>{ const py=CY+t*FH*1.5,hw=FW*(1-Math.pow(t-.1,2)*.6);
+    ctx.save(); ctx.globalAlpha=.38; ctx.strokeStyle='#0c1014'; ctx.lineWidth=.7;
+    ctx.beginPath(); ctx.moveTo(CX-hw,py); ctx.lineTo(CX+hw,py); ctx.stroke(); ctx.restore();
+  });
+  ctx.save(); ctx.globalAlpha=.8; ctx.strokeStyle='#d4a020'; ctx.lineWidth=2.5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(CX-FW*.7,CY-FH*.5); ctx.lineTo(CX+FW*.7,CY-FH*.5); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.globalAlpha=.78; ctx.fillStyle='#c02828';
+  ctx.beginPath(); ctx.rect(CX-FW*.85,CY-5,FW*1.7,7); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.globalAlpha=.65; ctx.font='bold 7px monospace'; ctx.fillStyle='#0a0c10'; ctx.textAlign='center';
+  ctx.fillText('X-07',CX,CY+FH*.22); ctx.restore();
+
+  // 驾驶舱
+  const ckY=CY-FH*.4;
+  ctx.save();
+  ctx.fillStyle='#282e3c'; ctx.beginPath(); ctx.ellipse(CX,ckY,FW*.65,FW*.9,0,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=10; ctx.shadowColor=`rgba(80,200,255,${.4+.2*pb})`;
+  const cgG=ctx.createRadialGradient(CX-1.5,ckY-2,0,CX,ckY,FW*.85);
+  cgG.addColorStop(0,`rgba(150,225,255,${.65+.15*pb})`); cgG.addColorStop(.5,'rgba(35,130,215,.8)'); cgG.addColorStop(1,'rgba(10,50,140,.88)');
+  ctx.fillStyle=cgG; ctx.beginPath(); ctx.ellipse(CX,ckY,FW*.55,FW*.8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=`rgba(210,242,255,${.16+.08*pb})`;
+  ctx.beginPath(); ctx.ellipse(CX-FW*.18,ckY-FW*.28,FW*.28,FW*.18,-.45,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0; ctx.restore();
+
+  // R2
+  const r2Y=CY-FH*.18;
+  ctx.save();
+  ctx.fillStyle='#b4bcc8'; ctx.beginPath(); ctx.ellipse(CX,r2Y,FW*.55,FW*.55,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#4488cc'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.ellipse(CX,r2Y,FW*.35,FW*.35,0,0,Math.PI*2); ctx.stroke();
+  ctx.shadowBlur=8; ctx.shadowColor=`rgba(80,200,255,${.5+.3*pb3})`;
+  ctx.fillStyle=`rgba(80,200,255,${.75+.2*pb3})`; ctx.beginPath(); ctx.arc(CX,r2Y,FW*.15,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(10,15,30,.85)'; ctx.beginPath(); ctx.arc(CX,r2Y,FW*.08,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0; ctx.restore();
+
+  // 做旧
+  weatherSeeds.forEach(s=>{
+    ctx.save(); ctx.globalAlpha=s.alpha; ctx.strokeStyle='#080c10'; ctx.lineWidth=.6;
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.x+Math.cos(s.angle)*s.len,s.y+Math.sin(s.angle)*s.len); ctx.stroke(); ctx.restore();
+  });
+
+  // 光束炮口坐标
+  const sc2=1, tx2=CX, ty2=CY;
+  const gunDist=190+14;
+  const allMuzzles=[];
+  [[1,true],[1,false],[-1,true],[-1,false]].forEach(([sign,upper])=>{
+    const rootOffset=upper?-30:30;
+    const RX2=CX+sign*FW*.9, RY2=CY+rootOffset;
+    const WLEN=190;
+    const dx=sign*Math.cos(WING_ANGLE)*WLEN, dy=(upper?-1:1)*Math.sin(WING_ANGLE)*WLEN;
+    [.82,.92].forEach((gt,gi)=>{
+      const GX=RX2+dx*gt, GY=RY2+dy*gt;
+      const nx2=-(dy/WLEN), ny2=dx/WLEN;
+      const G0X=GX+(gi===0?nx2:-nx2)*3.5, G0Y=GY+(gi===0?ny2:-ny2)*3.5;
+      allMuzzles.push({x:G0X+(dx/WLEN)*14, y:G0Y+(dy/WLEN)*14});
+    });
+  });
+
+  if(bPhase===1){
+    const ca=bCycle/B_CHARGE;
+    allMuzzles.forEach(m=>{ ctx.save(); ctx.shadowBlur=20; ctx.shadowColor=`rgba(80,220,255,${ca})`;
+      const cG2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,18*ca);
+      cG2.addColorStop(0,`rgba(220,248,255,${.85*ca})`); cG2.addColorStop(.5,`rgba(60,190,255,${.6*ca})`); cG2.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=cG2; ctx.beginPath(); ctx.arc(m.x,m.y,18*ca,0,Math.PI*2); ctx.fill(); ctx.restore(); });
+  } else if(bPhase===2){
+    const fa=Math.min(1,bCycle/8),fl=.88+.12*Math.sin(now/25);
+    allMuzzles.forEach(m=>{ ctx.save(); ctx.shadowBlur=28; ctx.shadowColor=`rgba(60,200,255,${.7*fa*fl})`;
+      const bG3=ctx.createLinearGradient(m.x,m.y,m.x,760);
+      bG3.addColorStop(0,`rgba(160,238,255,${.88*fa*fl})`); bG3.addColorStop(.3,`rgba(40,175,255,${.65*fa*fl})`); bG3.addColorStop(1,'rgba(0,60,200,0)');
+      ctx.strokeStyle=bG3; ctx.lineWidth=8*fa*fl;
+      ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x,760); ctx.stroke();
+      ctx.shadowBlur=8; ctx.strokeStyle=`rgba(240,252,255,${.92*fa*fl})`; ctx.lineWidth=1.8;
+      ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x,760); ctx.stroke(); ctx.restore(); });
+  } else if(bPhase===3){
+    const ca2=1-bCycle/B_COOL;
+    allMuzzles.forEach(m=>{ ctx.save(); ctx.globalAlpha=ca2*.28;
+      ctx.strokeStyle='rgba(80,185,255,.5)'; ctx.lineWidth=3.5;
+      ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x,760); ctx.stroke(); ctx.restore(); });
+  }
+
+  particles.forEach(p=>{ const a=1-p.life/p.max; ctx.save(); ctx.globalAlpha=a*.55; ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*a,0,Math.PI*2); ctx.fill(); ctx.restore(); });
+
+  ctx.textAlign='center';
+  ctx.font=`bold 13px 'Microsoft YaHei',sans-serif`;
+  ctx.shadowBlur=14; ctx.shadowColor='rgba(120,180,255,.6)';
+  ctx.fillStyle=`rgba(180,210,245,${.8+.12*pb2})`;
+  ctx.fillText('星际判官  ·  GALACTIC JUDGE  ·  X-07', 450, 672);
+  ctx.shadowBlur=0; ctx.font='10px monospace'; ctx.fillStyle='rgba(80,110,160,.6)';
+  ctx.fillText('HP 180,000  ·  quad laser cannons  ·  top-down view', 450, 690);
+
+  bCycle++;
+  if(bPhase===0&&bCycle>B_IDLE)         {bPhase=1;bCycle=0;}
+  else if(bPhase===1&&bCycle>=B_CHARGE) {bPhase=2;bCycle=0;}
+  else if(bPhase===2&&bCycle>=B_FIRE)   {bPhase=3;bCycle=0;}
+  else if(bPhase===3&&bCycle>=B_COOL)   {bPhase=0;bCycle=0;}
+
+  for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life++; if(p.life>p.max)particles.splice(i,1); }
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>焰刃战机 · NOVA FLAME — Boss 8</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0e0805; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:'Microsoft YaHei',sans-serif; }
+h1 { color:#ff6020; font-size:1.2rem; letter-spacing:.25em; margin-bottom:4px; text-shadow:0 0 24px rgba(255,100,20,.9); }
+p  { color:#554030; font-size:.75rem; letter-spacing:.1em; margin-bottom:14px; }
+canvas { box-shadow:0 0 80px rgba(255,80,10,.4), 0 0 160px rgba(0,0,0,.9); border-radius:10px; }
+.info { margin-top:14px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+.tag { border:1px solid rgba(255,140,40,.35); border-radius:20px; padding:3px 12px; font-size:.72rem; color:#ff9040; }
+</style>
+</head>
+<body>
+<h1>焰刃战机 · NOVA FLAME · 熔麟刀</h1>
+<p>第八大 BOSS · 铠甲勇士拿瓦 · 焰之力量 · 火焰机甲</p>
+<canvas id="c" width="960" height="740"></canvas>
+<div class="info">
+  <span class="tag">HP · 1,200,000</span>
+  <span class="tag">火焰刃翼</span>
+  <span class="tag">熔麟宝珠</span>
+  <span class="tag">金色齿轮</span>
+  <span class="tag">熔岩机甲</span>
+</div>
+<script>
+const C=document.getElementById('c');
+const ctx=C.getContext('2d');
+
+// 粒子系统
+const particles=[];
+function emitFlame(x,y,n=4){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=.5+Math.random()*2.5;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.5,
+      life:0,max:30+Math.random()*30,r:2+Math.random()*4,
+      col:`hsl(${20+Math.random()*30},100%,${55+Math.random()*20}%)`});
+  }
+}
+function emitSpark(x,y,n=6){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=1+Math.random()*4;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+      life:0,max:18+Math.random()*14,r:.8+Math.random()*2,
+      col:'rgba(255,220,100,.9)'});
+  }
+}
+
+// 齿轮旋转
+let gearAngle=0;
+// 宝珠脉冲
+let orbPulse=0;
+// 光束
+let beamPhase=0, beamCycle=0;
+const B_IDLE=90,B_CHARGE=55,B_FIRE=110,B_COOL=45;
+// 导弹
+const missiles=[];
+let missileTimer=0;
+const MISSILE_INTERVAL=115, MISSILE_SPEED=4.5, MISSILE_LIFE=130;
+// 云偏移
+let cloudOff=0;
+
+function draw(){
+  ctx.clearRect(0,0,960,740);
+  const now=Date.now();
+  const pb =.5+.5*Math.sin(now/120);
+  const pb2=.5+.5*Math.sin(now/340);
+  const pb3=.5+.5*Math.sin(now/185+1.3);
+  const pb4=.5+.5*Math.sin(now/65+.9);
+  gearAngle+=.008;
+  orbPulse+=.04;
+  cloudOff=(cloudOff+.4)%980;
+
+  const CX=480,CY=320;
+
+  // ─────────────────────────────────────────────────────────
+  // 背景：橙红火焰氛围
+  // ─────────────────────────────────────────────────────────
+  const bg=ctx.createRadialGradient(CX,CY,20,CX,CY,500);
+  bg.addColorStop(0,'#2a1005'); bg.addColorStop(.35,'#1a0804');
+  bg.addColorStop(.7,'#100503'); bg.addColorStop(1,'#080200');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,960,740);
+
+  // 橙红光晕（战机周围）
+  const halo=ctx.createRadialGradient(CX,CY,30,CX,CY,320);
+  halo.addColorStop(0,`rgba(255,100,20,${.18+.1*pb})`);
+  halo.addColorStop(.4,`rgba(200,60,10,${.1+.05*pb})`);
+  halo.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(CX,CY,320,0,Math.PI*2); ctx.fill();
+
+  // 远处火焰光柱（背景装饰）
+  [-200,-100,100,200].forEach((dx,i)=>{
+    const bx=CX+dx, by=CY+50;
+    const ph=(i%2===0)?pb:pb3;
+    ctx.save(); ctx.globalAlpha=.12+.05*ph;
+    const plG=ctx.createRadialGradient(bx,by,5,bx,by-80,35);
+    plG.addColorStop(0,'rgba(255,160,40,.8)'); plG.addColorStop(.5,'rgba(255,60,0,.4)'); plG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=plG; ctx.beginPath(); ctx.ellipse(bx,by-80,18,90,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // 云层（橙红染色）
+  // ─────────────────────────────────────────────────────────
+  ctx.save();
+  for(let i=0;i<9;i++){
+    const cx2=(80+i*105+cloudOff*.6)%1010-50;
+    const cy2=550+Math.sin(i*1.8)*30;
+    const cw=70+Math.sin(i*.9)*40, ch=22+Math.cos(i*1.2)*8;
+    const cloudG=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,cw*.65);
+    cloudG.addColorStop(0,'rgba(255,180,80,.55)');
+    cloudG.addColorStop(.5,'rgba(200,90,20,.25)');
+    cloudG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cloudG; ctx.beginPath(); ctx.ellipse(cx2,cy2,cw*.65,ch*.6,0,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 辅助函数
+  // ─────────────────────────────────────────────────────────
+  function flameGrad(x1,y1,x2,y2){
+    const g=ctx.createLinearGradient(x1,y1,x2,y2);
+    g.addColorStop(0,'#c02808'); g.addColorStop(.2,'#e84010');
+    g.addColorStop(.45,'#ff7020'); g.addColorStop(.6,'#ffb040');
+    g.addColorStop(.8,'#e84010'); g.addColorStop(1,'#901808');
+    return g;
+  }
+  function goldGrad(x1,y1,x2,y2){
+    const g=ctx.createLinearGradient(x1,y1,x2,y2);
+    g.addColorStop(0,'#806010'); g.addColorStop(.25,'#c09020');
+    g.addColorStop(.5,'#f0c840'); g.addColorStop(.75,'#c09020');
+    g.addColorStop(1,'#806010');
+    return g;
+  }
+  function seam(x1,y1,x2,y2,a=.45){
+    ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle='#200800'; ctx.lineWidth=.9;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.globalAlpha=a*.2; ctx.strokeStyle='#ffe0a0'; ctx.lineWidth=.5;
+    ctx.beginPath(); ctx.moveTo(x1+.4,y1+.4); ctx.lineTo(x2+.4,y2+.4); ctx.stroke();
+    ctx.restore();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // 1. 火焰刃翼（左右对称，锋利刃片）
+  // ─────────────────────────────────────────────────────────
+  [-1,1].forEach(sign=>{
+    ctx.save();
+    // 主刃（三角楔形，前掠刃）
+    const W1x=sign*55,  W1y=-120; // 前缘翼根
+    const W2x=sign*210, W2y= -30; // 翼尖前缘
+    const W3x=sign*200, W3y=  60; // 翼尖后缘
+    const W4x=sign*60,  W4y=  80; // 后缘翼根
+
+    // 翼面阴影
+    ctx.globalAlpha=.4; ctx.fillStyle='#0a0300';
+    ctx.beginPath(); ctx.moveTo(CX+W1x+3,CY+W1y+4); ctx.lineTo(CX+W2x+3,CY+W2y+4);
+    ctx.lineTo(CX+W3x+3,CY+W3y+4); ctx.lineTo(CX+W4x+3,CY+W4y+4); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+
+    // 翼面主色（橙红→金色渐变）
+    ctx.fillStyle=flameGrad(CX+W1x,CY+W1y,CX+W2x,CY+W2y);
+    ctx.beginPath(); ctx.moveTo(CX+W1x,CY+W1y); ctx.lineTo(CX+W2x,CY+W2y);
+    ctx.lineTo(CX+W3x,CY+W3y); ctx.lineTo(CX+W4x,CY+W4y); ctx.closePath(); ctx.fill();
+
+    // 翼面高光（上层亮面）
+    const wHL=ctx.createLinearGradient(CX+W1x,CY+W1y,CX+W4x,CY+W4y);
+    wHL.addColorStop(0,'rgba(255,200,100,.25)'); wHL.addColorStop(.4,'rgba(255,160,60,.15)'); wHL.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=wHL;
+    ctx.beginPath(); ctx.moveTo(CX+W1x,CY+W1y); ctx.lineTo(CX+W2x,CY+W2y);
+    ctx.lineTo(CX+W3x,CY+W3y); ctx.lineTo(CX+W4x,CY+W4y); ctx.closePath(); ctx.fill();
+
+    // 熔岩纹路（斜向裂缝发光）
+    [[.25,.6],[.5,.5],[.72,.4]].forEach(([ta,tb])=>{
+      const lx1=CX+W1x+(W2x-W1x)*ta, ly1=CY+W1y+(W2y-W1y)*ta;
+      const lx2=CX+W4x+(W3x-W4x)*tb, ly2=CY+W4y+(W3y-W4y)*tb;
+      ctx.save(); ctx.shadowBlur=6; ctx.shadowColor='rgba(255,180,40,.6)';
+      ctx.strokeStyle=`rgba(255,${140+40*pb},20,${.5+.2*pb})`; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(lx1,ly1); ctx.lineTo(lx2,ly2); ctx.stroke();
+      ctx.shadowBlur=0; ctx.restore();
+    });
+
+    // 翼面面板缝
+    seam(CX+W1x+(W2x-W1x)*.35,CY+W1y+(W2y-W1y)*.35, CX+W4x+(W3x-W4x)*.4,CY+W4y+(W3y-W4y)*.4,.4);
+    seam(CX+W1x+(W2x-W1x)*.65,CY+W1y+(W2y-W1y)*.65, CX+W4x+(W3x-W4x)*.7,CY+W4y+(W3y-W4y)*.7,.35);
+
+    // 前缘高光
+    ctx.save(); ctx.globalAlpha=.6; ctx.strokeStyle='#ffb060'; ctx.lineWidth=1.8;
+    ctx.shadowBlur=8; ctx.shadowColor='rgba(255,140,40,.5)';
+    ctx.beginPath(); ctx.moveTo(CX+W1x,CY+W1y); ctx.lineTo(CX+W2x,CY+W2y); ctx.stroke();
+    ctx.shadowBlur=0; ctx.restore();
+
+    // ── 翼尖火焰刺（尖角）
+    const tipX=CX+W2x, tipY=CY+W2y;
+    // 刃尖（向外突出的锋刃）
+    ctx.save();
+    ctx.shadowBlur=12; ctx.shadowColor=`rgba(255,160,40,${.5+.3*pb})`;
+    ctx.fillStyle=goldGrad(tipX-sign*5,tipY-10,tipX+sign*30,tipY+10);
+    ctx.beginPath();
+    ctx.moveTo(tipX,tipY-12); ctx.lineTo(tipX+sign*34,tipY); ctx.lineTo(tipX,tipY+12);
+    ctx.closePath(); ctx.fill();
+    // 次刃（上方小刺）
+    ctx.fillStyle='#ffb030';
+    ctx.beginPath();
+    ctx.moveTo(tipX,tipY-12); ctx.lineTo(tipX+sign*18,tipY-20); ctx.lineTo(tipX+sign*8,tipY-6);
+    ctx.closePath(); ctx.fill();
+    // 次刃（下方小刺）
+    ctx.fillStyle='#ff8020';
+    ctx.beginPath();
+    ctx.moveTo(tipX,tipY+12); ctx.lineTo(tipX+sign*18,tipY+22); ctx.lineTo(tipX+sign*8,tipY+7);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur=0;
+    // 刃尖边缘发光线
+    ctx.strokeStyle=`rgba(255,220,80,${.7+.2*pb})`; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(tipX,tipY-12); ctx.lineTo(tipX+sign*34,tipY); ctx.lineTo(tipX,tipY+12); ctx.stroke();
+    ctx.restore();
+
+
+
+    // ── 翼中导弹发射器
+    const mlX=CX+sign*90, mlY=CY+20;
+    ctx.save();
+    ctx.fillStyle='#2a1008';
+    ctx.beginPath(); ctx.roundRect(mlX-5,mlY-18,10,22,3); ctx.fill();
+    ctx.strokeStyle='rgba(255,120,40,.4)'; ctx.lineWidth=.8;
+    ctx.beginPath(); ctx.roundRect(mlX-5,mlY-18,10,22,3); ctx.stroke();
+    // 导弹弹体
+    ctx.fillStyle='#3a2010';
+    ctx.beginPath(); ctx.roundRect(mlX-3.5,mlY-36,7,26,2.5); ctx.fill();
+    // 警告带（金色）
+    ctx.fillStyle='#d09010';
+    ctx.beginPath(); ctx.rect(mlX-3.5,mlY-26,7,5); ctx.fill();
+    // 弹头
+    ctx.fillStyle='#e03010';
+    ctx.beginPath(); ctx.moveTo(mlX-3.5,mlY-36); ctx.lineTo(mlX,mlY-45); ctx.lineTo(mlX+3.5,mlY-36); ctx.closePath(); ctx.fill();
+    // 尾焰
+    ctx.shadowBlur=8; ctx.shadowColor='rgba(255,140,40,.6)';
+    const mf=ctx.createRadialGradient(mlX,mlY+5,0,mlX,mlY+9,6);
+    mf.addColorStop(0,'rgba(255,200,80,.8)'); mf.addColorStop(.5,'rgba(255,80,20,.4)'); mf.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=mf; ctx.beginPath(); ctx.ellipse(mlX,mlY+5,4,6,0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.restore();
+
+    ctx.restore();
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // 2. 机身（棱角分明，橙红机甲）
+  // ─────────────────────────────────────────────────────────
+  function bodyPath(off=0){
+    const W=28+off, nY=CY-195-off, tY=CY+95+off*0.5;
+    ctx.beginPath();
+    ctx.moveTo(CX, nY);
+    // 右前缘（斜切棱角）
+    ctx.lineTo(CX+W*.4+off, nY+30);
+    ctx.lineTo(CX+W+off, nY+80);
+    ctx.bezierCurveTo(CX+W*1.1+off, CY-40, CX+W*1.2+off, CY+30, CX+W+off, tY-30);
+    ctx.lineTo(CX+W*.5, tY);
+    ctx.lineTo(CX, tY+8);
+    // 左（镜像）
+    ctx.lineTo(CX-W*.5, tY);
+    ctx.lineTo(CX-W-off, tY-30);
+    ctx.bezierCurveTo(CX-W*1.2-off, CY+30, CX-W*1.1-off, CY-40, CX-W-off, nY+80);
+    ctx.lineTo(CX-W*.4-off, nY+30);
+    ctx.closePath();
+  }
+
+  // 机身投影
+  ctx.save(); ctx.globalAlpha=.45; ctx.fillStyle='#050100';
+  ctx.translate(5,7); bodyPath(0); ctx.fill(); ctx.translate(-5,-7); ctx.restore();
+
+  // 机身底色（深红）
+  ctx.fillStyle='#601008'; bodyPath(0); ctx.fill();
+
+  // 机身主色（橙红渐变）
+  const bodyG=ctx.createLinearGradient(CX-28,CY,CX+28,CY);
+  bodyG.addColorStop(0,'#901810'); bodyG.addColorStop(.15,'#c02818');
+  bodyG.addColorStop(.3,'#e84020'); bodyG.addColorStop(.45,'#ff6828');
+  bodyG.addColorStop(.5,'#ff7830'); bodyG.addColorStop(.55,'#ff6828');
+  bodyG.addColorStop(.7,'#e84020'); bodyG.addColorStop(.85,'#c02818');
+  bodyG.addColorStop(1,'#901810');
+  ctx.fillStyle=bodyG; bodyPath(0); ctx.fill();
+
+  // 机身高光
+  const bodyHL=ctx.createLinearGradient(CX-28,CY,CX+28,CY);
+  bodyHL.addColorStop(0,'rgba(0,0,0,0)'); bodyHL.addColorStop(.45,'rgba(255,180,80,.1)');
+  bodyHL.addColorStop(.5,'rgba(255,220,120,.18)'); bodyHL.addColorStop(.55,'rgba(255,180,80,.1)');
+  bodyHL.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=bodyHL; bodyPath(0); ctx.fill();
+
+  // 机身棱角装甲板（左右各一，金色边框）
+  [-1,1].forEach(sign=>{
+    const pX=CX+sign*20, pY=CY-60;
+    ctx.save();
+    ctx.strokeStyle=goldGrad(pX-sign*5,pY-30,pX+sign*5,pY+30);
+    ctx.lineWidth=2; ctx.beginPath();
+    ctx.moveTo(pX,pY-30); ctx.lineTo(pX+sign*8,pY-15); ctx.lineTo(pX+sign*10,pY+10);
+    ctx.lineTo(pX+sign*5,pY+30); ctx.stroke();
+    ctx.restore();
+  });
+
+  // 机身面板缝（横向）
+  [-140,-95,-50,-5,40,75].forEach(dy=>{
+    const hw=28*(1-Math.pow(dy/200,2)*.25)*.85;
+    seam(CX-hw,CY+dy,CX+hw,CY+dy,.45);
+  });
+  [-1,1].forEach(s=>seam(CX+s*20,CY-165,CX+s*20,CY+70,.32));
+  // 机身轮廓描边
+  ctx.save(); ctx.globalAlpha=.25; ctx.strokeStyle='#ff9040'; ctx.lineWidth=1;
+  bodyPath(0); ctx.stroke(); ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 3. 机首（棱角尖锐，金色V形装饰）
+  // ─────────────────────────────────────────────────────────
+  const NOSE_Y=CY-195;
+  // V形金色装饰线
+  ctx.save();
+  ctx.shadowBlur=12; ctx.shadowColor=`rgba(255,200,40,${.5+.3*pb})`;
+  ctx.strokeStyle=`rgba(255,${180+50*pb},20,${.85+.12*pb})`; ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(CX,NOSE_Y+10); ctx.lineTo(CX-24,NOSE_Y+55); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX,NOSE_Y+10); ctx.lineTo(CX+24,NOSE_Y+55); ctx.stroke();
+  ctx.globalAlpha=.35; ctx.strokeStyle='#fff8c0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(CX,NOSE_Y+10); ctx.lineTo(CX-24,NOSE_Y+55); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX,NOSE_Y+10); ctx.lineTo(CX+24,NOSE_Y+55); ctx.stroke();
+  ctx.shadowBlur=0; ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 4. 驾驶舱（机首中段，橙色玻璃）
+  // ─────────────────────────────────────────────────────────
+  const ckY=NOSE_Y+85;
+  ctx.save();
+  ctx.fillStyle='#1a0808';
+  ctx.beginPath(); ctx.ellipse(CX,ckY,22,14,0,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=10; ctx.shadowColor=`rgba(255,120,40,${.3+.15*pb})`;
+  const ckG=ctx.createRadialGradient(CX-4,ckY-4,1,CX,ckY,16);
+  ckG.addColorStop(0,`rgba(255,180,80,${.55+.1*pb})`);
+  ckG.addColorStop(.4,'rgba(200,80,20,.6)'); ckG.addColorStop(.8,'rgba(80,20,5,.75)'); ckG.addColorStop(1,'rgba(40,10,0,.85)');
+  ctx.fillStyle=ckG; ctx.beginPath(); ctx.ellipse(CX,ckY,18,11,0,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle=`rgba(255,200,100,${.18+.08*pb})`;
+  ctx.beginPath(); ctx.ellipse(CX-6,ckY-4,7,4,-.3,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,140,40,.35)'; ctx.lineWidth=.8;
+  ctx.beginPath(); ctx.ellipse(CX,ckY,22,14,0,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 5. 核心宝珠 + 金色齿轮（机身中央）
+  // ─────────────────────────────────────────────────────────
+  const orbX=CX, orbY=CY-5;
+
+  // 外层火焰光晕
+  ctx.save();
+  ctx.shadowBlur=40; ctx.shadowColor=`rgba(255,120,30,${.5+.3*pb2})`;
+  const outerHalo=ctx.createRadialGradient(orbX,orbY,20,orbX,orbY,80);
+  outerHalo.addColorStop(0,`rgba(255,140,30,${.15+.08*pb2})`);
+  outerHalo.addColorStop(.5,`rgba(200,60,10,${.08+.04*pb2})`);
+  outerHalo.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=outerHalo; ctx.beginPath(); ctx.arc(orbX,orbY,80,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0; ctx.restore();
+
+  // 金色齿轮（外层大齿轮）
+  ctx.save();
+  ctx.translate(orbX,orbY); ctx.rotate(gearAngle);
+  const TEETH=16, R_OUT=52, R_IN=42, R_CORE=36;
+  ctx.beginPath();
+  for(let i=0;i<TEETH;i++){
+    const a1=i/TEETH*Math.PI*2, a2=(i+.5)/TEETH*Math.PI*2;
+    const a0=(i-.5)/TEETH*Math.PI*2;
+    if(i===0) ctx.moveTo(R_OUT*Math.cos(a1),R_OUT*Math.sin(a1));
+    // 齿顶
+    ctx.lineTo(R_OUT*Math.cos(a1),R_OUT*Math.sin(a1));
+    ctx.lineTo(R_OUT*Math.cos(a2-0.05),R_OUT*Math.sin(a2-0.05));
+    // 齿谷
+    ctx.lineTo(R_IN*Math.cos(a2),R_IN*Math.sin(a2));
+  }
+  ctx.closePath();
+  ctx.fillStyle=goldGrad(-R_OUT,-R_OUT,R_OUT,R_OUT);
+  ctx.fill();
+  ctx.strokeStyle='rgba(255,200,60,.35)'; ctx.lineWidth=.8;
+  ctx.stroke();
+  // 齿轮高光
+  ctx.save(); ctx.globalAlpha=.3;
+  for(let i=0;i<TEETH;i++){
+    const a=(i+.25)/TEETH*Math.PI*2;
+    ctx.fillStyle='rgba(255,240,160,.4)';
+    ctx.beginPath(); ctx.arc(R_OUT*.85*Math.cos(a),R_OUT*.85*Math.sin(a),2,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+  ctx.restore();
+
+  // 金色花瓣装饰（中层，反转旋转）
+  ctx.save();
+  ctx.translate(orbX,orbY); ctx.rotate(-gearAngle*1.5);
+  const PETALS=8;
+  for(let i=0;i<PETALS;i++){
+    const a=i/PETALS*Math.PI*2;
+    ctx.save(); ctx.rotate(a);
+    ctx.shadowBlur=8; ctx.shadowColor=`rgba(255,200,40,${.4+.2*pb})`;
+    ctx.fillStyle=goldGrad(0,-32,0,0);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(-8,-16,8,-16,0,-32); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,220,80,.4)'; ctx.lineWidth=.5; ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // 齿轮内环（橙红）
+  ctx.save(); ctx.translate(orbX,orbY);
+  ctx.beginPath(); ctx.arc(0,0,34,0,Math.PI*2);
+  ctx.fillStyle='#5a1208'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0,0,34,0,Math.PI*2);
+  ctx.fillStyle=ctx.createRadialGradient(0,0,5,0,0,34);
+  const rinG=ctx.createRadialGradient(0,0,5,0,0,34);
+  rinG.addColorStop(0,'#e04818'); rinG.addColorStop(.5,'#b02810'); rinG.addColorStop(1,'#601008');
+  ctx.fillStyle=rinG; ctx.fill();
+  ctx.restore();
+
+  // 核心宝珠（白色发光）
+  ctx.save(); ctx.translate(orbX,orbY);
+  ctx.shadowBlur=30; ctx.shadowColor=`rgba(255,255,255,${.7+.25*Math.sin(orbPulse)})`;
+  const orbR=18+2*Math.sin(orbPulse);
+  const orbG=ctx.createRadialGradient(-orbR*.3,-orbR*.3,1,0,0,orbR);
+  orbG.addColorStop(0,'rgba(255,255,255,1)');
+  orbG.addColorStop(.3,`rgba(255,240,200,${.95+.04*Math.sin(orbPulse)})`);
+  orbG.addColorStop(.6,'rgba(255,180,80,.85)');
+  orbG.addColorStop(.9,'rgba(255,100,20,.6)');
+  orbG.addColorStop(1,'rgba(200,40,0,.3)');
+  ctx.fillStyle=orbG; ctx.beginPath(); ctx.arc(0,0,orbR,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  // 宝珠高光
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.ellipse(-orbR*.3,-orbR*.35,orbR*.35,orbR*.2,-.4,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ─────────────────────────────────────────────────────────
+  // 6. 机尾喷火装置（两个大型）
+  // ─────────────────────────────────────────────────────────
+  const TAIL_Y=CY+95;
+  [CX-22,CX+22].forEach((ex,i)=>{
+    const ey=TAIL_Y+6;
+    const ph=i===0?pb:pb3;
+    ctx.save();
+    const shellG=ctx.createLinearGradient(ex-14,ey,ex+14,ey);
+    shellG.addColorStop(0,'#180804'); shellG.addColorStop(.4,'#401410');
+    shellG.addColorStop(.6,'#401410'); shellG.addColorStop(1,'#180804');
+    ctx.fillStyle=shellG; ctx.beginPath(); ctx.roundRect(ex-14,ey-8,28,16,5); ctx.fill();
+    ctx.strokeStyle='rgba(255,100,30,.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(ex-14,ey-8,28,16,5); ctx.stroke();
+    // 内环
+    ctx.fillStyle='#1e0505'; ctx.beginPath(); ctx.ellipse(ex,ey,10,7,0,0,Math.PI*2); ctx.fill();
+    // 核心
+    ctx.shadowBlur=24; ctx.shadowColor=`rgba(255,160,30,${.7+.25*ph})`;
+    const cG=ctx.createRadialGradient(ex,ey,0,ex,ey,9);
+    cG.addColorStop(0,'rgba(255,240,160,1)'); cG.addColorStop(.3,`rgba(255,160,30,${.95+.05*ph})`);
+    cG.addColorStop(.65,'rgba(220,60,5,.8)'); cG.addColorStop(1,'rgba(120,10,0,.2)');
+    ctx.fillStyle=cG; ctx.beginPath(); ctx.ellipse(ex,ey,8,5.5,0,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+    // 火焰
+    const flLen=44+18*ph, flW=17+8*ph;
+    ctx.shadowBlur=28; ctx.shadowColor=`rgba(255,100,10,${.55+.3*ph})`;
+    const fG=ctx.createRadialGradient(ex,ey+8,0,ex,ey+flLen*.55,flW);
+    fG.addColorStop(0,`rgba(255,220,100,${.85+.1*ph})`); fG.addColorStop(.25,`rgba(255,100,20,${.7+.2*ph})`);
+    fG.addColorStop(.6,'rgba(200,30,0,.4)'); fG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=fG; ctx.beginPath(); ctx.ellipse(ex,ey+flLen*.4,flW*.55,flLen*.6,0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    const fiG=ctx.createLinearGradient(ex,ey+4,ex,ey+flLen*.5);
+    fiG.addColorStop(0,`rgba(255,255,200,${.9+.08*ph})`); fiG.addColorStop(.5,`rgba(255,160,40,${.6+.2*ph})`); fiG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.strokeStyle=fiG; ctx.lineWidth=5+2*ph; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(ex,ey+4); ctx.lineTo(ex,ey+flLen*.5); ctx.stroke();
+    ctx.globalAlpha=.4; ctx.strokeStyle='#100200'; ctx.lineWidth=.7;
+    ctx.beginPath(); ctx.moveTo(ex-12,ey-4); ctx.lineTo(ex+12,ey-4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex-12,ey+4); ctx.lineTo(ex+12,ey+4); ctx.stroke();
+    ctx.globalAlpha=1;
+    ctx.restore();
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // 7. 机首光束
+  // ─────────────────────────────────────────────────────────
+  if(beamPhase===1){
+    const ca=beamCycle/B_CHARGE;
+    ctx.save(); ctx.shadowBlur=24; ctx.shadowColor=`rgba(255,150,30,${ca})`;
+    const cG2=ctx.createRadialGradient(CX,NOSE_Y,0,CX,NOSE_Y,26*ca);
+    cG2.addColorStop(0,`rgba(255,240,180,${.9*ca})`); cG2.addColorStop(.5,`rgba(255,100,20,${.65*ca})`); cG2.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cG2; ctx.beginPath(); ctx.arc(CX,NOSE_Y,26*ca,0,Math.PI*2); ctx.fill(); ctx.restore();
+  } else if(beamPhase===2){
+    const fa=Math.min(1,beamCycle/8),fl=.87+.13*Math.sin(now/20);
+    ctx.save(); ctx.shadowBlur=36; ctx.shadowColor=`rgba(255,120,30,${.8*fa*fl})`;
+    const bG3=ctx.createLinearGradient(CX,NOSE_Y,CX,-10);
+    bG3.addColorStop(0,`rgba(255,220,140,${.95*fa*fl})`); bG3.addColorStop(.35,`rgba(255,100,20,${.75*fa*fl})`); bG3.addColorStop(1,'rgba(200,30,0,0)');
+    ctx.strokeStyle=bG3; ctx.lineWidth=16*fa*fl;
+    ctx.beginPath(); ctx.moveTo(CX,NOSE_Y); ctx.lineTo(CX,-10); ctx.stroke();
+    ctx.shadowBlur=12; ctx.strokeStyle=`rgba(255,255,220,${.96*fa*fl})`; ctx.lineWidth=3.5;
+    ctx.beginPath(); ctx.moveTo(CX,NOSE_Y); ctx.lineTo(CX,-10); ctx.stroke(); ctx.restore();
+    if(Math.random()<.15) emitSpark(CX,NOSE_Y,4);
+  } else if(beamPhase===3){
+    const ca2=1-beamCycle/B_COOL;
+    ctx.save(); ctx.globalAlpha=ca2*.3; ctx.strokeStyle='rgba(255,100,20,.5)'; ctx.lineWidth=6;
+    ctx.beginPath(); ctx.moveTo(CX,NOSE_Y); ctx.lineTo(CX,-10); ctx.stroke(); ctx.restore();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // 8. 飞行中的导弹
+  // ─────────────────────────────────────────────────────────
+  missiles.forEach(m=>{
+    ctx.save();
+    ctx.fillStyle='#3a2010';
+    ctx.beginPath(); ctx.roundRect(m.x-3.5,m.y-14,7,22,2.5); ctx.fill();
+    ctx.fillStyle='#d09010';
+    ctx.beginPath(); ctx.rect(m.x-3.5,m.y-6,7,5); ctx.fill();
+    ctx.fillStyle='#e03010';
+    ctx.beginPath(); ctx.moveTo(m.x-3.5,m.y-14); ctx.lineTo(m.x,m.y-23); ctx.lineTo(m.x+3.5,m.y-14); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur=14; ctx.shadowColor='rgba(255,140,30,.7)';
+    const mfG=ctx.createRadialGradient(m.x,m.y+8,0,m.x,m.y+16,9);
+    mfG.addColorStop(0,'rgba(255,220,80,.9)'); mfG.addColorStop(.4,'rgba(255,80,20,.6)'); mfG.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=mfG; ctx.beginPath(); ctx.ellipse(m.x,m.y+10,5,9*(0.7+0.3*pb4),0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0; ctx.restore();
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // 9. 粒子
+  // ─────────────────────────────────────────────────────────
+  particles.forEach(p=>{
+    const a=1-p.life/p.max; ctx.save(); ctx.globalAlpha=a*.6;
+    ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*a,0,Math.PI*2); ctx.fill(); ctx.restore();
+  });
+
+  // 机身周围常态小火焰粒子
+  if(Math.random()<.25) emitFlame(CX+(Math.random()-.5)*30,CY+(Math.random()-.5)*80,2);
+
+  // ─────────────────────────────────────────────────────────
+  // 10. 名称
+  // ─────────────────────────────────────────────────────────
+  ctx.textAlign='center';
+  ctx.font=`bold 14px 'Microsoft YaHei',sans-serif`;
+  ctx.shadowBlur=18; ctx.shadowColor=`rgba(255,100,20,${.7+.2*pb2})`;
+  ctx.fillStyle=`rgba(255,180,80,${.88+.1*pb2})`;
+  ctx.fillText('焰刃战机  ·  NOVA FLAME  ·  铠甲勇士拿瓦 · 熔麟刀', 480, 668);
+  ctx.shadowBlur=0; ctx.font='10px monospace'; ctx.fillStyle='rgba(180,80,20,.65)';
+  ctx.fillText('HP 1,200,000  ·  焰之力量  ·  金色齿轮核心宝珠  ·  火焰刃翼', 480, 687);
+
+  // ─────────────────────────────────────────────────────────
+  // 状态机
+  // ─────────────────────────────────────────────────────────
+  beamCycle++;
+  if(beamPhase===0&&beamCycle>B_IDLE)        {beamPhase=1;beamCycle=0;}
+  else if(beamPhase===1&&beamCycle>=B_CHARGE){beamPhase=2;beamCycle=0;}
+  else if(beamPhase===2&&beamCycle>=B_FIRE)  {beamPhase=3;beamCycle=0;}
+  else if(beamPhase===3&&beamCycle>=B_COOL)  {beamPhase=0;beamCycle=0;}
+
+  missileTimer++;
+  if(missileTimer>=MISSILE_INTERVAL){
+    missileTimer=0;
+    missiles.push({x:CX-90,y:CY+20,vx:-1.2,vy:-MISSILE_SPEED,life:0});
+    missiles.push({x:CX+90,y:CY+20,vx: 1.2,vy:-MISSILE_SPEED,life:0});
+    emitSpark(CX-90,CY+20,4); emitSpark(CX+90,CY+20,4);
+  }
+  for(let i=missiles.length-1;i>=0;i--){
+    const m=missiles[i]; m.x+=m.vx; m.y+=m.vy; m.life++;
+    if(m.life>MISSILE_LIFE) missiles.splice(i,1);
+  }
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=.04; p.life++;
+    if(p.life>p.max) particles.splice(i,1);
+  }
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
