@@ -4209,18 +4209,31 @@
             }
         }
 
+        const MAX_PARTICLES = 180; // 全局粒子上限
         function createExplosion(x, y, c, n) {
-            for (let i = 0; i < n; i++) {
+            const add = Math.min(n, MAX_PARTICLES - particles.length);
+            for (let i = 0; i < add; i++) {
                 particles.push({x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 30, color: c, size: Math.random()*4+2});
             }
         }
 
         function updateParticles() {
+            // 超上限时丢弃最老的粒子
+            if (particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
             particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.life--; p.size *= 0.95; return p.life > 0; });
         }
 
         function drawParticles() {
-            particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life/30; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.28); ctx.fill(); });
+            // 批量绘制：同色粒子合并 path，减少 fillStyle 切换
+            const byColor = {};
+            particles.forEach(p => { (byColor[p.color] = byColor[p.color] || []).push(p); });
+            Object.entries(byColor).forEach(([col, ps]) => {
+                ctx.fillStyle = col;
+                ps.forEach(p => {
+                    ctx.globalAlpha = p.life / 30;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.28); ctx.fill();
+                });
+            });
             ctx.globalAlpha = 1;
         }
 
@@ -4949,7 +4962,10 @@
                         }
                     }
                 }
-                if (e.bullets) e.bullets = e.bullets.filter(b => { b.x += b.vx; b.y += b.vy; return b.y < HEIGHT && b.x > 0 && b.x < WIDTH; });
+                if (e.bullets) {
+                    e.bullets = e.bullets.filter(b => { b.x += b.vx; b.y += b.vy; return b.y < HEIGHT && b.x > 0 && b.x < WIDTH; });
+                    if (e.bullets.length > 40) e.bullets.splice(0, e.bullets.length - 40); // 单敌机子弹上限
+                }
             });
             // 无人机：等待阶段永不移除；折返飞出上边界才移除
             enemies = enemies.filter(e => {
@@ -5337,21 +5353,21 @@
                 ctx.lineWidth = 0.8;
                 ctx.strokeRect(x1, y1, w1, y2 - y1);
                 ctx.restore();
-                // 窗户灯光
-                windows.forEach(win => {
-                    if (!win.on) return;
-                    const wx = x1 + win.wx * w1;
-                    const wy = y1 + win.wy * (y2 - y1);
-                    const wr = (win.size || 1) * winScale;
-                    // 闪烁（少数窗户）
-                    const flicker = Math.random() > 0.998 ? 0 : 1;
-                    if (!flicker) return;
-                    ctx.save();
-                    ctx.shadowBlur = 4; ctx.shadowColor = win.col;
-                    ctx.fillStyle = win.col;
-                    ctx.fillRect(wx - wr, wy - wr*0.7, wr*2, wr*1.4);
-                    ctx.restore();
+                // 窗户灯光（批量渲染：同色一次 shadowColor，不逐个 save/restore）
+                const nowHash = (now / 3000) | 0;
+                ctx.save(); ctx.shadowBlur = 3;
+                ['#ffe890','#b0d8ff','#ffe8a0','#a0c8ff','#ffd870','#90c8ff'].forEach(col => {
+                    let drawn = false;
+                    windows.forEach(win => {
+                        if (!win.on || win.col !== col) return;
+                        if ((nowHash + (win.wx * 97 + win.wy * 53 | 0)) % 250 === 0) return;
+                        if (!drawn) { ctx.shadowColor = col; ctx.fillStyle = col; drawn = true; }
+                        const wx = x1 + win.wx * w1, wy = y1 + win.wy * (y2 - y1);
+                        const wr = (win.size || 1) * winScale;
+                        ctx.fillRect(wx - wr, wy - wr*0.7, wr*2, wr*1.4);
+                    });
                 });
+                ctx.shadowBlur = 0; ctx.restore();
             }
 
             // ── 4. 远景建筑群（后排，密集细小，有远景雾化）──
@@ -5878,20 +5894,16 @@
                     ctx.strokeStyle = 'rgba(160,230,255,0.7)'; ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke();
                 } else if (b.isCrossBlock) {
-                    // 积木猎鹰十字形积木子弹（橙色Plus-Plus积木）
+                    // 积木猎鹰十字形积木子弹（简化渲染，避免每帧重建渐变）
                     const cbS=6, cbA=cbS*.42;
                     ctx.save();
-                    const vGc=ctx.createLinearGradient(b.x-cbS,b.y,b.x+cbS,b.y);
-                    vGc.addColorStop(0,'#c05010'); vGc.addColorStop(.5,'#ffb860'); vGc.addColorStop(1,'#c05010');
-                    ctx.fillStyle=vGc; ctx.beginPath(); ctx.roundRect(b.x-cbA,b.y-cbS,cbA*2,cbS*2,cbA*.45); ctx.fill();
-                    const hGc=ctx.createLinearGradient(b.x,b.y-cbS,b.x,b.y+cbS);
-                    hGc.addColorStop(0,'#c05010'); hGc.addColorStop(.5,'#ffb860'); hGc.addColorStop(1,'#c05010');
-                    ctx.fillStyle=hGc; ctx.beginPath(); ctx.roundRect(b.x-cbS,b.y-cbA,cbS*2,cbA*2,cbA*.45); ctx.fill();
-                    const cGc=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,cbS*.55);
-                    cGc.addColorStop(0,'#ffb860'); cGc.addColorStop(.5,'#ff8020'); cGc.addColorStop(1,'#c05010');
-                    ctx.fillStyle=cGc; ctx.beginPath(); ctx.arc(b.x,b.y,cbS*.55,0,Math.PI*2); ctx.fill();
-                    ctx.save(); ctx.shadowBlur=10; ctx.shadowColor='rgba(255,140,40,.7)';
-                    ctx.fillStyle='rgba(255,180,60,.12)'; ctx.beginPath(); ctx.arc(b.x,b.y,cbS*.8,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#ff8020';
+                    ctx.beginPath(); ctx.roundRect(b.x-cbA,b.y-cbS,cbA*2,cbS*2,cbA*.45); ctx.fill();
+                    ctx.beginPath(); ctx.roundRect(b.x-cbS,b.y-cbA,cbS*2,cbA*2,cbA*.45); ctx.fill();
+                    ctx.fillStyle='#ffb860';
+                    ctx.beginPath(); ctx.arc(b.x,b.y,cbS*.45,0,Math.PI*2); ctx.fill();
+                    ctx.save(); ctx.shadowBlur=8; ctx.shadowColor='rgba(255,140,40,.8)';
+                    ctx.fillStyle='rgba(255,200,80,.2)'; ctx.beginPath(); ctx.arc(b.x,b.y,cbS*.75,0,Math.PI*2); ctx.fill();
                     ctx.shadowBlur=0; ctx.restore();
                     ctx.restore();
                 } else {
@@ -6059,7 +6071,6 @@
                             ctx.beginPath(); ctx.arc(b.x, b.y, 1.5, 0, Math.PI*2); ctx.fill();
                             ctx.shadowBlur = 0; ctx.restore();
                         } else if (b.isBossB) {
-                            // boss 子弹：大红橙色能量球
                             ctx.save();
                             ctx.shadowBlur = 14; ctx.shadowColor = '#FF2200';
                             ctx.fillStyle = 'rgba(180,0,0,0.4)';
