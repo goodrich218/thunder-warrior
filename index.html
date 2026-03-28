@@ -5216,252 +5216,237 @@
         }
 
         // ── 电影级城市夜空背景（Urban Night Sky） ──
-        if (!window._cityData) {
-            const rng = (a,b) => a+Math.random()*(b-a);
-            const rint = (a,b) => Math.floor(rng(a,b));
-
-            // 远景建筑群（后排，细小密集）
-            const farBuildings = Array.from({length:28}, (_,i) => ({
-                x: i/28, w: rng(0.022,0.05), h: rng(0.18,0.42),
-                baseCol: `hsl(${rint(220,270)},${rint(8,22)}%,${rint(8,18)}%)`,
-                windows: Array.from({length:rint(6,18)}, () => ({
-                    wx: rng(0.1,0.9), wy: rng(0.1,0.9),
-                    on: Math.random()>0.38, col: Math.random()>0.6?'#ffe8a0':'#a0c8ff'
-                }))
-            }));
-
-            // 中景建筑群（中排，中等高度）
-            const midBuildings = Array.from({length:14}, (_,i) => ({
-                x: i/14 + rng(-0.02,0.02), w: rng(0.04,0.09), h: rng(0.30,0.62),
-                baseCol: `hsl(${rint(220,260)},${rint(10,25)}%,${rint(6,15)}%)`,
-                accent: Math.random()>0.5,
-                windows: Array.from({length:rint(12,35)}, () => ({
-                    wx: rng(0.05,0.95), wy: rng(0.05,0.95),
-                    on: Math.random()>0.35, col: Math.random()>0.5?'#ffe890':'#b0d8ff',
-                    size: rng(0.8,1.4)
-                }))
-            }));
-
-            // 近景建筑（前排，极高，只露顶部）
-            const nearBuildings = Array.from({length:8}, (_,i) => ({
-                x: i/8 + rng(-0.03,0.03), w: rng(0.09,0.16), h: rng(0.55,0.85),
-                baseCol: `hsl(${rint(215,250)},${rint(12,28)}%,${rint(4,11)}%)`,
-                windows: Array.from({length:rint(8,20)}, () => ({
-                    wx: rng(0.08,0.92), wy: rng(0.02,0.55),
-                    on: Math.random()>0.3, col: Math.random()>0.4?'#ffd870':'#90c8ff',
-                    size: rng(1.0,2.0)
-                }))
-            }));
-
-            // 地面车流光带（街道，向上移动）
-            const streets = Array.from({length:5}, (_,i) => ({
-                x: rng(0.05,0.95), w: rng(0.008,0.018),
-                col: Math.random()>0.5?'rgba(255,200,60,':'rgba(255,80,80,'
-            }));
-
-            // 远处雾气光晕点（城市泛光）
-            const glows = Array.from({length:6}, () => ({
-                x: rng(0,1), y: rng(0.55,0.85),
-                r: rng(0.08,0.18), col: Math.random()>0.5?'rgba(255,160,60,':'rgba(100,140,255,'
-            }));
-
-            window._cityData = { farBuildings, midBuildings, nearBuildings, streets, glows };
+        // ── 热带海洋背景数据初始化 ──
+        if (!window._oceanData) {
+            const rng=(a,b)=>a+Math.random()*(b-a);
+            const noiseGrid=Array.from({length:50},()=>Array.from({length:30},()=>Math.random()));
+            const islands=[
+              {cx:150,cy:220,rx:85,ry:48,rot:-0.2,trees:5,seed:1.2,
+               reefs:Array.from({length:8},()=>({a:Math.random()*Math.PI*2,d:rng(0.85,1.3),rx:rng(4,10),ry:rng(2,5),col:Math.random()>0.5?'#008888':'#006680'}))},
+              {cx:480,cy:360,rx:70,ry:40,rot:0.15,trees:4,seed:2.5,
+               reefs:Array.from({length:6},()=>({a:Math.random()*Math.PI*2,d:rng(0.85,1.3),rx:rng(3,8),ry:rng(2,4),col:Math.random()>0.5?'#008888':'#006680'}))},
+              {cx:75, cy:560,rx:52,ry:28,rot:-0.1,trees:3,seed:3.7,
+               reefs:Array.from({length:5},()=>({a:Math.random()*Math.PI*2,d:rng(0.85,1.3),rx:rng(3,7),ry:rng(2,4),col:Math.random()>0.5?'#008888':'#006680'}))},
+              {cx:530,cy:690,rx:62,ry:34,rot:0.1, trees:3,seed:4.1,
+               reefs:Array.from({length:6},()=>({a:Math.random()*Math.PI*2,d:rng(0.85,1.3),rx:rng(3,8),ry:rng(2,4),col:Math.random()>0.5?'#008888':'#006680'}))},
+              {cx:300,cy:830,rx:48,ry:26,rot:0.05,trees:3,seed:5.3,
+               reefs:Array.from({length:5},()=>({a:Math.random()*Math.PI*2,d:rng(0.85,1.3),rx:rng(3,7),ry:rng(2,3),col:Math.random()>0.5?'#008888':'#006680'}))},
+              {cx:160,cy:760,rx:36,ry:20,rot:-0.15,trees:2,seed:6.8,
+               reefs:Array.from({length:4},()=>({a:Math.random()*Math.PI*2,d:rng(0.85,1.3),rx:rng(2,6),ry:rng(1,3),col:Math.random()>0.5?'#008888':'#006680'}))},
+            ];
+            islands.forEach(isl=>{
+                isl._jungleDots=Array.from({length:8+Math.floor(isl.rx/8)},(_,i)=>{
+                    const a=rng(0,Math.PI*2),d=rng(0,isl.rx*0.52);
+                    return {x:Math.cos(a)*d,y:Math.sin(a)*d*0.6,r:rng(4,9),dark:i%3===0};
+                });
+            });
+            const foamDots=[];
+            islands.forEach(isl=>{
+                for(let i=0;i<20;i++){
+                    const a=Math.random()*Math.PI*2,d=rng(isl.rx+2,isl.rx+18);
+                    foamDots.push({x:isl.cx+Math.cos(a)*d*1.2,y:isl.cy+Math.sin(a)*d*0.7,r:rng(1.5,4),phase:rng(0,Math.PI*2),speed:rng(0.02,0.06)});
+                }
+            });
+            const palmTrees=[];
+            islands.forEach(isl=>{
+                for(let i=0;i<isl.trees;i++){
+                    const a=rng(0,Math.PI*2),d=rng(isl.rx*0.2,isl.rx*0.7);
+                    palmTrees.push({x:isl.cx+Math.cos(a)*d*1.1,y:isl.cy+Math.sin(a)*d*0.65,
+                        h:rng(10,16),lean:rng(-0.3,0.3),leafCount:Math.floor(rng(4,7)),leafLen:rng(10,16)});
+                }
+            });
+            const ripples=Array.from({length:12},()=>({x:rng(50,550),y:rng(50,950),r:rng(10,40),maxR:rng(30,80),speed:rng(0.3,0.8),phase:rng(0,Math.PI*2)}));
+            window._oceanData={islands,foamDots,palmTrees,ripples,noiseGrid};
         }
-        if (!window._skyData) {
-            const rng = (a,b) => a + Math.random()*(b-a);
-            window._skyData = {
-                // 边缘云团（左右各3朵，远离中央）
-                edgeClouds: [
-                    ...Array.from({length:3}, (_,i) => ({ side:'L', y: 150+i*220, w: rng(90,140), h: rng(40,70), alpha: rng(0.7,0.95), seed: rng(0,10) })),
-                    ...Array.from({length:3}, (_,i) => ({ side:'R', y: 200+i*200, w: rng(80,130), h: rng(35,65), alpha: rng(0.7,0.95), seed: rng(0,10) })),
-                ],
-                // 底部云海（宽扁，5块）
-                baseClouds: Array.from({length:5}, (_,i) => ({
-                    x: i * 0.22, w: rng(160,240), h: rng(50,90), alpha: rng(0.8,1.0), seed: rng(0,10)
-                })),
-            };
-            window._stars = Array.from({length:40}, () => ({
-                x: Math.random(), y: Math.random() * 0.15,
-                r: 0.5 + Math.random() * 1.5, a: 0.3 + Math.random() * 0.6
-            }));
+
+        function _islandPoints(rx,ry,seed,N=28){
+            const pts=[];
+            for(let i=0;i<N;i++){
+                const a=(i/N)*Math.PI*2;
+                const r=1+Math.sin(a*3+seed)*0.18+Math.sin(a*5+seed*1.7)*0.10+Math.sin(a*7+seed*2.3)*0.06+Math.cos(a*4+seed*0.9)*0.08;
+                pts.push([Math.cos(a)*rx*r,Math.sin(a)*ry*r]);
+            }
+            return pts;
+        }
+        function _tracePath(pts){
+            ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+            for(let i=1;i<pts.length;i++){
+                const p0=pts[i-1],p1=pts[i],p2=pts[(i+1)%pts.length];
+                ctx.quadraticCurveTo(p1[0],p1[1],(p1[0]+p2[0])/2,(p1[1]+p2[1])/2);
+            }
+            ctx.closePath();
         }
 
         function drawBackground() {
-            const SY = HEIGHT / 1000;
-            const SX = WIDTH / 600;
-            const now = Date.now();
-            const W = WIDTH, H = HEIGHT;
-            const city = window._cityData;
-            const pulse = 0.5 + 0.5 * Math.sin(now / 1800);
-            const pulse2 = 0.5 + 0.5 * Math.sin(now / 2600 + 1.1);
-            // 建筑随 bgScrollY 纵向慢速滚动（视差）
-            const farOff  = bgScrollY * 0.04;
-            const midOff  = bgScrollY * 0.10;
-            const nearOff = bgScrollY * 0.20;
-            // 街道车流快速向上
-            const trafficOff = bgScrollY * 0.9;
+            const W=WIDTH, H=HEIGHT;
+            const now=Date.now();
+            const od=window._oceanData;
+            const bgT=bgScrollY*0.4; // 滚动偏移
+            const pulse=0.5+0.5*Math.sin(now/2000);
 
-            // ── 1. 夜空渐变（深蓝紫→城市霓虹地平线）──
-            const skyG = ctx.createLinearGradient(0, 0, 0, H);
-            skyG.addColorStop(0,    '#03040f');   // 极深太空黑
-            skyG.addColorStop(0.10, '#080a22');   // 深夜黑蓝
-            skyG.addColorStop(0.28, '#0d1540');   // 深蓝
-            skyG.addColorStop(0.48, '#121a52');   // 午夜蓝紫
-            skyG.addColorStop(0.65, '#1a1460');   // 深紫蓝
-            skyG.addColorStop(0.78, '#2a1a70');   // 紫色
-            skyG.addColorStop(0.88, '#3a1060');   // 霓虹紫
-            skyG.addColorStop(0.94, '#280820');   // 深紫红
-            skyG.addColorStop(1,    '#100408');   // 极深底
-            ctx.fillStyle = skyG; ctx.fillRect(0, 0, W, H);
+            // 1. 海洋主渐变
+            const og=ctx.createLinearGradient(0,0,0,H);
+            og.addColorStop(0,'#005a78'); og.addColorStop(0.2,'#0080a8');
+            og.addColorStop(0.45,'#00a8cc'); og.addColorStop(0.7,'#00c0d8');
+            og.addColorStop(0.88,'#00d0e4'); og.addColorStop(1,'#00ddf0');
+            ctx.fillStyle=og; ctx.fillRect(0,0,W,H);
 
-            // ── 2. 星点（顶部，夜空）──
-            ctx.save();
-            window._stars.forEach(s => {
-                const tw = 0.5 + 0.5 * Math.sin(now/(700+s.r*200) + s.x*6);
-                ctx.fillStyle = `rgba(200,210,255,${s.a*tw})`;
-                ctx.beginPath(); ctx.arc(s.x*W, s.y*H*0.5, s.r*0.7, 0, Math.PI*2); ctx.fill();
-            });
-            ctx.restore();
-
-            // ── 3. 城市地平线泛光（霓虹光晕，底部背光）──
-            city.glows.forEach(g => {
-                const gx = g.x * W, gy = g.y * H;
-                const gr = g.r * W;
-                const glowG = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-                glowG.addColorStop(0, g.col + `${0.18+0.08*pulse})`);
-                glowG.addColorStop(0.4, g.col + '0.07)');
-                glowG.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = glowG; ctx.fillRect(gx-gr, gy-gr, gr*2, gr*2);
-            });
-
-            // 通用建筑绘制函数
-            function drawBuilding(bx, bw, bh, baseY, baseCol, windows, winScale, scroll) {
-                const x1 = bx * W, w1 = bw * W;
-                const y1 = baseY - bh * H - scroll * 0.1;
-                const y2 = baseY + 2;
-                // 建筑主体
-                const bG = ctx.createLinearGradient(x1, y1, x1+w1, y1);
-                bG.addColorStop(0, 'rgba(0,0,0,0.4)');
-                bG.addColorStop(0.3, baseCol);
-                bG.addColorStop(0.7, baseCol);
-                bG.addColorStop(1, 'rgba(0,0,0,0.4)');
-                ctx.fillStyle = bG;
-                ctx.fillRect(x1, y1, w1, y2 - y1);
-                // 边缘高光（建筑轮廓线）
-                ctx.save(); ctx.globalAlpha = 0.35;
-                ctx.strokeStyle = 'rgba(100,120,200,0.5)';
-                ctx.lineWidth = 0.8;
-                ctx.strokeRect(x1, y1, w1, y2 - y1);
-                ctx.restore();
-                // 窗户灯光（批量渲染：同色一次 shadowColor，不逐个 save/restore）
-                const nowHash = (now / 3000) | 0;
-                ctx.save(); ctx.shadowBlur = 3;
-                ['#ffe890','#b0d8ff','#ffe8a0','#a0c8ff','#ffd870','#90c8ff'].forEach(col => {
-                    let drawn = false;
-                    windows.forEach(win => {
-                        if (!win.on || win.col !== col) return;
-                        if ((nowHash + (win.wx * 97 + win.wy * 53 | 0)) % 250 === 0) return;
-                        if (!drawn) { ctx.shadowColor = col; ctx.fillStyle = col; drawn = true; }
-                        const wx = x1 + win.wx * w1, wy = y1 + win.wy * (y2 - y1);
-                        const wr = (win.size || 1) * winScale;
-                        ctx.fillRect(wx - wr, wy - wr*0.7, wr*2, wr*1.4);
-                    });
-                });
-                ctx.shadowBlur = 0; ctx.restore();
+            // 2. 太阳光束（右上角，screen blend）
+            ctx.save(); ctx.globalCompositeOperation='screen';
+            const sunX=W*0.78, sunY=-20;
+            for(let i=0;i<5;i++){
+                const ang=(i-2)*0.12;
+                const a=(0.04+0.02*Math.sin(now/2000+i))*(0.7+0.3*Math.sin(now/1500+i*0.8));
+                const ex=sunX+Math.sin(ang)*H, sp=16+i*8;
+                const rG=ctx.createLinearGradient(sunX,sunY,ex,H);
+                rG.addColorStop(0,`rgba(255,235,160,${a*2})`); rG.addColorStop(0.3,`rgba(255,210,100,${a})`); rG.addColorStop(1,'rgba(255,190,60,0)');
+                ctx.fillStyle=rG;
+                ctx.beginPath(); ctx.moveTo(sunX,sunY); ctx.lineTo(ex-sp,H); ctx.lineTo(ex+sp,H); ctx.closePath(); ctx.fill();
             }
+            ctx.globalCompositeOperation='source-over'; ctx.restore();
 
-            // ── 4. 远景建筑群（后排，密集细小，有远景雾化）──
-            ctx.save(); ctx.globalAlpha = 0.55;
-            const farBaseY = H * 0.72;
-            city.farBuildings.forEach(b => {
-                drawBuilding(b.x, b.w, b.h * 0.65, farBaseY, b.baseCol, b.windows, 0.8, farOff);
-            });
-            // 远景雾化（大气透视）
-            const farFogG = ctx.createLinearGradient(0, H*0.30, 0, farBaseY+5);
-            farFogG.addColorStop(0, 'rgba(10,8,30,0)');
-            farFogG.addColorStop(0.5, 'rgba(15,10,40,0.12)');
-            farFogG.addColorStop(1, 'rgba(20,12,50,0.35)');
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = farFogG; ctx.fillRect(0, H*0.30, W, farBaseY - H*0.30 + 5);
-            ctx.restore();
-
-            // ── 5. 中景建筑群（中排，清晰）──
-            ctx.save(); ctx.globalAlpha = 0.82;
-            const midBaseY = H * 0.80;
-            city.midBuildings.forEach(b => {
-                drawBuilding(b.x, b.w, b.h, midBaseY, b.baseCol, b.windows, 1.0, midOff);
-                // 楼顶天线/信号灯
-                if (b.accent) {
-                    const ax = b.x*W + b.w*W*0.5, ay = midBaseY - b.h*H - midOff*0.1;
-                    ctx.save();
-                    ctx.shadowBlur = 6; ctx.shadowColor = `rgba(255,60,60,${0.6+0.4*pulse2})`;
-                    ctx.fillStyle = `rgba(255,60,60,${0.7+0.3*pulse2})`;
-                    ctx.beginPath(); ctx.arc(ax, ay, 1.8, 0, Math.PI*2); ctx.fill();
-                    ctx.shadowBlur = 0; ctx.restore();
-                }
-            });
-            ctx.restore();
-
-
-
-            // ── 7. 近景建筑（前排，极高，两侧压迫感）──
-            const nearBaseY = H * 0.92;
-            // 左侧近景楼
-            city.nearBuildings.slice(0,4).forEach((b,i) => {
-                const bx = b.x * 0.45; // 压缩到左半部
-                ctx.save(); ctx.globalAlpha = 0.95;
-                drawBuilding(bx, b.w*0.8, b.h, nearBaseY, b.baseCol, b.windows, 1.5, nearOff);
-                ctx.restore();
-            });
-            // 右侧近景楼
-            city.nearBuildings.slice(4).forEach((b,i) => {
-                const bx = 0.55 + b.x * 0.45;
-                ctx.save(); ctx.globalAlpha = 0.95;
-                drawBuilding(bx, b.w*0.8, b.h, nearBaseY, b.baseCol, b.windows, 1.5, nearOff);
-                ctx.restore();
-            });
-
-            // ── 8. 地面发光带（城市地面光晕）──
-            const groundG = ctx.createLinearGradient(0, H*0.85, 0, H);
-            groundG.addColorStop(0, 'rgba(0,0,0,0)');
-            groundG.addColorStop(0.3, `rgba(80,40,120,0.25)`);
-            groundG.addColorStop(0.7, `rgba(50,20,80,0.55)`);
-            groundG.addColorStop(1, `rgba(20,5,30,0.85)`);
-            ctx.fillStyle = groundG; ctx.fillRect(0, H*0.85, W, H*0.15);
-
-            // ── 9. 轻微雾气（中部大气感）──
-            const atmG = ctx.createLinearGradient(0, H*0.55, 0, H*0.82);
-            atmG.addColorStop(0, 'rgba(0,0,0,0)');
-            atmG.addColorStop(0.5, `rgba(30,20,60,${0.06+0.03*pulse})`);
-            atmG.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = atmG; ctx.fillRect(0, H*0.55, W, H*0.27);
-
-            // ── 10. Lens Flare（霓虹灯折射，3个彩色光点）──
+            // 3. 水面细波纹
             ctx.save();
-            const flareColors = ['rgba(180,100,255,', 'rgba(80,180,255,', 'rgba(255,100,160,'];
-            [[W*0.15, H*0.62], [W*0.85, H*0.58], [W*0.5, H*0.70]].forEach(([fx,fy],i) => {
-                const fa = (0.12+0.06*pulse) * (0.7 + 0.3*Math.sin(now/1200+i));
-                ctx.globalAlpha = fa;
-                ctx.strokeStyle = flareColors[i] + '0.8)';
-                ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.arc(fx, fy, 22+i*8, 0, Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(fx, fy, 12+i*4, 0, Math.PI*2); ctx.stroke();
-                const flG = ctx.createRadialGradient(fx,fy,0,fx,fy,18+i*6);
-                flG.addColorStop(0, flareColors[i]+'0.5)'); flG.addColorStop(1,'rgba(0,0,0,0)');
-                ctx.fillStyle = flG; ctx.beginPath(); ctx.arc(fx,fy,18+i*6,0,Math.PI*2); ctx.fill();
-            });
-            ctx.globalAlpha = 1; ctx.restore();
+            for(let i=0;i<35;i++){
+                const y=(i*(H/35)+bgT*1.2)%(H+10)-5;
+                const xoff=Math.sin(y*0.018+now/2500)*14;
+                ctx.globalAlpha=0.045+0.025*Math.sin(y*0.008+now/1800);
+                ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=0.7;
+                ctx.beginPath();
+                for(let x=0;x<W;x+=10){
+                    const wy=y+Math.sin(x*0.04+now/2000+i)*2.5;
+                    x===0?ctx.moveTo(x+xoff,wy):ctx.lineTo(x+xoff,wy);
+                }
+                ctx.stroke();
+            }
+            ctx.globalAlpha=1; ctx.restore();
 
-            // ── 11. 暗角（边缘压暗，中央干净）──
-            const vigL = ctx.createLinearGradient(0, 0, W*0.18, 0);
-            vigL.addColorStop(0, 'rgba(0,0,10,0.6)'); vigL.addColorStop(1, 'rgba(0,0,0,0)');
-            const vigR = ctx.createLinearGradient(W*0.82, 0, W, 0);
-            vigR.addColorStop(0, 'rgba(0,0,0,0)'); vigR.addColorStop(1, 'rgba(0,0,10,0.6)');
-            ctx.fillStyle = vigL; ctx.fillRect(0, 0, W*0.18, H);
-            ctx.fillStyle = vigR; ctx.fillRect(W*0.82, 0, W*0.18, H);
-            const vigTop = ctx.createLinearGradient(0, 0, 0, H*0.12);
-            vigTop.addColorStop(0, 'rgba(0,0,8,0.7)'); vigTop.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = vigTop; ctx.fillRect(0, 0, W, H*0.12);
+            // 4. 波光闪烁
+            ctx.save();
+            od.noiseGrid.forEach((row,gy)=>row.forEach((n,gx)=>{
+                const fl=0.5+0.5*Math.sin(now/1200+n*10);
+                if(fl>0.80){
+                    const px=(gx/30)*W+(n-0.5)*14+Math.sin(now/2000+gx)*3;
+                    const py=((gy/50)*H+bgT*0.15)%H;
+                    const glG=ctx.createRadialGradient(px,py,0,px,py,7+n*5);
+                    glG.addColorStop(0,`rgba(255,252,200,${0.28*fl})`); glG.addColorStop(1,'rgba(0,0,0,0)');
+                    ctx.fillStyle=glG; ctx.beginPath(); ctx.ellipse(px,py,7+n*4,3+n*2,0,0,Math.PI*2); ctx.fill();
+                }
+            }));
+            ctx.restore();
+
+            // 5. 珊瑚礁（静态装饰）
+            if(!window._bgReefs){
+                const rng2=(a,b)=>a+Math.random()*(b-a);
+                window._bgReefs=Array.from({length:18},()=>({x:rng2(20,580),y:rng2(80,980),rx:rng2(8,22),ry:rng2(4,12),col:Math.random()>0.5?'#00c8a0':'#0090c8',alpha:rng2(0.1,0.22)}));
+            }
+            ctx.save();
+            window._bgReefs.forEach(r=>{
+                ctx.globalAlpha=r.alpha;
+                ctx.fillStyle=r.col;
+                ctx.beginPath(); ctx.ellipse(r.x,r.y,r.rx,r.ry,0,0,Math.PI*2); ctx.fill();
+            });
+            ctx.restore();
+
+            // 6. 岛屿（从远到近排列，随bgScrollY滚动）
+            const sortedIslands=[...od.islands].sort((a,b)=>a.cy-b.cy);
+            sortedIslands.forEach(isl=>{
+                const iy=isl.cy+bgScrollY*0.05;
+                ctx.save(); ctx.translate(isl.cx,iy); ctx.rotate(isl.rot);
+                const seed=isl.seed;
+                const outerPts=_islandPoints(isl.rx*1.5,isl.ry*1.5,seed+0.5,24);
+                const shPts=_islandPoints(isl.rx*1.2,isl.ry*1.2,seed+0.3,24);
+                const islPts=_islandPoints(isl.rx,isl.ry,seed,28);
+                const jPts=_islandPoints(isl.rx*0.68,isl.ry*0.68,seed+1.1,24);
+                // 礁湖外缘
+                _tracePath(outerPts);
+                const lg=ctx.createRadialGradient(0,0,isl.rx*0.3,0,0,isl.rx*1.65);
+                lg.addColorStop(0,'rgba(0,210,175,0.48)'); lg.addColorStop(0.5,'rgba(0,185,155,0.28)'); lg.addColorStop(1,'rgba(0,0,0,0)');
+                ctx.fillStyle=lg; ctx.fill();
+                // 礁湖浅水
+                _tracePath(shPts);
+                const sw=ctx.createRadialGradient(0,0,isl.rx*0.25,0,0,isl.rx*1.25);
+                sw.addColorStop(0,'rgba(0,235,195,0.65)'); sw.addColorStop(0.5,'rgba(0,215,175,0.42)'); sw.addColorStop(1,'rgba(0,185,150,0.08)');
+                ctx.fillStyle=sw; ctx.fill();
+                // 暗礁
+                if(isl.reefs){
+                    ctx.save(); ctx.globalAlpha=0.38;
+                    isl.reefs.forEach(r=>{ctx.fillStyle=r.col; ctx.beginPath(); ctx.ellipse(Math.cos(r.a)*isl.rx*r.d,Math.sin(r.a)*isl.ry*r.d*0.65,r.rx,r.ry,r.a,0,Math.PI*2); ctx.fill();});
+                    ctx.restore();
+                }
+                // 沙滩
+                _tracePath(islPts);
+                const bg=ctx.createRadialGradient(-isl.rx*0.1,-isl.ry*0.15,0,0,0,isl.rx*1.05);
+                bg.addColorStop(0,'#f8e8a0'); bg.addColorStop(0.35,'#f0d880'); bg.addColorStop(0.75,'#e0c060'); bg.addColorStop(1,'#c8a040');
+                ctx.fillStyle=bg; ctx.fill();
+                ctx.strokeStyle='rgba(255,245,200,0.45)'; ctx.lineWidth=0.8; ctx.stroke();
+                // 丛林
+                _tracePath(jPts);
+                const jg=ctx.createRadialGradient(-isl.rx*0.08,-isl.ry*0.1,0,0,0,isl.rx*0.72);
+                jg.addColorStop(0,'#1a5c10'); jg.addColorStop(0.4,'#2e7820'); jg.addColorStop(0.85,'#387228'); jg.addColorStop(1,'#204810');
+                ctx.fillStyle=jg; ctx.fill();
+                if(isl._jungleDots){
+                    ctx.globalAlpha=0.22;
+                    isl._jungleDots.forEach(d=>{ctx.fillStyle=d.dark?'#0e3808':'#4a8830'; ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2); ctx.fill();});
+                    ctx.globalAlpha=1;
+                }
+                // 沙滩高光
+                _tracePath(islPts); ctx.save(); ctx.clip();
+                ctx.globalAlpha=0.25;
+                const hl=ctx.createRadialGradient(-isl.rx*0.25,-isl.ry*0.35,0,-isl.rx*0.1,-isl.ry*0.15,isl.rx*0.65);
+                hl.addColorStop(0,'rgba(255,252,220,0.7)'); hl.addColorStop(1,'rgba(0,0,0,0)');
+                ctx.fillStyle=hl; ctx.beginPath(); ctx.ellipse(-isl.rx*0.1,-isl.ry*0.15,isl.rx*0.65,isl.ry*0.65,0,0,Math.PI*2); ctx.fill();
+                ctx.restore();
+                ctx.restore();
+            });
+
+            // 7. 泡沫
+            ctx.save();
+            od.foamDots.forEach(f=>{
+                const alpha=0.4+0.4*Math.sin(bgT*0.1+f.phase);
+                ctx.globalAlpha=alpha*0.65;
+                ctx.fillStyle='rgba(255,255,255,0.9)';
+                ctx.beginPath(); ctx.arc(f.x,f.y+(bgScrollY*0.05)%10,f.r*(0.7+0.4*Math.sin(bgT*0.05+f.phase)),0,Math.PI*2); ctx.fill();
+            });
+            ctx.restore();
+
+            // 8. 棕榈树
+            od.palmTrees.forEach(p=>{
+                const py=p.y+bgScrollY*0.05;
+                ctx.save(); ctx.translate(p.x,py);
+                const h=p.h, lean=p.lean;
+                ctx.strokeStyle='#6a4010'; ctx.lineWidth=2.5; ctx.lineCap='round';
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(lean*h*0.4,-h*0.5,lean*h*0.7,-h); ctx.stroke();
+                ctx.strokeStyle='#8a5820'; ctx.lineWidth=1.5;
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(lean*h*0.4,-h*0.5,lean*h*0.7,-h); ctx.stroke();
+                ctx.fillStyle='#806020'; ctx.beginPath(); ctx.arc(lean*h*0.7,-h,2.5,0,Math.PI*2); ctx.fill();
+                const tx=lean*h*0.7, ty=-h;
+                for(let i=0;i<p.leafCount;i++){
+                    const la=(i/p.leafCount)*Math.PI*2;
+                    const sway=Math.sin(now*0.001*0.06+i*1.3)*0.18;
+                    const lx=Math.cos(la+sway)*p.leafLen, ly=Math.sin(la+sway)*p.leafLen*0.5;
+                    ctx.strokeStyle=i%2===0?'#2e7018':'#3a8820'; ctx.lineWidth=2.5;
+                    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.quadraticCurveTo(tx+lx*0.6,ty+ly*0.5,tx+lx,ty+ly); ctx.stroke();
+                    ctx.strokeStyle='#4aaa28'; ctx.lineWidth=1;
+                    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.quadraticCurveTo(tx+lx*0.5,ty+ly*0.4+1,tx+lx,ty+ly+1); ctx.stroke();
+                }
+                ctx.restore();
+            });
+
+            // 9. 水面波纹圆
+            ctx.save(); ctx.globalAlpha=0.15;
+            od.ripples.forEach(r=>{
+                const cr=r.r+((bgT*r.speed*0.5+r.phase)%(r.maxR-r.r));
+                ctx.globalAlpha=(1-cr/r.maxR)*0.20;
+                ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=0.8;
+                ctx.beginPath(); ctx.ellipse(r.x,r.y,cr,cr*0.5,0,0,Math.PI*2); ctx.stroke();
+            });
+            ctx.restore();
+
+            // 10. 顶部轻微深色（营造景深）
+            const topG=ctx.createLinearGradient(0,0,0,H*0.07);
+            topG.addColorStop(0,'rgba(0,30,50,0.5)'); topG.addColorStop(1,'rgba(0,0,0,0)');
+            ctx.fillStyle=topG; ctx.fillRect(0,0,W,H*0.07);
 
             void 0;
         }
