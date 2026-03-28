@@ -5307,7 +5307,7 @@
 
             // 3. 水面细波纹
             ctx.save();
-            for(let i=0;i<35;i++){
+            for(let i=0;i<20;i++){
                 const y=(i*(H/35)+bgT*1.2)%(H+10)-5;
                 const xoff=Math.sin(y*0.018+now/2500)*14;
                 ctx.globalAlpha=0.045+0.025*Math.sin(y*0.008+now/1800);
@@ -5323,16 +5323,18 @@
 
             // 4. 波光闪烁
             ctx.save();
+            // 波光：简化为白色小圆，不创建渐变
+            ctx.save(); ctx.fillStyle='rgba(255,252,200,0.22)';
             od.noiseGrid.forEach((row,gy)=>row.forEach((n,gx)=>{
                 const fl=0.5+0.5*Math.sin(now/1200+n*10);
-                if(fl>0.80){
-                    const px=(gx/30)*W+(n-0.5)*14+Math.sin(now/2000+gx)*3;
-                    const py=((gy/50)*H+bgT*0.15)%H;
-                    const glG=ctx.createRadialGradient(px,py,0,px,py,7+n*5);
-                    glG.addColorStop(0,`rgba(255,252,200,${0.28*fl})`); glG.addColorStop(1,'rgba(0,0,0,0)');
-                    ctx.fillStyle=glG; ctx.beginPath(); ctx.ellipse(px,py,7+n*4,3+n*2,0,0,Math.PI*2); ctx.fill();
+                if(fl>0.84){
+                    const px=(gx/30)*W+(n-0.5)*12;
+                    const py2=((gy/50)*H+bgT*0.15)%H;
+                    ctx.globalAlpha=fl*0.20;
+                    ctx.beginPath(); ctx.ellipse(px,py2,5+n*3,2+n*1.5,0,0,Math.PI*2); ctx.fill();
                 }
             }));
+            ctx.globalAlpha=1; ctx.restore();
             ctx.restore();
 
             // 5. 珊瑚礁（静态装饰）
@@ -5341,17 +5343,15 @@
                 window._bgReefs=Array.from({length:18},()=>({x:rng2(20,580),y:rng2(80,980),rx:rng2(8,22),ry:rng2(4,12),col:Math.random()>0.5?'#00c8a0':'#0090c8',alpha:rng2(0.1,0.22)}));
             }
             ctx.save();
-            window._bgReefs.forEach(r=>{
-                ctx.globalAlpha=r.alpha;
-                ctx.fillStyle=r.col;
-                ctx.beginPath(); ctx.ellipse(r.x,r.y,r.rx,r.ry,0,0,Math.PI*2); ctx.fill();
-            });
+            ctx.save();
+            window._bgReefs.forEach(r=>{ctx.globalAlpha=r.alpha; ctx.fillStyle=r.col; ctx.beginPath(); ctx.ellipse(r.x,r.y,r.rx,r.ry,0,0,Math.PI*2); ctx.fill();});
+            ctx.restore();
             ctx.restore();
 
             // 6. 岛屿（从远到近排列，随bgScrollY滚动）
             const sortedIslands=[...od.islands].sort((a,b)=>a.cy-b.cy);
             sortedIslands.forEach(isl=>{
-                const iy=isl.cy+bgScrollY*0.05;
+                const iy=((isl.cy+bgScrollY*0.35)%(HEIGHT+200))-100;
                 ctx.save(); ctx.translate(isl.cx,iy); ctx.rotate(isl.rot);
                 const seed=isl.seed;
                 const outerPts=_islandPoints(isl.rx*1.5,isl.ry*1.5,seed+0.5,24);
@@ -5406,13 +5406,13 @@
                 const alpha=0.4+0.4*Math.sin(bgT*0.1+f.phase);
                 ctx.globalAlpha=alpha*0.65;
                 ctx.fillStyle='rgba(255,255,255,0.9)';
-                ctx.beginPath(); ctx.arc(f.x,f.y+(bgScrollY*0.05)%10,f.r*(0.7+0.4*Math.sin(bgT*0.05+f.phase)),0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(f.x,((f.y+bgScrollY*0.35)%(HEIGHT+80))-40,f.r*(0.7+0.4*Math.sin(bgT*0.05+f.phase)),0,Math.PI*2); ctx.fill();
             });
             ctx.restore();
 
             // 8. 棕榈树
             od.palmTrees.forEach(p=>{
-                const py=p.y+bgScrollY*0.05;
+                const py=((p.y+bgScrollY*0.35)%(HEIGHT+80))-40;
                 ctx.save(); ctx.translate(p.x,py);
                 const h=p.h, lean=p.lean;
                 ctx.strokeStyle='#6a4010'; ctx.lineWidth=2.5; ctx.lineCap='round';
@@ -5456,7 +5456,7 @@
             drawBackground();
             // 游戏进行中才滚动
             if (gameState === 'playing' || gameState === 'upgrade') {
-                bgScrollY += 1.6;
+                bgScrollY += 2.8;
             }
 
             if (gameState !== 'playing' && gameState !== 'upgrade') return;
